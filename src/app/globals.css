@@ -1,27 +1,68 @@
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
+@layer base {
+  :root {
+    --background: 140 30% 97%;
+    --foreground: 150 10% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 150 10% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 10% 15%;
+    --primary: 152 55% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 152 30% 94%;
+    --secondary-foreground: 152 40% 25%;
+    --muted: 140 15% 95%;
+    --muted-foreground: 150 5% 45%;
+    --accent: 30 90% 60%;
+    --accent-foreground: 30 90% 20%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 140 15% 90%;
+    --input: 140 15% 90%;
+    --ring: 152 55% 50%;
+    --chart-1: 152 55% 50%;
+    --chart-2: 30 90% 60%;
+    --chart-3: 200 70% 55%;
+    --chart-4: 340 65% 55%;
+    --chart-5: 45 80% 55%;
+    --radius: 0.75rem;
+    --sidebar-background: 140 30% 97%;
+    --sidebar-foreground: 150 10% 15%;
+    --sidebar-primary: 152 55% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 152 30% 94%;
+    --sidebar-accent-foreground: 152 40% 25%;
+    --sidebar-border: 140 15% 90%;
+    --sidebar-ring: 152 55% 50%;
+
+    --meal-breakfast: 30 90% 60%;
+    --meal-lunch: 152 55% 50%;
+    --meal-dinner: 200 70% 55%;
+    --meal-snack: 340 65% 55%;
+  }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
