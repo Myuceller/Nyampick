@@ -1,208 +1,286 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { CalendarDays, List } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { AppHeader } from "@/components/app-header";
-import { BottomNav, type TabId } from "@/components/bottom-nav";
-import { CalendarView } from "@/components/calendar-view";
+import { useState, useEffect, useMemo } from "react";
+import { Baby, CalendarDays } from "lucide-react";
+import { BottomNav } from "@/components/bottom-nav";
 import { MealList } from "@/components/meal-list";
-import { AddMealSheet } from "@/components/add-meal-sheet";
-import { WeeklyBoard } from "@/components/weekly-board";
-import { RecipePage } from "@/components/recipe-page";
-import { CommunityPage } from "@/components/community-page";
-import { MyPage } from "@/components/my-page";
-import type { DayMeals, MealType } from "@/lib/types";
-import { getSampleMealData, createMealEntry } from "@/lib/meal-store";
+import { authedFetch } from "@/lib/authed-fetch";
+import type { DayMeals } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+function formatDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function getWeekDaysMondayStart(baseDate: Date): Date[] {
+  const day = baseDate.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  const monday = new Date(baseDate);
+  monday.setDate(baseDate.getDate() + mondayOffset);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
+  });
+}
+
+function getMonthDays(date: Date): Array<Date | null> {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const days: Array<Date | null> = [];
+
+  for (let i = 0; i < firstDay.getDay(); i += 1) {
+    days.push(null);
+  }
+
+  for (let d = 1; d <= lastDay.getDate(); d += 1) {
+    days.push(new Date(year, month, d));
+  }
+
+  return days;
+}
+
+function getMealCountByDate(mealData: Record<string, DayMeals>, date: Date) {
+  const key = formatDateKey(date);
+  const day = mealData[key];
+  if (!day) return 0;
+  return (
+    day.breakfast.length + day.lunch.length + day.dinner.length + day.snack.length
+  );
+}
 
 export default function Page() {
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabId>("calendar");
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [mealData, setMealData] = useState<Record<string, DayMeals>>({});
-  const [viewMode, setViewMode] = useState<"monthly" | "weekly">("monthly");
+  const [calendarMode, setCalendarMode] = useState<"weekly" | "monthly">(
+    "weekly"
+  );
 
   useEffect(() => {
-    setMealData(getSampleMealData());
-    setMounted(true);
+    const load = async () => {
+      let baseData: Record<string, DayMeals> = {};
+      try {
+        const res = await authedFetch("/api/meals", { cache: "no-store" });
+        if (res.ok) {
+          const json = (await res.json()) as { meals?: Record<string, DayMeals> };
+          baseData = json.meals ?? {};
+        }
+      } catch {
+        baseData = {};
+      }
+
+      const editedRaw = localStorage.getItem("mammanote:meal-edit:result");
+      if (editedRaw) {
+        try {
+          const parsed = JSON.parse(editedRaw) as {
+            date: string;
+            dayMeals: DayMeals;
+          };
+          if (parsed?.date && parsed?.dayMeals) {
+            baseData[parsed.date] = parsed.dayMeals;
+          }
+        } catch {
+          // ignore invalid persisted edit payload
+        }
+        localStorage.removeItem("mammanote:meal-edit:result");
+      }
+
+      setMealData(baseData);
+      setMounted(true);
+    };
+
+    void load();
   }, []);
 
-  // Add meal sheet state
-  const [addMealOpen, setAddMealOpen] = useState(false);
-  const [addMealType, setAddMealType] = useState<MealType>("breakfast");
-
-  const dateKey = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
+  const dateKey = formatDateKey(selectedDate);
   const currentDayMeals = mealData[dateKey];
-
-  const handleAddMeal = useCallback((mealType: MealType) => {
-    setAddMealType(mealType);
-    setAddMealOpen(true);
-  }, []);
-
-  const handleRemoveMeal = useCallback(
-    (mealType: MealType, entryId: string) => {
-      setMealData((prev) => {
-        const day = prev[dateKey];
-        if (!day) return prev;
-        return {
-          ...prev,
-          [dateKey]: {
-            ...day,
-            [mealType]: day[mealType].filter(
-              (e: { id: string }) => e.id !== entryId
-            ),
-          },
-        };
-      });
-    },
-    [dateKey]
+  const weekDays = useMemo(
+    () => getWeekDaysMondayStart(selectedDate),
+    [selectedDate]
   );
-
-  const handleToggleReaction = useCallback(
-    (mealType: MealType, entryId: string) => {
-      const reactions: Array<"loved" | "okay" | "disliked" | undefined> = [
-        "loved",
-        "okay",
-        "disliked",
-        undefined,
-      ];
-      setMealData((prev) => {
-        const day = prev[dateKey];
-        if (!day) return prev;
-        return {
-          ...prev,
-          [dateKey]: {
-            ...day,
-            [mealType]: day[mealType].map(
-              (e: { id: string; reaction?: string }) => {
-                if (e.id !== entryId) return e;
-                const currentIdx = reactions.indexOf(
-                  e.reaction as "loved" | "okay" | "disliked" | undefined
-                );
-                const nextReaction =
-                  reactions[(currentIdx + 1) % reactions.length];
-                return { ...e, reaction: nextReaction };
-              }
-            ),
-          },
-        };
-      });
-    },
-    [dateKey]
-  );
-
-  const handleAddItems = useCallback(
-    (items: string[]) => {
-      setMealData((prev) => {
-        const day = prev[dateKey] || {
-          date: dateKey,
-          breakfast: [],
-          lunch: [],
-          dinner: [],
-          snack: [],
-        };
-        return {
-          ...prev,
-          [dateKey]: {
-            ...day,
-            [addMealType]: [
-              ...day[addMealType],
-              ...items.map((name) => createMealEntry(name)),
-            ],
-          },
-        };
-      });
-    },
-    [dateKey, addMealType]
-  );
+  const monthDays = useMemo(() => getMonthDays(selectedDate), [selectedDate]);
+  const monthLabel = `${selectedDate.getFullYear()}년 ${selectedDate.getMonth() + 1}월`;
 
   if (!mounted) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-md flex-col bg-background">
-        <AppHeader />
+      <div className="mx-auto flex min-h-screen max-w-md flex-col bg-[#f0f4f3]">
         <div className="flex flex-1 items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
         </div>
-        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+        <BottomNav />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-background">
-      <AppHeader />
+    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-[rgb(#F3F8F4)] pb-24">
+      <div className="px-4 pb-4 pt-11">
+        <p className="text-[14px] text-[#6f7875]">안녕하세요 👋</p>
+        <h1 className="mt-2 mb-2 text-[24px] font-extrabold leading-[1.05] tracking-[-0.02em] text-[#1f2725]">
+          하은이의 식단
+        </h1>
 
-      {activeTab === "calendar" && (
-        <>
-          {/* View mode toggle */}
-          <div className="flex items-center justify-end gap-1 bg-card px-4 pb-1 pt-2">
+        <div className="mt-3 rounded-[22px] bg-[#fdfefd] px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#d6ebe2]">
+                <Baby className="h-6 w-6 text-[#56be8d]" />
+              </div>
+              <div>
+                <p className="text-[22px] font-semibold leading-tight text-[#26302d]">
+                  하은이
+                </p>
+                <p className="text-[14px] leading-tight text-[#77807d]">
+                  생후 11개월
+                </p>
+              </div>
+            </div>
             <button
               type="button"
-              onClick={() => setViewMode("monthly")}
-              className={cn(
-                "rounded-lg p-1.5 transition-colors",
-                viewMode === "monthly"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted"
-              )}
+              className="rounded-[12px] bg-[#57bf8e] px-4 py-2 text-[15px] font-semibold text-white"
             >
-              <CalendarDays className="h-4 w-4" />
+              아기 관리
             </button>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-[22px] bg-[#fdfefd] px-4 py-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-[18px] font-bold leading-none text-[#232a28]">
+              이번 주 식단
+            </h2>
             <button
               type="button"
-              onClick={() => setViewMode("weekly")}
-              className={cn(
-                "rounded-lg p-1.5 transition-colors",
-                viewMode === "weekly"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted"
-              )}
+              onClick={() =>
+                setCalendarMode((prev) =>
+                  prev === "weekly" ? "monthly" : "weekly"
+                )
+              }
+              className="rounded-md p-1 text-[#202725] transition-colors hover:bg-[#e4e9e7]"
+              aria-label="캘린더 보기 전환"
             >
-              <List className="h-4 w-4" />
+              <CalendarDays className="h-5 w-5" />
             </button>
           </div>
 
-          {viewMode === "monthly" ? (
-            <>
-              <CalendarView
-                selectedDate={selectedDate}
-                onDateSelect={setSelectedDate}
-                mealData={mealData}
-                viewMode={viewMode}
-              />
-
-              <div className="h-px bg-border" />
-
-              <MealList
-                dayMeals={currentDayMeals}
-                selectedDate={selectedDate}
-                onAddMeal={handleAddMeal}
-                onRemoveMeal={handleRemoveMeal}
-                onToggleReaction={handleToggleReaction}
-              />
-            </>
+          {calendarMode === "weekly" ? (
+            <div className="grid grid-cols-7 gap-1.5">
+              {weekDays.map((date) => {
+                const isSelected = formatDateKey(date) === dateKey;
+                const count = getMealCountByDate(mealData, date);
+                const dayLabel = ["일", "월", "화", "수", "목", "금", "토"][date.getDay()];
+                return (
+                  <button
+                    key={formatDateKey(date)}
+                    type="button"
+                    onClick={() => setSelectedDate(date)}
+                    className={cn(
+                      "flex flex-col items-center rounded-[20px] px-1 py-2.5",
+                      isSelected && "bg-[#57bf8e] text-white"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "text-[11px]",
+                        isSelected ? "text-white/80" : "text-[#7a8380]"
+                      )}
+                    >
+                      {dayLabel}
+                    </span>
+                    <span className="text-[14px] font-bold leading-none">
+                      {date.getDate()}
+                    </span>
+                    <div className="mt-1 flex flex-col gap-1">
+                      {count > 0 && (
+                        <>
+                          <span
+                            className={cn(
+                              "h-[3px] w-4 rounded-full",
+                              isSelected ? "bg-white/70" : "bg-[#9ad7bc]"
+                            )}
+                          />
+                          <span
+                            className={cn(
+                              "h-[3px] w-4 rounded-full",
+                              isSelected ? "bg-white/60" : "bg-[#b6dfcb]"
+                            )}
+                          />
+                          <span
+                            className={cn(
+                              "h-[3px] w-4 rounded-full",
+                              isSelected ? "bg-white/50" : "bg-[#efdbc2]"
+                            )}
+                          />
+                        </>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           ) : (
-            <WeeklyBoard
-              selectedDate={selectedDate}
-              onDateSelect={setSelectedDate}
-              mealData={mealData}
-            />
+            <div>
+              <p className="mb-1 text-center text-[14px] font-bold text-[#242a26]">
+                {monthLabel}
+              </p>
+              <div className="grid grid-cols-7 gap-y-2 text-center text-[12px]">
+                {["일", "월", "화", "수", "목", "금", "토"].map((day, idx) => (
+                  <span
+                    key={day}
+                    className={cn(
+                      idx === 0 ? "text-[#eb6f6f]" : "text-[#7b8680]"
+                    )}
+                  >
+                    {day}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-1 grid grid-cols-7 gap-y-2 text-center">
+                {monthDays.map((date, idx) => {
+                  if (!date) {
+                    return <div key={`empty-${idx}`} className="h-10" />;
+                  }
+                  const isSelected = formatDateKey(date) === dateKey;
+                  return (
+                    <button
+                      key={formatDateKey(date)}
+                      type="button"
+                      onClick={() => setSelectedDate(date)}
+                      className={cn(
+                        "mx-auto h-10 w-10 rounded-[12px] text-[14px] font-semibold text-[#26302d]",
+                        isSelected && "bg-[#57bf8e] text-white"
+                      )}
+                    >
+                      {date.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           )}
+          <div className="mt-2 text-right">
+            <button
+              type="button"
+              className="text-[12px] font-semibold text-[#57bf8e]"
+            >
+              전체보기
+            </button>
+          </div>
+        </div>
+      </div>
 
-          <AddMealSheet
-            open={addMealOpen}
-            onOpenChange={setAddMealOpen}
-            mealType={addMealType}
-            onAddItems={handleAddItems}
-          />
-        </>
-      )}
+      <div className="h-px bg-[#7bc8a3]" />
 
-      {activeTab === "recipe" && <RecipePage />}
-      {activeTab === "community" && <CommunityPage />}
-      {activeTab === "mypage" && <MyPage />}
+      <MealList
+        dayMeals={currentDayMeals}
+        selectedDate={selectedDate}
+        dateKey={dateKey}
+      />
 
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      <BottomNav />
     </div>
   );
 }

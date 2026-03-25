@@ -1,4 +1,4 @@
-import type { DayMeals, MealEntry, MealType, MenuItem } from "./types";
+import type { DayMeals, MenuItem } from "./types";
 
 // Sample menu items
 export const SAMPLE_MENUS: MenuItem[] = [
@@ -120,21 +120,4 @@ export function getSampleMealData(): Record<string, DayMeals> {
   }
 
   return dates;
-}
-
-export function createMealEntry(menuName: string): MealEntry {
-  return {
-    id: Math.random().toString(36).substring(2, 9),
-    menuName,
-  };
-}
-
-export function getMealCount(dayMeals: DayMeals | undefined): Record<MealType, number> {
-  if (!dayMeals) return { breakfast: 0, lunch: 0, dinner: 0, snack: 0 };
-  return {
-    breakfast: dayMeals.breakfast.length,
-    lunch: dayMeals.lunch.length,
-    dinner: dayMeals.dinner.length,
-    snack: dayMeals.snack.length,
-  };
 }

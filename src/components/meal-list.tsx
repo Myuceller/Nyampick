@@ -1,169 +1,118 @@
 "use client";
 
-import { Plus, Trash2, Heart, Meh, ThumbsDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Heart, SquarePen } from "lucide-react";
 import type { DayMeals, MealEntry, MealType } from "@/lib/types";
-import { MEAL_LABELS, MEAL_COLORS, MEAL_TEXT_COLORS } from "@/lib/types";
+import { MEAL_LABELS } from "@/lib/types";
+import { useRouter } from "next/navigation";
 
 interface MealListProps {
   dayMeals: DayMeals | undefined;
   selectedDate: Date;
-  onAddMeal: (mealType: MealType) => void;
-  onRemoveMeal: (mealType: MealType, entryId: string) => void;
-  onToggleReaction: (mealType: MealType, entryId: string) => void;
+  dateKey: string;
 }
 
 const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
-
-const reactionIcons = {
-  loved: Heart,
-  okay: Meh,
-  disliked: ThumbsDown,
-};
-
-const reactionColors = {
-  loved: "text-destructive fill-destructive",
-  okay: "text-meal-breakfast",
-  disliked: "text-muted-foreground",
-};
 
 function formatKoreanDate(date: Date): string {
   const month = date.getMonth() + 1;
   const day = date.getDate();
   const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][date.getDay()];
-  return `${month}월 ${day}일(${dayOfWeek})`;
-}
-
-function isToday(date: Date): boolean {
-  const today = new Date();
-  return (
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
-  );
+  return `${month}월 ${day}일 ${dayOfWeek}요일`;
 }
 
 export function MealList({
   dayMeals,
   selectedDate,
-  onAddMeal,
-  onRemoveMeal,
-  onToggleReaction,
+  dateKey,
 }: MealListProps) {
+  const router = useRouter();
   const dateLabel = formatKoreanDate(selectedDate);
-  const todayLabel = isToday(selectedDate) ? ", 오늘" : "";
+  const totalMealCount = MEAL_TYPES.reduce(
+    (sum, type) => sum + (dayMeals ? dayMeals[type].length : 0),
+    0
+  );
 
   return (
-    <div className="flex-1 px-4 pb-24 pt-4">
-      <div className="mb-4 flex items-center gap-2">
-        <h2 className="text-base font-bold text-foreground">
-          {dateLabel}
-          {todayLabel}
+    <div className="flex-1 px-4 pb-24 pt-6 bg-[#fdfefd]">
+      <p className="mb-2 text-[12px] text-[#7f8885]">{dateLabel}</p>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-[20px] font-bold leading-none text-[#242b29]">
+          오늘의 식단
         </h2>
+        <button
+          type="button"
+          onClick={() => {
+            const emptyDay: DayMeals = {
+              date: dateKey,
+              breakfast: [],
+              lunch: [],
+              dinner: [],
+              snack: [],
+            };
+            localStorage.setItem(
+              `mammanote:meal-edit:init:${dateKey}`,
+              JSON.stringify(dayMeals ?? emptyDay)
+            );
+            router.push(`/meal/edit?date=${dateKey}`);
+          }}
+          className="rounded-md p-1 text-[#1f2523] transition-colors hover:bg-[#dfe5e3]"
+          aria-label="식단 수정"
+        >
+          <SquarePen className="h-6 w-6" />
+        </button>
       </div>
 
-      {/* Meal type tabs */}
-      <div className="mb-4 flex gap-2">
-        {MEAL_TYPES.map((type) => {
-          const count = dayMeals ? dayMeals[type].length : 0;
-          return (
-            <div
-              key={type}
-              className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5"
-            >
-              <span
-                className={cn("h-2 w-2 rounded-full", MEAL_COLORS[type])}
-              />
-              <span className="text-xs font-medium text-foreground">
-                {MEAL_LABELS[type]}
-              </span>
-              {count > 0 && (
-                <span className="text-xs font-semibold text-muted-foreground">
-                  {count}
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Meal sections */}
-      <div className="flex flex-col gap-4">
-        {MEAL_TYPES.map((type) => {
-          const entries: MealEntry[] = dayMeals ? dayMeals[type] : [];
-          return (
-            <div key={type} className="rounded-2xl border border-border bg-card p-4">
-              <div className="mb-3 flex items-center gap-2">
-                <span
-                  className={cn("h-2.5 w-2.5 rounded-full", MEAL_COLORS[type])}
-                />
-                <span className={cn("text-sm font-semibold", MEAL_TEXT_COLORS[type])}>
-                  {MEAL_LABELS[type]}
-                </span>
-              </div>
-
-              {entries.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  {entries.map((entry) => {
-                    const ReactionIcon = entry.reaction
-                      ? reactionIcons[entry.reaction]
-                      : null;
-                    return (
-                      <div
-                        key={entry.id}
-                        className="flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2.5"
-                      >
-                        <span className="text-sm font-medium text-foreground">
-                          {entry.menuName}
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                          {/* Reaction toggle */}
-                          <button
-                            type="button"
-                            onClick={() => onToggleReaction(type, entry.id)}
-                            className={cn(
-                              "rounded-full p-1 transition-colors hover:bg-muted",
-                              entry.reaction
-                                ? reactionColors[entry.reaction]
-                                : "text-muted-foreground"
-                            )}
-                          >
-                            {ReactionIcon ? (
-                              <ReactionIcon className="h-3.5 w-3.5" />
-                            ) : (
-                              <Heart className="h-3.5 w-3.5" />
-                            )}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onRemoveMeal(type, entry.id)}
-                            className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  아직 기록이 없어요
-                </p>
-              )}
-
-              <button
-                type="button"
-                onClick={() => onAddMeal(type)}
-                className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+      {totalMealCount === 0 ? (
+        <div className="rounded-[14px] border bg-[#fdfefd] px-4 py-10 text-center">
+          <p className="text-[18px] font-medium text-[#6e7673]">
+            아직 식단이 준비되지 않았습니다
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-5">
+          {MEAL_TYPES.map((type) => {
+            const entries: MealEntry[] = dayMeals ? dayMeals[type] : [];
+            return (
+              <div
+                key={type}
+                className="rounded-[14px] border border-[#c8cfcd] bg-[#fdfefd] px-4 py-3.5"
               >
-                <Plus className="h-4 w-4" />
-                추가하기
-              </button>
-            </div>
-          );
-        })}
-      </div>
+                <div className="mb-2">
+                  <span className="text-[18px] font-bold leading-none text-[#252c2a]">
+                    {MEAL_LABELS[type]}
+                  </span>
+                </div>
+
+                {entries.length > 0 ? (
+                  <div className="flex flex-col gap-1.5">
+                    {entries.map((entry) => {
+                      return (
+                        <div
+                          key={entry.id}
+                          className="flex items-center justify-between"
+                        >
+                          <span className="text-[16px] font-medium leading-[1.25] text-[#2a312f]">
+                            {entry.menuName}
+                          </span>
+                          {entry.reaction === "loved" ? (
+                            <Heart className="h-5 w-5 fill-[#ff3848] text-[#ff3848]" />
+                          ) : (
+                            <span className="w-4" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-[18px] text-[#6e7673]">
+                    아직 식단이 준비되지 않았습니다
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
