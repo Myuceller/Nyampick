@@ -32,6 +32,20 @@ export default function AuthPage() {
     }
 
     const syncScreenFromSession = async () => {
+      if (typeof window !== "undefined") {
+        const currentUrl = new URL(window.location.href);
+        const authCode = currentUrl.searchParams.get("code");
+        if (authCode) {
+          const { error } = await supabase.auth.exchangeCodeForSession(authCode);
+          if (error && active) {
+            setErrorMessage(error.message);
+          }
+          currentUrl.searchParams.delete("code");
+          currentUrl.searchParams.delete("state");
+          window.history.replaceState({}, "", currentUrl.pathname);
+        }
+      }
+
       const { data } = await supabase.auth.getSession();
       if (!active) return;
       const session = data.session;
@@ -166,16 +180,31 @@ export default function AuthPage() {
         typeof window !== "undefined"
           ? `${window.location.origin}/auth`
           : undefined;
-
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo,
+          queryParams:
+            provider === "kakao"
+              ? {
+                  scope: "profile_nickname profile_image",
+                }
+              : undefined,
         },
       });
 
       if (error) throw error;
     } catch (error) {
+      if (
+        provider === "kakao" &&
+        error instanceof Error &&
+        (error.message.includes("KOE205") || error.message.includes("동의 항목"))
+      ) {
+        setErrorMessage(
+          "카카오 동의항목 설정 문제입니다. Supabase Kakao provider의 scope에서 account_email을 제거하거나 Kakao 동의항목에서 이메일을 활성화해주세요."
+        );
+        return;
+      }
       setErrorMessage(
         error instanceof Error ? error.message : "소셜 로그인에 실패했습니다."
       );

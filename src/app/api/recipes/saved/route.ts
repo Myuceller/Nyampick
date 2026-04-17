@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { getUserFromRequest } from "@/lib/server/api-auth";
+import {
+  AuthProviderUnavailableError,
+  getUserFromRequest,
+} from "@/lib/server/api-auth";
 import {
   addSavedRecipeToDb,
   deleteSavedRecipeInDb,
@@ -34,8 +37,23 @@ function normalizeSavedRecipeError(error: unknown, fallback: string) {
   return { status: 500, message };
 }
 
+function authUnavailableResponse() {
+  return NextResponse.json(
+    { message: "인증 서버에 연결할 수 없습니다. 네트워크/DNS를 확인해주세요." },
+    { status: 503 }
+  );
+}
+
 export async function GET(request: Request) {
-  const user = await getUserFromRequest(request);
+  let user = null;
+  try {
+    user = await getUserFromRequest(request);
+  } catch (error) {
+    if (error instanceof AuthProviderUnavailableError) {
+      return authUnavailableResponse();
+    }
+    throw error;
+  }
   if (!user) {
     return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }
@@ -56,7 +74,15 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const user = await getUserFromRequest(request);
+  let user = null;
+  try {
+    user = await getUserFromRequest(request);
+  } catch (error) {
+    if (error instanceof AuthProviderUnavailableError) {
+      return authUnavailableResponse();
+    }
+    throw error;
+  }
   if (!user) {
     return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }
@@ -101,7 +127,15 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const user = await getUserFromRequest(request);
+  let user = null;
+  try {
+    user = await getUserFromRequest(request);
+  } catch (error) {
+    if (error instanceof AuthProviderUnavailableError) {
+      return authUnavailableResponse();
+    }
+    throw error;
+  }
   if (!user) {
     return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }
@@ -146,7 +180,15 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const user = await getUserFromRequest(request);
+  let user = null;
+  try {
+    user = await getUserFromRequest(request);
+  } catch (error) {
+    if (error instanceof AuthProviderUnavailableError) {
+      return authUnavailableResponse();
+    }
+    throw error;
+  }
   if (!user) {
     return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }
