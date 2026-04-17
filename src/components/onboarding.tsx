@@ -139,20 +139,20 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           overflow: hidden;
           touch-action: pan-y;
           width: 100vw;
-          height: 100vh;
+          height: 100dvh;
           background-color: var(--bg-color);
         }
 
         .slider-container {
           display: flex;
           width: 300vw;
-          height: 100vh;
+          height: 100dvh;
           transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
         .slide {
           width: 100vw;
-          height: 100vh;
+          height: 100dvh;
           display: flex;
           flex-direction: column;
           align-items: center;

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Baby, CalendarDays } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 import { MealList } from "@/components/meal-list";
+import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import { authedFetch } from "@/lib/authed-fetch";
 import type { DayMeals } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -106,7 +107,7 @@ export default function Page() {
 
   if (!mounted) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-md flex-col bg-[#f0f4f3]">
+      <div className="mx-auto flex min-h-[100dvh] max-w-[480px] flex-col bg-[#f0f4f3]">
         <div className="flex flex-1 items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
         </div>
@@ -116,9 +117,10 @@ export default function Page() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-[rgb(#F3F8F4)] pb-24">
+    <div className="mx-auto flex min-h-[100dvh] max-w-[480px] flex-col bg-[rgb(#F3F8F4)] pb-24">
       <div className="px-4 pb-4 pt-11">
         <p className="text-[14px] text-[#6f7875]">안녕하세요 👋</p>
+        <PwaInstallPrompt className="mt-3" />
         <h1 className="mt-2 mb-2 text-[24px] font-extrabold leading-[1.05] tracking-[-0.02em] text-[#1f2725]">
           하은이의 식단
         </h1>

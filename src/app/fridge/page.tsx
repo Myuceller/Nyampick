@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Check, Search, X } from "lucide-react";
+import { Camera, Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { AppButton } from "@/components/app-button";
+import { CategoryChipFilter } from "@/components/category-chip-filter";
+import { AppSearchInput } from "@/components/app-search-input";
 import { BottomNav } from "@/components/bottom-nav";
 import { authedFetch } from "@/lib/authed-fetch";
 import { cn } from "@/lib/utils";
@@ -164,6 +167,14 @@ export default function FridgePage() {
     })).filter((section) => section.items.length > 0);
   }, [activeFilter, fridgeItems, keyword]);
 
+  const filterOptions = useMemo(
+    () => [
+      { key: "all", label: "전체" },
+      ...SECTION_ORDER.map((key) => ({ key, label: SECTION_META[key].chipLabel })),
+    ],
+    []
+  );
+
   const addIngredient = async () => {
     const trimmed = newIngredientName.trim();
     if (!trimmed) return;
@@ -318,108 +329,83 @@ export default function FridgePage() {
   };
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-[rgb(243,248,244)] pb-24">
-      <main className="flex-1 px-4 pb-40 pt-12">
+    <div className="mx-auto flex min-h-[100dvh] max-w-[480px] flex-col bg-white pb-24">
+      <main className="flex-1 px-4 pt-12">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-[40px] font-extrabold tracking-[-0.02em] text-[#1f2725]">
+          <h1 className="text-[24px] font-bold tracking-[-0.02em] text-[#1f2725]">
             내 냉장고
           </h1>
           <button
             type="button"
             onClick={() => router.push("/fridge/edit")}
-            className="text-[22px] font-semibold text-[#57bf8e]"
+            className="text-[12px] font-semibold text-[#59C090]"
           >
             수정하기
           </button>
         </div>
 
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#95a09c]" />
-          <input
-            value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
-            placeholder="재료 검색"
-            className="h-12 w-full rounded-[16px] bg-[#eef0ef] pl-12 pr-4 text-[21px] text-[#2a312f] outline-none placeholder:text-[#8b9591]"
-          />
-        </div>
+        <AppSearchInput
+          value={keyword}
+          onChange={setKeyword}
+          placeholder="재료 검색"
+          inputClassName="border-transparent bg-[#eef0ef]"
+        />
 
-        <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1">
-          <button
-            type="button"
-            onClick={() => setActiveFilter("all")}
-            className={`shrink-0 rounded-full border px-4 py-1.5 text-[16px] font-semibold ${
-              activeFilter === "all"
-                ? "border-[#57bf8e] bg-[#57bf8e] text-white"
-                : "border-[#c6cecb] bg-[#dce3e0] text-[#69726f]"
-            }`}
-          >
-            전체
-          </button>
-          {SECTION_ORDER.map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setActiveFilter(key)}
-              className={`shrink-0 rounded-full border px-4 py-1.5 text-[16px] font-semibold ${
-                activeFilter === key
-                  ? "border-[#57bf8e] bg-[#57bf8e] text-white"
-                  : "border-[#c6cecb] bg-[#dce3e0] text-[#69726f]"
-              }`}
-            >
-              {SECTION_META[key].chipLabel}
-            </button>
-          ))}
-        </div>
+        <CategoryChipFilter
+          options={filterOptions}
+          activeKey={activeFilter}
+          onChange={(key) => setActiveFilter(key as "all" | FridgeSectionKey)}
+        />
 
-        <div className="mt-5 space-y-7">
-          {isLoading ? (
-            <p className="text-center text-[18px] text-[#6f7875]">불러오는 중...</p>
-          ) : filteredSections.map((section) => (
-            <section key={section.key}>
-              <h2 className="mb-3 text-[30px] font-bold text-[#2a4a3c]">
-                {section.emoji} {section.label}
-              </h2>
-              <div className="space-y-2.5">
-                {section.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between rounded-[14px] border border-[#c8cfcd] bg-[#f5f6f5] px-4 py-3"
-                  >
-                    <span className="text-[33px] font-medium text-[#1f2725]">
-                      {item.name}
-                    </span>
-                    {item.quantity ? (
-                      <span className="text-[31px] font-semibold text-[#2f8d68]">
-                        {item.quantity}
+        <div className="-mx-4 mt-4 bg-[#eef3f0] px-4 pb-40 pt-5">
+          <div className="space-y-7">
+            {isLoading ? (
+              <p className="text-center text-[18px] text-[#6f7875]">불러오는 중...</p>
+            ) : filteredSections.map((section) => (
+              <section key={section.key}>
+                <h2 className="mb-3 text-[16px] font-bold text-[#2a4a3c]">
+                  {section.emoji} {section.label}
+                </h2>
+                <div className="space-y-2.5">
+                  {section.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between rounded-[14px] border border-[#c8cfcd] bg-white px-4 py-3"
+                    >
+                      <span className="text-[18px] font-medium text-[#1f2725]">
+                        {item.name}
                       </span>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+                      {item.quantity ? (
+                        <span className="text-[31px] font-semibold text-[#2f8d68]">
+                          {item.quantity}
+                        </span>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
 
-        {!isLoading && filteredSections.length === 0 ? (
-          <p className="mt-8 text-center text-[18px] text-[#6f7875]">
-            검색 결과가 없습니다
-          </p>
-        ) : null}
+          {!isLoading && filteredSections.length === 0 ? (
+            <p className="mt-8 text-center text-[18px] text-[#6f7875]">
+              검색 결과가 없습니다
+            </p>
+          ) : null}
+        </div>
       </main>
 
-      <div className="pointer-events-none fixed bottom-[86px] left-1/2 z-40 w-full max-w-md -translate-x-1/2 px-4">
-        <button
-          type="button"
+      <div className="pointer-events-none fixed bottom-[calc(86px+env(safe-area-inset-bottom))] left-1/2 z-40 w-full max-w-[480px] -translate-x-1/2 px-4">
+        <AppButton
+          label="재료 추가"
           onClick={() => setIsAddPopupOpen(true)}
-          className="pointer-events-auto mx-auto block h-12 w-[230px] rounded-full bg-[#57bf8e] text-[33px] font-semibold text-white shadow-[0_8px_20px_rgba(87,191,142,0.28)]"
-        >
-          재료 추가
-        </button>
+          className="pointer-events-auto mx-auto flex h-12 w-[230px] rounded-full shadow-[0_8px_20px_rgba(87,191,142,0.28)]"
+        />
       </div>
 
       {isAddPopupOpen ? (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#7f8783]/50 px-4 py-4">
-          <div className="mx-auto flex max-h-[calc(100vh-32px)] w-full max-w-md flex-col overflow-y-auto rounded-[28px] bg-[#f6f7f6] p-4">
+          <div className="mx-auto flex max-h-[calc(100dvh-32px)] w-full max-w-[480px] flex-col overflow-y-auto rounded-[28px] bg-[#f6f7f6] p-4">
             <div className="mb-4 flex items-center justify-center relative">
               <h2 className="text-[30px] font-bold text-[#1f2725]">냉장고 재료 추가</h2>
               <button
@@ -504,7 +490,7 @@ export default function FridgePage() {
 
       {isReceiptPopupOpen ? (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#6b716e]/65 px-4 py-4">
-          <div className="mx-auto w-full max-w-md rounded-[28px] bg-[#f6f7f6] px-4 pb-5 pt-4">
+          <div className="mx-auto w-full max-w-[480px] rounded-[28px] bg-[#f6f7f6] px-4 pb-5 pt-4">
             <input
               ref={albumInputRef}
               type="file"

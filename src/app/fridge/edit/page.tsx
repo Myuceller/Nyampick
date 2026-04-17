@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Check, MinusCircle, PlusCircle, Search, X } from "lucide-react";
+import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, Check, MinusCircle, PlusCircle, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { AppButton } from "@/components/app-button";
+import { AppSearchInput } from "@/components/app-search-input";
+import { CategoryChipFilter } from "@/components/category-chip-filter";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { authedFetch } from "@/lib/authed-fetch";
 import { cn } from "@/lib/utils";
 
@@ -64,6 +68,29 @@ function parseQuantity(raw?: string): { value: number; suffix: string } {
 
 function buildQuantity(value: number, suffix: string) {
   return `${Math.max(0, value)}${suffix}`;
+}
+
+function hashToUnit(value: string) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return (hash % 1000) / 1000;
+}
+
+function getWiggleStyle(id: string): CSSProperties {
+  const a = hashToUnit(`${id}:a`);
+  const b = hashToUnit(`${id}:b`);
+  const c = hashToUnit(`${id}:c`);
+  const duration = 0.85 + a * 0.25; // 0.85s ~ 1.10s
+  const delay = -(b * duration); // 시작 위상 분산
+  const rotate = 0.28 + c * 0.34; // 0.28deg ~ 0.62deg
+
+  return {
+    "--wiggle-duration": `${duration.toFixed(2)}s`,
+    "--wiggle-delay": `${delay.toFixed(2)}s`,
+    "--wiggle-rotate": `${rotate.toFixed(2)}deg`,
+  } as CSSProperties;
 }
 
 export default function FridgeEditPage() {
@@ -170,6 +197,14 @@ export default function FridgeEditPage() {
   const visibleSectionOrder = useMemo(
     () => CHIP_ORDER.filter((section) => grouped[section].length > 0),
     [grouped]
+  );
+
+  const filterOptions = useMemo(
+    () => [
+      { key: "all", label: "전체" },
+      ...CHIP_ORDER.map((section) => ({ key: section, label: SECTION_META[section].chip })),
+    ],
+    []
   );
 
   const startEditQuantity = (item: FridgeItem) => {
@@ -318,7 +353,7 @@ export default function FridgeEditPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-[rgb(243,248,244)]">
+    <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white">
       <div className="px-4 pb-3 pt-6">
         <div className="flex items-center justify-between">
           <button
@@ -329,69 +364,43 @@ export default function FridgeEditPage() {
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
-          <h1 className="text-[32px] font-bold text-[#1f2725]">냉장고 수정</h1>
+          <h1 className="text-[24px] font-bold tracking-[-0.02em] text-[#1f2725]">냉장고 수정</h1>
           <span className="w-8" />
         </div>
 
-        <p className="mt-8 text-center text-[22px] leading-snug text-[#1f2725]">
+        <p className="mt-6 text-center text-[14px] leading-snug text-[#6f7875]">
           재료를 한번에 삭제하고 싶다면
           <br />
           꼭 눌러서 선택해보세요
         </p>
 
-        <div className="relative mt-6">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#95a09c]" />
-          <input
-            value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
-            placeholder="수정할 재료 검색"
-            className="h-12 w-full rounded-[16px] bg-[#eef0ef] pl-12 pr-4 text-[20px] text-[#2a312f] outline-none placeholder:text-[#8b9591]"
-          />
-        </div>
+        <AppSearchInput
+          value={keyword}
+          onChange={setKeyword}
+          placeholder="수정할 재료 검색"
+          wrapperClassName="mt-6"
+          inputClassName="border-transparent bg-[#eef0ef]"
+        />
 
-        <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1">
-          <button
-            type="button"
-            onClick={() => setActiveFilter("all")}
-            className={cn(
-              "shrink-0 rounded-full border px-4 py-1.5 text-[16px] font-semibold",
-              activeFilter === "all"
-                ? "border-[#57bf8e] bg-[#57bf8e] text-white"
-                : "border-[#c6cecb] text-[#69726f]"
-            )}
-          >
-            전체
-          </button>
-          {CHIP_ORDER.map((section) => (
-            <button
-              key={section}
-              type="button"
-              onClick={() => setActiveFilter(section)}
-              className={cn(
-                "shrink-0 rounded-full border px-4 py-1.5 text-[16px] font-semibold",
-                activeFilter === section
-                  ? "border-[#57bf8e] bg-[#57bf8e] text-white"
-                  : "border-[#c6cecb] text-[#69726f]"
-              )}
-            >
-              {SECTION_META[section].chip}
-            </button>
-          ))}
-        </div>
+        <CategoryChipFilter
+          options={filterOptions}
+          activeKey={activeFilter}
+          onChange={(key) => setActiveFilter(key as "all" | SectionKey)}
+        />
       </div>
 
-      <div className="h-px bg-[#dbe3df]" />
+      <div className="h-px bg-[#d3d7d5]" />
 
-      <div className="flex-1 overflow-y-auto px-4 pb-28 pt-4">
+      <div className="flex-1 overflow-y-auto bg-[#eef3f0] px-4 pb-28 pt-4">
         {isLoading ? (
-          <p className="text-center text-[18px] text-[#78817e]">불러오는 중...</p>
+          <p className="text-center text-[18px] text-[#6f7875]">불러오는 중...</p>
         ) : visibleSectionOrder.length === 0 ? (
-          <p className="text-center text-[18px] text-[#78817e]">표시할 재료가 없습니다.</p>
+          <p className="text-center text-[18px] text-[#6f7875]">표시할 재료가 없습니다.</p>
         ) : (
           <div className="space-y-6">
             {visibleSectionOrder.map((section) => (
               <section key={section}>
-                <h2 className="mb-2 text-[30px] font-bold text-[#2a4a3c]">
+                <h2 className="mb-3 text-[16px] font-bold text-[#2a4a3c]">
                   {SECTION_META[section].emoji} {SECTION_META[section].label}
                 </h2>
                 <div className="space-y-2.5">
@@ -404,12 +413,13 @@ export default function FridgeEditPage() {
                         className={cn(
                           "flex items-center justify-between rounded-[14px] border px-4 py-3",
                           isDeleteMode
-                            ? "cursor-pointer [animation:fridgeWiggle_0.22s_ease-in-out_infinite]"
+                            ? "cursor-pointer [animation:fridgeWiggle_var(--wiggle-duration)_ease-in-out_infinite] [animation-delay:var(--wiggle-delay)]"
                             : "",
                           isDeleteMode && isSelectedForDelete
                             ? "border-[#ff6e7a] bg-[#f9d9df]"
-                            : "border-[#c8cfcd] bg-[#f5f6f5]"
+                            : "border-[#c8cfcd] bg-white"
                         )}
+                        style={isDeleteMode ? getWiggleStyle(item.id) : undefined}
                         onMouseDown={() => startLongPress(item.id)}
                         onMouseUp={endLongPress}
                         onMouseLeave={endLongPress}
@@ -423,7 +433,7 @@ export default function FridgeEditPage() {
                         }}
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-[36px] font-medium text-[#1f2725]">{item.name}</span>
+                          <span className="text-[18px] font-medium text-[#1f2725]">{item.name}</span>
                           {item.quantity ? (
                             isEditing ? (
                               <>
@@ -495,108 +505,64 @@ export default function FridgeEditPage() {
       </div>
 
       {isDeleteMode ? (
-        <div className="pointer-events-none fixed bottom-6 left-1/2 z-20 w-full max-w-md -translate-x-1/2 px-4">
+        <div className="pointer-events-none fixed bottom-[calc(24px+env(safe-area-inset-bottom))] left-1/2 z-20 w-full max-w-[480px] -translate-x-1/2 px-4">
           <div className="pointer-events-auto grid grid-cols-2 gap-2">
-            <button
-              type="button"
+            <AppButton
+              label="취소하기"
               onClick={cancelDeleteMode}
-              className="h-12 rounded-full bg-[#7b8782] text-[16px] font-semibold text-white"
-            >
-              취소하기
-            </button>
-            <button
-              type="button"
+              bgClassName="bg-[#7b8782]"
+              className="h-12 rounded-full"
+            />
+            <AppButton
+              label="선택한 재료 삭제"
               onClick={confirmBulkDelete}
               disabled={selectedDeleteIds.size === 0}
-              className="h-12 rounded-full bg-[#ff2f3e] text-[16px] font-semibold text-white disabled:opacity-40"
-            >
-              선택한 재료 삭제
-            </button>
+              bgClassName="bg-[#ff2f3e]"
+              className="h-12 rounded-full disabled:opacity-40"
+            />
           </div>
         </div>
       ) : (
-        <div className="pointer-events-none fixed bottom-6 left-1/2 z-20 w-full max-w-md -translate-x-1/2 px-4">
-          <button
-            type="button"
+        <div className="pointer-events-none fixed bottom-[calc(24px+env(safe-area-inset-bottom))] left-1/2 z-20 w-full max-w-[480px] -translate-x-1/2 px-4">
+          <AppButton
+            label="저장하기"
             disabled={isSaving}
             onClick={saveChanges}
-            className="pointer-events-auto mx-auto block h-12 w-[180px] rounded-full bg-[#57bf8e] text-[35px] font-semibold text-white disabled:opacity-70"
-          >
-            {isSaving ? "저장중..." : "저장하기"}
-          </button>
+            className="pointer-events-auto mx-auto flex h-12 w-[180px] rounded-full text-[18px] disabled:opacity-70"
+          />
         </div>
       )}
 
-      {pendingDeleteItem ? (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/35 px-4">
-          <div className="w-full max-w-md rounded-[28px] bg-[#f6f7f6] px-4 pb-6 pt-7">
-            <h3 className="text-center text-[40px] font-bold text-[#1f2725]">
-              정말 삭제할까요?
-            </h3>
-            <p className="mt-3 text-center text-[21px] text-[#7b8581]">
-              “{pendingDeleteItem.name}” 재료가 사라져요
-            </p>
+      <ConfirmModal
+        open={Boolean(pendingDeleteItem)}
+        title="정말 삭제할까요?"
+        description={
+          pendingDeleteItem
+            ? `“${pendingDeleteItem.name}” 재료가 사라져요`
+            : ""
+        }
+        onCancel={() => setPendingDeleteItem(null)}
+        onConfirm={confirmRemoveItem}
+      />
 
-            <div className="mt-7 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setPendingDeleteItem(null)}
-                className="h-12 rounded-2xl bg-[#e5e7e6] text-[16px] font-semibold text-[#7f8885]"
-              >
-                아니요
-              </button>
-              <button
-                type="button"
-                onClick={confirmRemoveItem}
-                className="h-12 rounded-2xl bg-[#57bf8e] text-[16px] font-semibold text-white"
-              >
-                네
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {showBulkDeleteConfirm ? (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/35 px-4">
-          <div className="w-full max-w-md rounded-[28px] bg-[#f6f7f6] px-4 pb-6 pt-7">
-            <h3 className="text-center text-[40px] font-bold text-[#1f2725]">
-              정말 삭제할까요?
-            </h3>
-            <p className="mt-3 text-center text-[21px] text-[#7b8581]">
-              선택한 재료가 모두 사라져요!
-            </p>
-
-            <div className="mt-7 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setShowBulkDeleteConfirm(false)}
-                className="h-12 rounded-2xl bg-[#e5e7e6] text-[16px] font-semibold text-[#7f8885]"
-              >
-                아니요
-              </button>
-              <button
-                type="button"
-                onClick={applyBulkDelete}
-                className="h-12 rounded-2xl bg-[#57bf8e] text-[16px] font-semibold text-white"
-              >
-                네
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <ConfirmModal
+        open={showBulkDeleteConfirm}
+        title="정말 삭제할까요?"
+        description="선택한 재료가 모두 사라져요!"
+        onCancel={() => setShowBulkDeleteConfirm(false)}
+        onConfirm={applyBulkDelete}
+      />
 
       <style jsx global>{`
         @keyframes fridgeWiggle {
           0% {
-            transform: rotate(-1deg);
+            transform: rotate(calc(var(--wiggle-rotate, 0.8deg) * -1));
           }
           50% {
-            transform: rotate(1deg);
+            transform: rotate(var(--wiggle-rotate, 0.8deg));
           }
           100% {
-            transform: rotate(-1deg);
+            transform: rotate(calc(var(--wiggle-rotate, 0.8deg) * -1));
           }
         }
       `}</style>

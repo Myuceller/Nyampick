@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center bg-[#dce3e0] px-6 text-center">
+    <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col items-center justify-center bg-[#dce3e0] px-6 text-center">
       <p className="text-sm font-medium text-[#6f7875]">404 Not Found</p>
       <h1 className="mt-2 text-3xl font-extrabold text-[#1f2725]">
         페이지를 찾을 수 없습니다

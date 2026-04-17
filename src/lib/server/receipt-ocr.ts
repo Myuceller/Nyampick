@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { normalizeReceiptLines } from "@/lib/server/receipt-normalize";
 
 interface ReceiptOcrInput {
   imageDataUrl: string;
@@ -68,11 +69,12 @@ export async function extractReceiptItemsWithOpenAI(
   });
 
   const outputText = response.output_text?.trim() ?? "";
-  const items = extractJsonArray(outputText)
+  const rawItems = extractJsonArray(outputText)
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
 
-  const unique = Array.from(new Set(items));
+  const normalized = normalizeReceiptLines(rawItems);
+  const unique = normalized.map((item) => item.name);
   if (unique.length === 0) {
     throw new Error(
       input.fileName

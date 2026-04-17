@@ -44,10 +44,25 @@ create table if not exists public.family_members (
   invited_at timestamptz not null default now()
 );
 
+create table if not exists public.saved_recipes (
+  id text primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  subtitle text,
+  taste text check (taste in ('좋아해요','보통이에요','싫어해요') or taste is null),
+  source text not null check (source in ('ai','manual')),
+  favorite boolean not null default false,
+  link text,
+  memo text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 -- Migration safety for already-created tables
 alter table public.meal_entries add column if not exists user_id uuid;
 alter table public.fridge_items add column if not exists user_id uuid;
 alter table public.family_members add column if not exists user_id uuid;
+alter table public.saved_recipes add column if not exists user_id uuid;
 
 -- Indexes
 create index if not exists meal_entries_user_id_idx on public.meal_entries(user_id);
@@ -60,17 +75,21 @@ create index if not exists fridge_items_category_idx on public.fridge_items(cate
 
 create index if not exists family_members_user_id_idx on public.family_members(user_id);
 create index if not exists family_members_invited_at_idx on public.family_members(invited_at desc);
+create index if not exists saved_recipes_user_id_idx on public.saved_recipes(user_id);
+create index if not exists saved_recipes_created_at_idx on public.saved_recipes(created_at desc);
 
 -- Not-null constraints after migration column creation
 alter table public.meal_entries alter column user_id set not null;
 alter table public.fridge_items alter column user_id set not null;
 alter table public.family_members alter column user_id set not null;
+alter table public.saved_recipes alter column user_id set not null;
 
 -- Enable RLS
 alter table public.meal_entries enable row level security;
 alter table public.fridge_items enable row level security;
 alter table public.user_profile enable row level security;
 alter table public.family_members enable row level security;
+alter table public.saved_recipes enable row level security;
 
 -- Server-side service-role policy (current app uses service-role on API server)
 drop policy if exists "service-role-all" on public.meal_entries;
@@ -97,6 +116,13 @@ with check (true);
 drop policy if exists "service-role-all" on public.family_members;
 create policy "service-role-all"
 on public.family_members
+for all
+using (true)
+with check (true);
+
+drop policy if exists "service-role-all" on public.saved_recipes;
+create policy "service-role-all"
+on public.saved_recipes
 for all
 using (true)
 with check (true);

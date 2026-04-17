@@ -59,7 +59,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (status === "env-missing") {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-md items-center justify-center bg-[rgb(243,248,244)] px-6 text-center">
+      <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] items-center justify-center bg-[rgb(243,248,244)] px-6 text-center">
         <p className="text-[16px] leading-relaxed text-[#27312e]">
           인증 설정이 누락되었습니다.
           <br />
@@ -71,7 +71,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md items-center justify-center bg-[rgb(243,248,244)]">
+    <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] items-center justify-center bg-[rgb(243,248,244)]">
       <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#b8c5bf] border-t-[#57bf8e]" />
     </main>
   );

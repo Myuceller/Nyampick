@@ -15,6 +15,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSocialSubmitting, setIsSocialSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
   const [isEnvMissing, setIsEnvMissing] = useState(false);
@@ -147,9 +148,45 @@ export default function AuthPage() {
     }
   };
 
+  const signInWithSocial = async (provider: "google" | "kakao") => {
+    setErrorMessage(null);
+    setNoticeMessage(null);
+
+    let supabase: ReturnType<typeof getSupabaseBrowser>;
+    try {
+      supabase = getSupabaseBrowser();
+    } catch {
+      setErrorMessage("Supabase 환경 변수가 누락되었습니다.");
+      return;
+    }
+
+    try {
+      setIsSocialSubmitting(true);
+      const redirectTo =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/auth`
+          : undefined;
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "소셜 로그인에 실패했습니다."
+      );
+    } finally {
+      setIsSocialSubmitting(false);
+    }
+  };
+
   if (screenMode === "loading") {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-md items-center justify-center bg-[rgb(243,248,244)]">
+      <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] items-center justify-center bg-[rgb(243,248,244)]">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#b8c5bf] border-t-[#57bf8e]" />
       </main>
     );
@@ -160,7 +197,7 @@ export default function AuthPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-[rgb(243,248,244)] px-5 pb-10 pt-14">
+    <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-[rgb(243,248,244)] px-5 pb-10 pt-14">
       <h1 className="text-[34px] font-extrabold tracking-[-0.02em] text-[#1f2725]">
         맘마노트
       </h1>
@@ -220,7 +257,7 @@ export default function AuthPage() {
 
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isSocialSubmitting}
           className="mt-2 h-12 w-full rounded-2xl bg-[#57bf8e] text-[17px] font-semibold text-white disabled:opacity-60"
         >
           {isSubmitting
@@ -230,6 +267,31 @@ export default function AuthPage() {
               : "회원가입"}
         </button>
       </form>
+
+      <div className="my-5 flex items-center gap-3">
+        <div className="h-px flex-1 bg-[#d2dbd7]" />
+        <span className="text-[13px] text-[#7a8581]">또는</span>
+        <div className="h-px flex-1 bg-[#d2dbd7]" />
+      </div>
+
+      <div className="space-y-2.5">
+        <button
+          type="button"
+          disabled={isSubmitting || isSocialSubmitting}
+          onClick={() => void signInWithSocial("kakao")}
+          className="h-12 w-full rounded-2xl bg-[#fee500] text-[16px] font-semibold text-[#1f2725] disabled:opacity-60"
+        >
+          카카오톡으로 로그인하기
+        </button>
+        <button
+          type="button"
+          disabled={isSubmitting || isSocialSubmitting}
+          onClick={() => void signInWithSocial("google")}
+          className="h-12 w-full rounded-2xl border border-[#cbd5d1] bg-white text-[16px] font-semibold text-[#1f2725] disabled:opacity-60"
+        >
+          구글로 로그인하기
+        </button>
+      </div>
     </main>
   );
 }

@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { SAMPLE_MENUS, getSampleMealData } from "@/lib/meal-store";
 import type { DayMeals, MealType, MenuItem } from "@/lib/types";
+import { normalizeReceiptLines } from "@/lib/server/receipt-normalize";
 
 export type FridgeCategory =
   | "fruit"
@@ -347,12 +348,12 @@ export function createReceiptScanSession(rawText?: string): ReceiptScanSession {
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
 
-  const unique = Array.from(new Set(parsedLines));
+  const normalized = normalizeReceiptLines(parsedLines);
 
-  const candidates: ReceiptScanCandidate[] = unique.map((name, index) => ({
+  const candidates: ReceiptScanCandidate[] = normalized.map((item, index) => ({
     tempId: `${sessionId}-${index}`,
-    name,
-    category: guessFridgeCategory(name),
+    name: item.name,
+    category: guessFridgeCategory(item.name),
     confidence: Math.max(0.65, 0.96 - index * 0.04),
   }));
 

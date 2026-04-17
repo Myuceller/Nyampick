@@ -1,38 +1,53 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/server/api-auth";
-import { getRecipeRecommendationsFromDb } from "@/lib/server/supabase-app-data";
+import { generateRecipeRecommendationsWithOpenAI } from "@/lib/server/recipe-ai";
 
-export async function GET(request: Request) {
+export async function POST(request: Request) {
   const user = await getUserFromRequest(request);
   if (!user) {
     return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }
 
-  const { searchParams } = new URL(request.url);
-  const limitParam = searchParams.get("limit");
-  const limit = limitParam ? Number(limitParam) : 5;
+  const body = (await request.json().catch(() => ({}))) as {
+    ingredients?: unknown;
+    limit?: unknown;
+  };
 
-  if (Number.isNaN(limit) || limit <= 0 || limit > 20) {
+  if (!Array.isArray(body.ingredients)) {
     return NextResponse.json(
-      { message: "limit must be between 1 and 20" },
+      { message: "ingredients must be an array" },
       { status: 400 }
     );
   }
 
-  try {
-    const recommendations = await getRecipeRecommendationsFromDb(user.id, limit);
+  const ingredients = body.ingredients
+    .filter((v): v is string => typeof v === "string")
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0)
+    .slice(0, 20);
 
-    return NextResponse.json({
-      recommendations,
-      strategy: {
-        basedOn: ["fridge-items", "recent-meals", "nutrition-balance"],
-        description:
-          "냉장고 재료 우선 + 최근 식단 중복 완화 + 부족 영양소 보완 기준으로 정렬",
-      },
+  if (ingredients.length === 0) {
+    return NextResponse.json(
+      { message: "at least one ingredient is required" },
+      { status: 400 }
+    );
+  }
+
+  const limit =
+    typeof body.limit === "number" && Number.isFinite(body.limit)
+      ? Math.max(1, Math.min(10, Math.floor(body.limit)))
+      : 3;
+
+  try {
+    const recommendations = await generateRecipeRecommendationsWithOpenAI({
+      ingredients,
+      limit,
     });
+
+    return NextResponse.json({ recommendations });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "failed to fetch recommendations";
+      error instanceof Error ? error.message : "failed to generate recommendations";
     return NextResponse.json({ message }, { status: 500 });
   }
 }

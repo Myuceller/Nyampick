@@ -1,16 +1,31 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Plus, Search, X } from "lucide-react";
+import { ArrowLeft, Plus, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { AppButton } from "@/components/app-button";
+import { AppSearchInput } from "@/components/app-search-input";
 import type { DayMeals, MealEntry, MealType } from "@/lib/types";
 import { MEAL_LABELS } from "@/lib/types";
-import { SAMPLE_MENUS } from "@/lib/meal-store";
 import { authedFetch } from "@/lib/authed-fetch";
 import { useMealEditStore } from "@/lib/stores/meal-edit-store";
 import { cn } from "@/lib/utils";
 
 const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
+const FREQUENT_MENUS: string[] = [];
+const RECENT_SEARCH_KEY = "mammanote:meal-edit:recent-searches";
+
+interface SavedRecipeMenuItem {
+  id: string;
+  title: string;
+  source?: "ai" | "manual";
+  favorite?: boolean;
+}
+
+interface FridgeMenuItem {
+  id: string;
+  name: string;
+}
 
 function createEmptyDay(date: string): DayMeals {
   return {
@@ -28,7 +43,7 @@ function parseDateLabel(dateKey: string) {
   const month = date.getMonth() + 1;
   const day = date.getDate();
   const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][date.getDay()];
-  return `${month}월 ${day}일 ${dayOfWeek}요일의 식단을 수정해요`;
+  return `${month}월 ${day}일 ${dayOfWeek}요일의\n식단을 수정해요`;
 }
 
 function MealEditPageContent() {
@@ -48,7 +63,10 @@ function MealEditPageContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedNames, setSelectedNames] = useState<Set<string>>(new Set());
   const [menuTab, setMenuTab] = useState<"freq" | "fav" | "manual">("freq");
-  const [menuSource, setMenuSource] = useState<"all" | "recipe" | "fridge">("all");
+  const [menuSource, setMenuSource] = useState<"all" | "recipe" | "ai" | "fridge">("all");
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [savedRecipes, setSavedRecipes] = useState<SavedRecipeMenuItem[]>([]);
+  const [fridgeMenus, setFridgeMenus] = useState<FridgeMenuItem[]>([]);
 
   useEffect(() => {
     if (!date) return;
@@ -65,18 +83,136 @@ function MealEditPageContent() {
     }
   }, [date, initialize]);
 
+  useEffect(() => {
+    const saved = localStorage.getItem(RECENT_SEARCH_KEY);
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved) as string[];
+      if (Array.isArray(parsed)) {
+        setRecentSearches(parsed.filter((v) => typeof v === "string").slice(0, 8));
+      }
+    } catch {
+      setRecentSearches([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(RECENT_SEARCH_KEY, JSON.stringify(recentSearches));
+  }, [recentSearches]);
+
+  useEffect(() => {
+    const loadSavedRecipes = async () => {
+      try {
+        const res = await authedFetch("/api/recipes/saved", { cache: "no-store" });
+        const json = (await res.json().catch(() => ({}))) as {
+          items?: SavedRecipeMenuItem[];
+          message?: string;
+        };
+        if (!res.ok) {
+          throw new Error(json.message ?? "레시피 목록을 불러오지 못했습니다.");
+        }
+        setSavedRecipes(Array.isArray(json.items) ? json.items : []);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "레시피 목록을 불러오지 못했습니다.";
+        alert(message);
+        setSavedRecipes([]);
+      }
+    };
+
+    if (mode === "add") {
+      void loadSavedRecipes();
+    }
+  }, [mode]);
+
+  useEffect(() => {
+    const loadFridgeMenus = async () => {
+      try {
+        const res = await authedFetch("/api/fridge/items", { cache: "no-store" });
+        const json = (await res.json().catch(() => ({}))) as {
+          items?: FridgeMenuItem[];
+          message?: string;
+        };
+        if (!res.ok) {
+          throw new Error(json.message ?? "냉장고 목록을 불러오지 못했습니다.");
+        }
+        setFridgeMenus(
+          Array.isArray(json.items)
+            ? json.items.filter((item) => typeof item?.name === "string")
+            : []
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "냉장고 목록을 불러오지 못했습니다.";
+        alert(message);
+        setFridgeMenus([]);
+      }
+    };
+
+    if (mode === "add") {
+      void loadFridgeMenus();
+    }
+  }, [mode]);
+
   const filteredMenus = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const base = SAMPLE_MENUS.map((m) => m.name);
+    const recipeSourceMatched = (item: SavedRecipeMenuItem) => {
+      if (menuSource === "all") return true;
+      if (menuSource === "recipe") return item.source !== "ai";
+      if (menuSource === "ai") return item.source === "ai";
+      return false;
+    };
+
+    const recipeNames = savedRecipes
+      .filter((item) => {
+        if (!recipeSourceMatched(item)) return false;
+        if (menuTab === "fav") return Boolean(item.favorite);
+        return true;
+      })
+      .map((item) => item.title.trim())
+      .filter((title) => title.length > 0);
+
+    const fridgeNames =
+      menuTab === "manual" && (menuSource === "all" || menuSource === "fridge")
+        ? fridgeMenus
+            .map((item) => item.name.trim())
+            .filter((name) => name.length > 0)
+        : [];
+
+    const base = (() => {
+      if (menuTab === "freq") return FREQUENT_MENUS;
+      if (menuSource === "fridge" && menuTab === "fav") return [];
+      return Array.from(new Set([...recipeNames, ...fridgeNames]));
+    })();
+
     if (!q) return base;
     return base.filter((name) => name.toLowerCase().includes(q));
-  }, [search]);
+  }, [fridgeMenus, menuSource, menuTab, savedRecipes, search]);
 
   const addSelectedMenus = () => {
     if (selectedNames.size === 0) return;
-    addMenusToTarget(Array.from(selectedNames));
+    const selected = Array.from(selectedNames);
+    addMenusToTarget(selected);
+    setRecentSearches((prev) => {
+      const next = [...prev];
+      for (const name of selected) {
+        const idx = next.indexOf(name);
+        if (idx !== -1) next.splice(idx, 1);
+        next.unshift(name);
+      }
+      return next.slice(0, 8);
+    });
     setSelectedNames(new Set());
     setSearch("");
+  };
+
+  const addRecentSearch = (term: string) => {
+    const value = term.trim();
+    if (!value) return;
+    setRecentSearches((prev) => {
+      const filtered = prev.filter((item) => item !== value);
+      return [value, ...filtered].slice(0, 8);
+    });
   };
 
   const goHome = () => router.push("/");
@@ -128,11 +264,11 @@ function MealEditPageContent() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-[#f4f5f4]">
+    <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-[#f4f5f4]">
       {mode === "edit" ? (
         <>
           <div className="px-4 pb-4 pt-8">
-            <h1 className="text-[24px] font-extrabold leading-tight text-[#1f2725]">
+            <h1 className="whitespace-pre-line text-[24px] font-extrabold leading-tight text-[#1f2725]">
               {parseDateLabel(date)}
             </h1>
           </div>
@@ -144,7 +280,7 @@ function MealEditPageContent() {
                   key={mealType}
                   className="rounded-[14px] border border-[#d4d9d7] bg-[#f6f7f6] px-3.5 py-3.5"
                 >
-                  <h2 className="mb-2 text-[24px] font-bold text-[#1f2725]">{MEAL_LABELS[mealType]}</h2>
+                  <h2 className="mb-2 text-[18px] font-medium text-[#1f2725]">{MEAL_LABELS[mealType]}</h2>
                   <div className="space-y-1.5">
                     {draft[mealType].map((entry: MealEntry) => (
                       <div key={entry.id} className="flex items-center justify-between">
@@ -172,23 +308,21 @@ function MealEditPageContent() {
             </div>
           </div>
 
-          <div className="fixed bottom-0 left-1/2 z-20 w-full max-w-md -translate-x-1/2 bg-[#f4f5f4] px-4 pb-6 pt-2">
+          <div className="fixed bottom-0 left-1/2 z-20 w-full max-w-[480px] -translate-x-1/2 bg-[#f4f5f4] px-4 pb-6 pt-2">
             <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
+              <AppButton
+                label="취소하기"
                 onClick={goHome}
-                className="h-12 rounded-2xl bg-[#e5e7e6] text-[18px] font-semibold text-[#8a9390]"
-              >
-                취소하기
-              </button>
-              <button
-                type="button"
+                bgClassName="bg-[#e5e7e6]"
+                textClassName="text-[#8a9390]"
+                className="h-12 text-[18px]"
+              />
+              <AppButton
+                label="저장하기"
                 onClick={saveAndGoHome}
                 disabled={isSaving}
-                className="h-12 rounded-2xl bg-[#57bf8e] text-[18px] font-semibold text-white"
-              >
-                {isSaving ? "저장중..." : "저장하기"}
-              </button>
+                className="h-12 text-[18px]"
+              />
             </div>
           </div>
         </>
@@ -202,33 +336,37 @@ function MealEditPageContent() {
             >
               <ArrowLeft className="h-6 w-6" />
             </button>
-            <h2 className="text-[30px] font-bold text-[#232a28]">메뉴 추가</h2>
+            <h2 className="text-[18px] font-bold text-[#232a28]">메뉴 추가</h2>
             <span className="w-7" />
           </div>
 
           <div className="px-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8a9390]" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="레시피명, 큐브명으로 검색"
-                className="h-12 w-full rounded-2xl bg-[#e7e9e8] py-3 pl-10 pr-3 text-[18px] text-[#232a28] outline-none"
-              />
-            </div>
+            <AppSearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="레시피명, 큐브명으로 검색"
+              inputClassName="border-transparent bg-[#e7e9e8] text-[#232a28]"
+              iconClassName="text-[#8a9390]"
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  addRecentSearch(search);
+                }
+              }}
+            />
           </div>
 
           <div className="px-4 pt-3">
             <p className="text-[16px] text-[#7f8885]">최근 검색어</p>
-            <div className="mt-2 flex gap-2">
-              {[
-                "감자",
-                "당근",
-                "브로콜리",
-              ].map((tag) => (
-                <span key={tag} className="rounded-full bg-[#dfe5e3] px-3 py-1 text-[13px] text-[#51605a]">
-                  {tag} ×
-                </span>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {recentSearches.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => setSearch(tag)}
+                  className="rounded-full bg-[#dfe5e3] px-3 py-1 text-[13px] text-[#51605a]"
+                >
+                  {tag}
+                </button>
               ))}
             </div>
           </div>
@@ -239,7 +377,7 @@ function MealEditPageContent() {
                 type="button"
                 onClick={() => setMenuTab("freq")}
                 className={cn(
-                  "pb-2 text-[20px] font-bold",
+                  "pb-2 text-[18px] font-bold",
                   menuTab === "freq"
                     ? "border-b-2 border-[#57bf8e] text-[#232a28]"
                     : "text-[#232a28]"
@@ -251,7 +389,7 @@ function MealEditPageContent() {
                 type="button"
                 onClick={() => setMenuTab("fav")}
                 className={cn(
-                  "pb-2 text-[20px] font-bold",
+                  "pb-2 text-[18px] font-bold",
                   menuTab === "fav"
                     ? "border-b-2 border-[#57bf8e] text-[#232a28]"
                     : "text-[#232a28]"
@@ -263,7 +401,7 @@ function MealEditPageContent() {
                 type="button"
                 onClick={() => setMenuTab("manual")}
                 className={cn(
-                  "pb-2 text-[20px] font-bold",
+                  "pb-2 text-[18px] font-bold",
                   menuTab === "manual"
                     ? "border-b-2 border-[#57bf8e] text-[#232a28]"
                     : "text-[#232a28]"
@@ -277,13 +415,16 @@ function MealEditPageContent() {
           <div className="flex gap-2 px-4 pt-3">
             {[
               { key: "all", label: "전체" },
-              { key: "recipe", label: "레시피북" },
+              { key: "recipe", label: "내 레시피" },
+              { key: "ai", label: "AI 추천" },
               { key: "fridge", label: "냉장고" },
             ].map((item) => (
               <button
                 key={item.key}
                 type="button"
-                onClick={() => setMenuSource(item.key as "all" | "recipe" | "fridge")}
+                onClick={() =>
+                  setMenuSource(item.key as "all" | "recipe" | "ai" | "fridge")
+                }
                 className={cn(
                   "rounded-full border px-4 py-1.5 text-[16px] font-medium",
                   menuSource === item.key
@@ -297,44 +438,49 @@ function MealEditPageContent() {
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 pt-3">
-            {filteredMenus.map((menu) => {
-              const selected = selectedNames.has(menu);
-              return (
-                <div key={menu} className="flex items-center justify-between border-b border-[#d5dbd9] py-3">
-                  <span className="text-[20px] text-[#232a28]">{menu}</span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSelectedNames((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(menu)) next.delete(menu);
-                        else next.add(menu);
-                        return next;
-                      })
-                    }
-                    className={cn(
-                      "flex h-7 w-7 items-center justify-center rounded-full text-white",
-                      selected ? "bg-[#57bf8e]" : "bg-[#a9dcca]"
-                    )}
-                  >
-                    <Plus className="h-5 w-5" />
-                  </button>
-                </div>
-              );
-            })}
+            {filteredMenus.length === 0 ? (
+              <p className="py-8 text-center text-[16px] font-medium text-[#7f8885]">
+                {menuTab === "freq" ? "자주 먹은 메뉴가 없어요." : "표시할 메뉴가 없어요."}
+              </p>
+            ) : (
+              filteredMenus.map((menu) => {
+                const selected = selectedNames.has(menu);
+                return (
+                  <div key={menu} className="flex items-center justify-between border-b border-[#d5dbd9] py-3">
+                    <span className="text-[20px] text-[#232a28]">{menu}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        addRecentSearch(menu);
+                        setSelectedNames((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(menu)) next.delete(menu);
+                          else next.add(menu);
+                          return next;
+                        });
+                      }}
+                      className={cn(
+                        "flex h-7 w-7 items-center justify-center rounded-full text-white",
+                        selected ? "bg-[#57bf8e]" : "bg-[#a9dcca]"
+                      )}
+                    >
+                      <Plus className="h-5 w-5" />
+                    </button>
+                  </div>
+                );
+              })
+            )}
           </div>
 
           <div className="px-4 pb-4 pt-2">
             <p className="mb-2 text-center text-sm text-[#97a09d]">
               현재 선택한 메뉴는 {MEAL_LABELS[targetMealType]}에 추가돼요
             </p>
-            <button
-              type="button"
+            <AppButton
+              label="기록하기"
               onClick={addSelectedMenus}
-              className="h-12 w-full rounded-2xl bg-[#57bf8e] text-[18px] font-semibold text-white"
-            >
-              기록하기
-            </button>
+              className="h-12 w-full text-[18px]"
+            />
           </div>
         </>
       )}
@@ -344,7 +490,7 @@ function MealEditPageContent() {
 
 export default function MealEditPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-[#f5f6f5]" />}>
+    <Suspense fallback={<main className="min-h-[100dvh] bg-[#f5f6f5]" />}>
       <MealEditPageContent />
     </Suspense>
   );

@@ -23,6 +23,19 @@ export interface FridgeItem {
   source: "manual" | "receipt";
 }
 
+export interface SavedRecipe {
+  id: string;
+  title: string;
+  subtitle?: string;
+  taste?: "좋아해요" | "보통이에요" | "싫어해요";
+  source: "ai" | "manual";
+  favorite: boolean;
+  link?: string;
+  memo?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface FamilyMember {
   id: string;
   name: string;
@@ -341,6 +354,145 @@ export async function deleteFridgeItemInDb(userId: string, id: string): Promise<
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("fridge_items")
+    .delete()
+    .eq("user_id", userId)
+    .eq("id", id)
+    .select("id");
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
+}
+
+export async function listSavedRecipesFromDb(userId: string): Promise<SavedRecipe[]> {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("saved_recipes")
+    .select(
+      "id,user_id,title,subtitle,taste,source,favorite,link,memo,created_at,updated_at"
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    title: row.title,
+    subtitle: row.subtitle ?? undefined,
+    taste: row.taste ?? undefined,
+    source: row.source,
+    favorite: Boolean(row.favorite),
+    link: row.link ?? undefined,
+    memo: row.memo ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  })) as SavedRecipe[];
+}
+
+export async function addSavedRecipeToDb(input: {
+  userId: string;
+  title: string;
+  subtitle?: string;
+  taste?: "좋아해요" | "보통이에요" | "싫어해요";
+  source: "ai" | "manual";
+  favorite?: boolean;
+  link?: string;
+  memo?: string;
+}): Promise<SavedRecipe> {
+  const supabase = getSupabaseAdmin();
+
+  const payload = {
+    id: randomUUID(),
+    user_id: input.userId,
+    title: input.title,
+    subtitle: input.subtitle ?? null,
+    taste: input.taste ?? null,
+    source: input.source,
+    favorite: input.favorite ?? false,
+    link: input.link ?? null,
+    memo: input.memo ?? null,
+    updated_at: nowIso(),
+  };
+
+  const { data, error } = await supabase
+    .from("saved_recipes")
+    .insert(payload)
+    .select(
+      "id,user_id,title,subtitle,taste,source,favorite,link,memo,created_at,updated_at"
+    )
+    .single();
+
+  if (error) throw error;
+
+  return {
+    id: data.id,
+    title: data.title,
+    subtitle: data.subtitle ?? undefined,
+    taste: data.taste ?? undefined,
+    source: data.source,
+    favorite: Boolean(data.favorite),
+    link: data.link ?? undefined,
+    memo: data.memo ?? undefined,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  } as SavedRecipe;
+}
+
+export async function updateSavedRecipeInDb(
+  userId: string,
+  id: string,
+  patch: Partial<
+    Pick<SavedRecipe, "title" | "subtitle" | "taste" | "favorite" | "link" | "memo">
+  >
+): Promise<SavedRecipe | null> {
+  const supabase = getSupabaseAdmin();
+
+  const updatePatch: Record<string, unknown> = {
+    title: patch.title,
+    subtitle: patch.subtitle,
+    taste: patch.taste,
+    favorite: patch.favorite,
+    link: patch.link,
+    memo: patch.memo,
+    updated_at: nowIso(),
+  };
+  Object.keys(updatePatch).forEach((key) => {
+    if (updatePatch[key] === undefined) delete updatePatch[key];
+  });
+
+  const { data, error } = await supabase
+    .from("saved_recipes")
+    .update(updatePatch)
+    .eq("user_id", userId)
+    .eq("id", id)
+    .select(
+      "id,user_id,title,subtitle,taste,source,favorite,link,memo,created_at,updated_at"
+    )
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  return {
+    id: data.id,
+    title: data.title,
+    subtitle: data.subtitle ?? undefined,
+    taste: data.taste ?? undefined,
+    source: data.source,
+    favorite: Boolean(data.favorite),
+    link: data.link ?? undefined,
+    memo: data.memo ?? undefined,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  } as SavedRecipe;
+}
+
+export async function deleteSavedRecipeInDb(
+  userId: string,
+  id: string
+): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("saved_recipes")
     .delete()
     .eq("user_id", userId)
     .eq("id", id)
