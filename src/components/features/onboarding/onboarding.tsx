@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { OnboardingFooter } from "./onboarding/onboarding-footer";
+import { OnboardingSlide } from "./onboarding/onboarding-slide";
+import { ONBOARDING_SLIDES } from "./onboarding/slides";
 
 interface OnboardingProps {
   onComplete: () => void;
@@ -42,88 +44,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           if (touchEndX - touchStartX > 50) prevSlide();
         }}
       >
-        <div className="slide">
-          <div className="visual-area">
-            <Image
-              src="/baby.png"
-              alt="아기 캐릭터"
-              width={280}
-              height={280}
-              className="main-img baby-float"
-              priority
-            />
-            <div className="spoon-action">🥄</div>
-          </div>
-          <div className="title">맛있는 첫걸음, 맘마노트</div>
-          <div className="desc">
-            우리 아이 성장 단계에 딱 맞는
-            <br />
-            이유식 식단을 AI가 추천해드려요.
-          </div>
-        </div>
-
-        <div className="slide">
-          <div className="visual-area">
-            <Image
-              src="/calendar.png"
-              alt="캘린더 화면"
-              width={280}
-              height={280}
-              className="main-img calendar-tilt"
-            />
-          </div>
-          <div className="title">꼼꼼한 기록, 한눈에 확인</div>
-          <div className="desc">
-            언제 무엇을 얼마나 먹었는지
-            <br />
-            간편하게 기록하고 확인하세요.
-          </div>
-        </div>
-
-        <div className="slide">
-          <div className="visual-area">
-            <Image
-              src="/family.png"
-              alt="가족 공유 화면"
-              width={280}
-              height={280}
-              className="main-img"
-            />
-            <div className="heart-beat">💚</div>
-          </div>
-          <div className="title">온 가족이 함께해요</div>
-          <div className="desc">
-            엄마, 아빠, 할머니까지 공유하여
-            <br />
-            아이의 식단을 공동 관리할 수 있어요.
-          </div>
-        </div>
+        {ONBOARDING_SLIDES.map((slide, index) => (
+          <OnboardingSlide key={slide.title} data={slide} priority={index === 0} />
+        ))}
       </div>
 
-      <div className="footer-ui">
-        <div className="dots">
-          {[0, 1, 2].map((index) => (
-            <div
-              key={index}
-              className={`dot ${currentSlide === index ? "active" : ""}`}
-              onClick={() => goToSlide(index)}
-            />
-          ))}
-        </div>
-        <div className="nav-buttons">
-          <button
-            type="button"
-            className="btn prev-btn"
-            style={{ display: currentSlide === 0 ? "none" : "flex" }}
-            onClick={prevSlide}
-          >
-            이전
-          </button>
-          <button type="button" className="btn next-btn" onClick={nextSlide}>
-            {currentSlide === 2 ? "시작하기" : "다음으로"}
-          </button>
-        </div>
-      </div>
+      <OnboardingFooter
+        currentSlide={currentSlide}
+        onGoToSlide={goToSlide}
+        onPrev={prevSlide}
+        onNext={nextSlide}
+      />
 
       <style jsx>{`
         :global(body) {

@@ -52,14 +52,6 @@ export async function ensureMealSeedData(userId: string) {
   void userId;
 }
 
-function applyMealScope(query: any, userId: string, childId?: string) {
-  let scoped = query.eq("user_id", userId);
-  if (childId) {
-    scoped = scoped.eq("child_id", childId);
-  }
-  return scoped;
-}
-
 export async function backfillMealEntriesChildId(
   userId: string,
   childId: string
@@ -79,14 +71,16 @@ export async function getAllMealsFromDb(
 ): Promise<Record<string, DayMeals>> {
   await ensureMealSeedData(userId);
   const supabase = getSupabaseAdmin();
-  const { data, error } = await applyMealScope(
-    supabase
+  let query = supabase
     .from("meal_entries")
-    .select("id,user_id,child_id,date,meal_type,menu_name,quantity,memo,reaction"),
-    userId,
-    childId
-  )
-    .order("date", { ascending: false });
+    .select("id,user_id,child_id,date,meal_type,menu_name,quantity,memo,reaction")
+    .eq("user_id", userId);
+
+  if (childId) {
+    query = query.eq("child_id", childId);
+  }
+
+  const { data, error } = await query.order("date", { ascending: false });
 
   if (error) throw error;
   return rowsToMealsMap((data ?? []) as MealRow[]);
@@ -99,14 +93,17 @@ export async function getMealsByDateFromDb(
 ): Promise<DayMeals | null> {
   await ensureMealSeedData(userId);
   const supabase = getSupabaseAdmin();
-  const { data, error } = await applyMealScope(
-    supabase
+  let query = supabase
     .from("meal_entries")
     .select("id,user_id,child_id,date,meal_type,menu_name,quantity,memo,reaction")
-    .eq("date", date),
-    userId,
-    childId
-  );
+    .eq("date", date)
+    .eq("user_id", userId);
+
+  if (childId) {
+    query = query.eq("child_id", childId);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
   const rows = (data ?? []) as MealRow[];
@@ -157,16 +154,19 @@ export async function updateMealEntryInDb(
   if (patch.memo !== undefined) updatePatch.memo = patch.memo ?? null;
   if (patch.reaction !== undefined) updatePatch.reaction = patch.reaction ?? null;
 
-  const { error } = await applyMealScope(
-    supabase
+  let query = supabase
     .from("meal_entries")
     .update(updatePatch)
     .eq("id", entryId)
     .eq("date", date)
-    .eq("meal_type", mealType),
-    userId,
-    childId
-  );
+    .eq("meal_type", mealType)
+    .eq("user_id", userId);
+
+  if (childId) {
+    query = query.eq("child_id", childId);
+  }
+
+  const { error } = await query;
 
   if (error) throw error;
   return getMealsByDateFromDb(userId, date, childId);
@@ -180,16 +180,19 @@ export async function removeMealEntryInDb(
   childId?: string
 ): Promise<DayMeals | null> {
   const supabase = getSupabaseAdmin();
-  const { error } = await applyMealScope(
-    supabase
+  let query = supabase
     .from("meal_entries")
     .delete()
     .eq("id", entryId)
     .eq("date", date)
-    .eq("meal_type", mealType),
-    userId,
-    childId
-  );
+    .eq("meal_type", mealType)
+    .eq("user_id", userId);
+
+  if (childId) {
+    query = query.eq("child_id", childId);
+  }
+
+  const { error } = await query;
 
   if (error) throw error;
   return getMealsByDateFromDb(userId, date, childId);
@@ -203,14 +206,17 @@ export async function replaceMealsByDateInDb(
 ): Promise<DayMeals> {
   const supabase = getSupabaseAdmin();
 
-  const { error: deleteError } = await applyMealScope(
-    supabase
+  let deleteQuery = supabase
     .from("meal_entries")
     .delete()
-    .eq("date", date),
-    userId,
-    childId
-  );
+    .eq("date", date)
+    .eq("user_id", userId);
+
+  if (childId) {
+    deleteQuery = deleteQuery.eq("child_id", childId);
+  }
+
+  const { error: deleteError } = await deleteQuery;
   if (deleteError) throw deleteError;
 
   const rows: MealRow[] = [];

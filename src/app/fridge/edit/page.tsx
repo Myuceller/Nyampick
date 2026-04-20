@@ -3,10 +3,10 @@
 import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, MinusCircle, PlusCircle, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { AppButton } from "@/components/app-button";
-import { AppSearchInput } from "@/components/app-search-input";
-import { CategoryChipFilter } from "@/components/category-chip-filter";
-import { ConfirmModal } from "@/components/confirm-modal";
+import { AppButton } from "@/components/ui/app-button";
+import { AppSearchInput } from "@/components/ui/app-search-input";
+import { CategoryChipFilter } from "@/components/ui/category-chip-filter";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { authedFetch } from "@/lib/authed-fetch";
 import { cn } from "@/lib/utils";
 

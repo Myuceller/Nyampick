@@ -3,9 +3,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { Baby, CalendarDays } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { BottomNav } from "@/components/bottom-nav";
-import { MealList } from "@/components/meal-list";
-import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
+import { BottomNav } from "@/components/layout/bottom-nav";
+import { MealList } from "@/components/features/meal/meal-list";
+import { PwaInstallPrompt } from "@/components/layout/pwa-install-prompt";
 import { authedFetch } from "@/lib/authed-fetch";
 import type { DayMeals } from "@/lib/types";
 import { cn } from "@/lib/utils";

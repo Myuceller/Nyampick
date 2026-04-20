@@ -15,25 +15,32 @@ import {
 const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
 const REACTIONS = ["loved", "okay", "disliked", null, undefined] as const;
 
-function isMealType(value: unknown): value is MealType {
+type JsonScalar = string | number | boolean | null;
+type JsonValue = JsonScalar | JsonObject | JsonValue[];
+interface JsonObject {
+  [key: string]: JsonValue;
+}
+
+function isJsonObject(value: JsonValue | undefined): value is JsonObject {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isMealType(value: JsonValue | undefined): value is MealType {
   return typeof value === "string" && MEAL_TYPES.includes(value as MealType);
 }
 
-function isDateFormat(value: unknown): value is string {
+function isDateFormat(value: JsonValue | undefined): value is string {
   return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
-function isValidDayMealsPayload(value: unknown): value is Pick<
-  DayMeals,
-  "breakfast" | "lunch" | "dinner" | "snack"
-> {
+function isValidDayMealsPayload(value: object | null | undefined): boolean {
   if (!value || typeof value !== "object") return false;
-  const obj = value as Record<string, unknown>;
+  const obj = value as Record<string, object[]>;
   for (const type of MEAL_TYPES) {
     if (!Array.isArray(obj[type])) return false;
-    for (const item of obj[type] as unknown[]) {
+    for (const item of obj[type]) {
       if (!item || typeof item !== "object") return false;
-      const entry = item as Record<string, unknown>;
+      const entry = item as { menuName?: string };
       if (typeof entry.menuName !== "string" || entry.menuName.trim().length === 0) {
         return false;
       }
@@ -103,7 +110,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }
 
-  const body = (await request.json()) as {
+  const rawBody = (await request.json()) as JsonValue;
+  if (!isJsonObject(rawBody)) {
+    return NextResponse.json({ message: "invalid request body" }, { status: 400 });
+  }
+  const body = rawBody as {
     date?: string;
     childId?: string;
     mealType?: MealType;
@@ -171,7 +182,11 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }
 
-  const body = (await request.json()) as {
+  const rawBody = (await request.json()) as JsonValue;
+  if (!isJsonObject(rawBody)) {
+    return NextResponse.json({ message: "invalid request body" }, { status: 400 });
+  }
+  const body = rawBody as {
     date?: string;
     childId?: string;
     mealType?: MealType;
@@ -256,7 +271,11 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }
 
-  const body = (await request.json()) as {
+  const rawBody = (await request.json()) as JsonValue;
+  if (!isJsonObject(rawBody)) {
+    return NextResponse.json({ message: "invalid request body" }, { status: 400 });
+  }
+  const body = rawBody as {
     date?: string;
     childId?: string;
     mealType?: MealType;
@@ -313,7 +332,11 @@ export async function PUT(request: Request) {
     return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }
 
-  const body = (await request.json()) as {
+  const rawBody = (await request.json()) as JsonValue;
+  if (!isJsonObject(rawBody)) {
+    return NextResponse.json({ message: "invalid request body" }, { status: 400 });
+  }
+  const body = rawBody as {
     date?: string;
     childId?: string;
     meals?: Pick<DayMeals, "breakfast" | "lunch" | "dinner" | "snack">;
@@ -332,6 +355,10 @@ export async function PUT(request: Request) {
       { status: 400 }
     );
   }
+  const mealsPayload = body.meals as Pick<
+    DayMeals,
+    "breakfast" | "lunch" | "dinner" | "snack"
+  >;
 
   try {
     const scope = await getFamilyDataScope({
@@ -344,7 +371,7 @@ export async function PUT(request: Request) {
     const updated = await replaceMealsByDateInDb(
       scope.ownerUserId,
       body.date,
-      body.meals,
+      mealsPayload,
       childId
     );
     return NextResponse.json({ meals: updated, childId });

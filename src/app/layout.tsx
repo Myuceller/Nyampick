@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 
-import { AuthGate } from "@/components/auth-gate";
-import { PwaRegister } from "@/components/pwa-register";
+import { AuthGate } from "@/components/layout/auth-gate";
+import { PwaRegister } from "@/components/layout/pwa-register";
 import "./globals.css";
 
 export const metadata: Metadata = {

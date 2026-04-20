@@ -11,16 +11,18 @@ import {
   updateSavedRecipeInDb,
 } from "@/lib/server/supabase-app-data";
 
-function normalizeSavedRecipeError(error: unknown, fallback: string) {
+function normalizeSavedRecipeError(
+  error: Error | string | { message?: string } | null | undefined,
+  fallback: string
+) {
   let message = fallback;
   if (error instanceof Error) {
     message = error.message;
   } else if (typeof error === "string") {
     message = error;
   } else if (error && typeof error === "object" && "message" in error) {
-    const raw = (error as { message?: unknown }).message;
-    if (typeof raw === "string" && raw.length > 0) {
-      message = raw;
+    if (typeof error.message === "string" && error.message.length > 0) {
+      message = error.message;
     }
   }
 
@@ -65,7 +67,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ items });
   } catch (error) {
     const normalized = normalizeSavedRecipeError(
-      error,
+      error as Error | string | { message?: string } | null,
       "failed to fetch saved recipes"
     );
     return NextResponse.json(
@@ -121,7 +123,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ item }, { status: 201 });
   } catch (error) {
-    const normalized = normalizeSavedRecipeError(error, "failed to save recipe");
+    const normalized = normalizeSavedRecipeError(
+      error as Error | string | { message?: string } | null,
+      "failed to save recipe"
+    );
     return NextResponse.json(
       { message: normalized.message },
       { status: normalized.status }
@@ -175,7 +180,10 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ item });
   } catch (error) {
-    const normalized = normalizeSavedRecipeError(error, "failed to update recipe");
+    const normalized = normalizeSavedRecipeError(
+      error as Error | string | { message?: string } | null,
+      "failed to update recipe"
+    );
     return NextResponse.json(
       { message: normalized.message },
       { status: normalized.status }
@@ -211,7 +219,10 @@ export async function DELETE(request: Request) {
     }
     return NextResponse.json({ ok: true });
   } catch (error) {
-    const normalized = normalizeSavedRecipeError(error, "failed to delete recipe");
+    const normalized = normalizeSavedRecipeError(
+      error as Error | string | { message?: string } | null,
+      "failed to delete recipe"
+    );
     return NextResponse.json(
       { message: normalized.message },
       { status: normalized.status }

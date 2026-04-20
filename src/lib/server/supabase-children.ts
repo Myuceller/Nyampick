@@ -57,10 +57,8 @@ async function seedDefaultChild(userId: string): Promise<ChildProfile> {
   return toChildProfile(data);
 }
 
-function isUniqueViolation(error: unknown): boolean {
-  if (!error || typeof error !== "object") return false;
-  const maybeCode = (error as { code?: unknown }).code;
-  return maybeCode === "23505";
+function isUniqueViolation(error: { code?: string } | null | undefined): boolean {
+  return error?.code === "23505";
 }
 
 export async function listChildrenFromDb(userId: string): Promise<ChildProfile[]> {
@@ -110,7 +108,7 @@ export async function ensureDefaultChildFromDb(userId: string): Promise<ChildPro
     return seeded;
   } catch (error) {
     // Concurrent seed race: another request inserted first.
-    if (!isUniqueViolation(error)) throw error;
+    if (!isUniqueViolation(error as { code?: string } | null | undefined)) throw error;
     const racedChildren = await listChildrenFromDb(userId);
     if (racedChildren.length === 0) throw error;
     return normalizePrimary(racedChildren);

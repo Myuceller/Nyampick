@@ -176,7 +176,9 @@ function isCubeItemName(name: string): boolean {
   return name.includes("큐브");
 }
 
-export function isFridgeCategory(value: unknown): value is FridgeCategory {
+export function isFridgeCategory(
+  value: string | null | undefined
+): value is FridgeCategory {
   return typeof value === "string" && FRIDGE_CATEGORIES.includes(value as FridgeCategory);
 }
 
@@ -469,7 +471,10 @@ export async function updateSavedRecipeInDb(
 ): Promise<SavedRecipe | null> {
   const supabase = getSupabaseAdmin();
 
-  const updatePatch: Record<string, unknown> = {
+  const updatePatch: Record<
+    string,
+    string | boolean | null | undefined | "좋아해요" | "보통이에요" | "싫어해요"
+  > = {
     title: patch.title,
     subtitle: patch.subtitle,
     taste: patch.taste,

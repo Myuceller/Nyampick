@@ -1,7 +1,7 @@
 "use client";
 
-import { BottomNav } from "@/components/bottom-nav";
-import { RecipePage } from "@/components/recipe-page";
+import { BottomNav } from "@/components/layout/bottom-nav";
+import { RecipePage } from "@/components/features/recipe/recipe-page";
 
 export default function RecipeRoutePage() {
   return (

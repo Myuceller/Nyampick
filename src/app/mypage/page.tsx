@@ -1,7 +1,7 @@
 "use client";
-import { AppHeader } from "@/components/app-header";
-import { BottomNav } from "@/components/bottom-nav";
-import { MyPage } from "@/components/my-page";
+import { AppHeader } from "@/components/layout/app-header";
+import { BottomNav } from "@/components/layout/bottom-nav";
+import { MyPage } from "@/components/features/mypage/my-page";
 
 export default function MyPageRoute() {
   return (

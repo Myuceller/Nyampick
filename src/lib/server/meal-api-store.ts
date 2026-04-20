@@ -506,6 +506,8 @@ export function getHomeSummary() {
   };
 }
 
-export function isFridgeCategory(value: unknown): value is FridgeCategory {
+export function isFridgeCategory(
+  value: string | null | undefined
+): value is FridgeCategory {
   return typeof value === "string" && FRIDGE_CATEGORIES.includes(value as FridgeCategory);
 }

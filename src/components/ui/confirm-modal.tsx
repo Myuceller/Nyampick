@@ -1,4 +1,4 @@
-import { AppButton } from "@/components/app-button";
+import { AppButton } from "@/components/ui/app-button";
 
 interface ConfirmModalProps {
   open: boolean;

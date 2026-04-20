@@ -17,6 +17,22 @@ interface GenerateRecipeInput {
   limit: number;
 }
 
+type JsonScalar = string | number | boolean | null;
+type JsonValue = JsonScalar | JsonObject | JsonValue[];
+interface JsonObject {
+  [key: string]: JsonValue;
+}
+
+interface RecipeCandidate {
+  title?: JsonValue;
+  subtitle?: JsonValue;
+  taste?: JsonValue;
+  ingredients?: JsonValue;
+  steps?: JsonValue;
+  source_name?: JsonValue;
+  source_url?: JsonValue;
+}
+
 function stripCodeFence(text: string) {
   return text.replace(/^```(?:json)?\s*/i, "").replace(/```$/i, "").trim();
 }
@@ -37,9 +53,9 @@ function parseRecommendations(
   const requireSource = options?.requireSource ?? true;
   const cleaned = stripCodeFence(text);
 
-  let parsed: unknown;
+  let parsed: JsonValue;
   try {
-    parsed = JSON.parse(cleaned);
+    parsed = JSON.parse(cleaned) as JsonValue;
   } catch {
     throw new Error("AI 응답을 JSON으로 해석하지 못했습니다.");
   }
@@ -48,7 +64,7 @@ function parseRecommendations(
     throw new Error("AI 응답 형식이 올바르지 않습니다.");
   }
 
-  const recipes = (parsed as { recipes?: unknown[] }).recipes;
+  const recipes = (parsed as { recipes?: JsonValue }).recipes;
   if (!Array.isArray(recipes)) {
     throw new Error("AI 응답에 recipes 배열이 없습니다.");
   }
@@ -56,20 +72,9 @@ function parseRecommendations(
   const validTaste: AiTaste[] = ["좋아해요", "보통이에요", "싫어해요"];
 
   return recipes
-    .filter(
-      (
-        item
-      ): item is {
-        title?: unknown;
-        subtitle?: unknown;
-        taste?: unknown;
-        ingredients?: unknown;
-        steps?: unknown;
-        source_name?: unknown;
-        source_url?: unknown;
-      } => !!item && typeof item === "object"
-    )
-    .map((item) => {
+    .filter((item) => !!item && typeof item === "object")
+    .map((itemRaw) => {
+      const item = itemRaw as RecipeCandidate;
       const title = typeof item.title === "string" ? item.title.trim() : "";
       const subtitle =
         typeof item.subtitle === "string" ? item.subtitle.trim() : "";

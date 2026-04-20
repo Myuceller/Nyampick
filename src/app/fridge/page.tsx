@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Camera, Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { AppButton } from "@/components/app-button";
-import { CategoryChipFilter } from "@/components/category-chip-filter";
-import { AppSearchInput } from "@/components/app-search-input";
-import { BottomNav } from "@/components/bottom-nav";
+import { AppButton } from "@/components/ui/app-button";
+import { CategoryChipFilter } from "@/components/ui/category-chip-filter";
+import { AppSearchInput } from "@/components/ui/app-search-input";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { authedFetch } from "@/lib/authed-fetch";
 import { cn } from "@/lib/utils";
 

@@ -2,11 +2,17 @@ import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/server/api-auth";
 import { getProfileFromDb, updateProfileInDb } from "@/lib/server/supabase-app-data";
 
+type MetadataScalar = string | number | boolean | null;
+type MetadataValue = MetadataScalar | MetadataObject | MetadataValue[];
+interface MetadataObject {
+  [key: string]: MetadataValue;
+}
+
 function readDisplayNameFromUser(user: {
-  user_metadata?: Record<string, unknown> | null;
+  user_metadata?: MetadataObject | null;
 }): string | undefined {
   const metadata = user.user_metadata ?? {};
-  const asString = (value: unknown) =>
+  const asString = (value: MetadataValue | undefined) =>
     typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
 
   const direct =
@@ -19,11 +25,11 @@ function readDisplayNameFromUser(user: {
 
   const kakaoAccount =
     metadata.kakao_account && typeof metadata.kakao_account === "object"
-      ? (metadata.kakao_account as Record<string, unknown>)
+      ? (metadata.kakao_account as MetadataObject)
       : null;
   const kakaoProfile =
     kakaoAccount?.profile && typeof kakaoAccount.profile === "object"
-      ? (kakaoAccount.profile as Record<string, unknown>)
+      ? (kakaoAccount.profile as MetadataObject)
       : null;
 
   return asString(kakaoProfile?.nickname);

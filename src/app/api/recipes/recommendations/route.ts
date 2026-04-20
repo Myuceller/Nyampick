@@ -2,16 +2,18 @@ import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/server/api-auth";
 import { generateRecipeRecommendationsWithOpenAI } from "@/lib/server/recipe-ai";
 
+interface RecommendationsRequestBody {
+  ingredients?: string[];
+  limit?: number;
+}
+
 export async function POST(request: Request) {
   const user = await getUserFromRequest(request);
   if (!user) {
     return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }
 
-  const body = (await request.json().catch(() => ({}))) as {
-    ingredients?: unknown;
-    limit?: unknown;
-  };
+  const body = (await request.json().catch(() => ({}))) as RecommendationsRequestBody;
 
   if (!Array.isArray(body.ingredients)) {
     return NextResponse.json(

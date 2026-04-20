@@ -2,11 +2,22 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Onboarding } from "@/components/onboarding";
+import { Onboarding } from "@/components/features/onboarding/onboarding";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 type AuthMode = "signin" | "signup";
 type ScreenMode = "loading" | "form" | "onboarding";
+
+function getOAuthRedirectTo() {
+  if (typeof window === "undefined") return undefined;
+  const envAppUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const origin = window.location.origin;
+
+  // In production, force env URL when present to avoid accidental localhost redirects.
+  const baseUrl =
+    envAppUrl && !origin.includes("localhost") ? envAppUrl.replace(/\/+$/, "") : origin;
+  return `${baseUrl}/auth`;
+}
 
 export default function AuthPage() {
   const router = useRouter();
@@ -176,10 +187,7 @@ export default function AuthPage() {
 
     try {
       setIsSocialSubmitting(true);
-      const redirectTo =
-        typeof window !== "undefined"
-          ? `${window.location.origin}/auth`
-          : undefined;
+      const redirectTo = getOAuthRedirectTo();
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {

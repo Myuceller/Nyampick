@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authedFetch } from "@/lib/authed-fetch";
@@ -32,7 +30,7 @@ interface ChildrenResponse {
   } | null;
 }
 
-export function MyPage() {
+export function useMyPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -84,11 +82,7 @@ export function MyPage() {
             setBabyMonthsOld(String(primary.monthsOld));
           }
           setLinkedMode(Boolean(json.linkedMode));
-          setLinkedOwnerLabel(
-            json.linkedInfo?.ownerName ||
-              json.linkedInfo?.ownerEmail ||
-              ""
-          );
+          setLinkedOwnerLabel(json.linkedInfo?.ownerName || json.linkedInfo?.ownerEmail || "");
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "내 정보를 불러오지 못했습니다.");
@@ -169,98 +163,24 @@ export function MyPage() {
     router.replace("/auth");
   };
 
-  return (
-    <main className="flex-1 px-4 pb-28 pt-4">
-      <div className="space-y-3">
-        <div className="rounded-2xl border border-[#cbd5d1] bg-white p-4">
-          <h2 className="text-[18px] font-bold text-[#1f2725]">내 정보</h2>
-          {loading ? (
-            <p className="mt-3 text-[15px] text-[#6f7875]">불러오는 중...</p>
-          ) : (
-            <div className="mt-3 space-y-2">
-              <label className="block text-[13px] font-semibold text-[#6a7471]">보호자 이름</label>
-              <input
-                value={profileName}
-                onChange={(e) => setProfileName(e.target.value)}
-                className="h-11 w-full rounded-xl border border-[#d4ddda] px-3 text-[15px] outline-none"
-              />
-              <p className="text-[13px] text-[#6f7875]">로그인 이메일: {userEmail || "-"}</p>
-              <p className="break-all text-[12px] text-[#85908c]">계정 ID: {userId || "-"}</p>
-              <button
-                type="button"
-                onClick={() => void saveProfile()}
-                disabled={saving || loading}
-                className="mt-2 h-11 w-full rounded-xl bg-[#57bf8e] text-[15px] font-semibold text-white disabled:opacity-60"
-              >
-                {saving ? "저장 중..." : "내 정보 저장"}
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-[#cbd5d1] bg-white p-4">
-          <h2 className="text-[18px] font-bold text-[#1f2725]">우리 아기</h2>
-          {loading ? (
-            <p className="mt-3 text-[15px] text-[#6f7875]">불러오는 중...</p>
-          ) : (
-            <div className="mt-3 space-y-2">
-              <label className="block text-[13px] font-semibold text-[#6a7471]">아기 이름</label>
-              <input
-                value={babyName}
-                onChange={(e) => setBabyName(e.target.value)}
-                disabled={linkedMode}
-                className="h-11 w-full rounded-xl border border-[#d4ddda] px-3 text-[15px] outline-none disabled:bg-[#f2f4f3]"
-              />
-              <label className="block text-[13px] font-semibold text-[#6a7471]">개월 수</label>
-              <input
-                value={babyMonthsOld}
-                onChange={(e) => setBabyMonthsOld(e.target.value)}
-                disabled={linkedMode}
-                inputMode="numeric"
-                className="h-11 w-full rounded-xl border border-[#d4ddda] px-3 text-[15px] outline-none disabled:bg-[#f2f4f3]"
-              />
-              <button
-                type="button"
-                onClick={() => void saveBabyProfile()}
-                disabled={babySaving || loading || linkedMode}
-                className="mt-2 h-11 w-full rounded-xl bg-[#57bf8e] text-[15px] font-semibold text-white disabled:opacity-60"
-              >
-                {babySaving ? "저장 중..." : "아기 정보 저장"}
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-[#cbd5d1] bg-white p-4">
-          <h2 className="text-[18px] font-bold text-[#1f2725]">가족 연결</h2>
-          <p className="mt-2 text-[14px] text-[#6f7875]">
-            {linkedMode
-              ? `연결됨${linkedOwnerLabel ? ` · ${linkedOwnerLabel}` : ""}`
-              : "연결 안됨"}
-          </p>
-          <button
-            type="button"
-            onClick={() => router.push("/children")}
-            className="mt-3 h-11 w-full rounded-xl border border-[#b8d6c7] bg-[#edf7f2] text-[15px] font-semibold text-[#2f8d68]"
-          >
-            아기/가족 관리 열기
-          </button>
-        </div>
-
-        {error ? (
-          <div className="rounded-xl border border-[#f0c7c7] bg-[#fff6f6] p-3 text-[13px] text-[#bf5555]">
-            {error}
-          </div>
-        ) : null}
-      </div>
-
-      <button
-        type="button"
-        onClick={() => void logout()}
-        className="mt-4 h-12 w-full rounded-2xl bg-[#1f2725] text-[16px] font-semibold text-white"
-      >
-        로그아웃
-      </button>
-    </main>
-  );
+  return {
+    loading,
+    saving,
+    babySaving,
+    userId,
+    userEmail,
+    profileName,
+    setProfileName,
+    babyName,
+    setBabyName,
+    babyMonthsOld,
+    setBabyMonthsOld,
+    linkedMode,
+    linkedOwnerLabel,
+    error,
+    saveProfile,
+    saveBabyProfile,
+    logout,
+    openFamilyPage: () => router.push("/children"),
+  };
 }

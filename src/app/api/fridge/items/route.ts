@@ -9,15 +9,6 @@ import {
   updateFridgeItemInDb,
 } from "@/lib/server/supabase-app-data";
 
-function getErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof Error) return error.message;
-  if (error && typeof error === "object" && "message" in error) {
-    const message = (error as { message?: unknown }).message;
-    if (typeof message === "string" && message.length > 0) return message;
-  }
-  return fallback;
-}
-
 export async function GET(request: Request) {
   const user = await getUserFromRequest(request);
   if (!user) {
@@ -38,9 +29,8 @@ export async function GET(request: Request) {
     return NextResponse.json({
       items: await listFridgeItemsFromDb(scope.ownerUserId, { category, keyword }),
     });
-  } catch (error) {
-    const message = getErrorMessage(error, "failed to fetch fridge items");
-    return NextResponse.json({ message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ message: "failed to fetch fridge items" }, { status: 500 });
   }
 }
 
@@ -78,9 +68,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ item }, { status: 201 });
-  } catch (error) {
-    const message = getErrorMessage(error, "failed to add fridge item");
-    return NextResponse.json({ message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ message: "failed to add fridge item" }, { status: 500 });
   }
 }
 
@@ -116,9 +105,8 @@ export async function PATCH(request: Request) {
       quantity: body.quantity,
       expiresAt: body.expiresAt,
     });
-  } catch (error) {
-    const message = getErrorMessage(error, "failed to update fridge item");
-    return NextResponse.json({ message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ message: "failed to update fridge item" }, { status: 500 });
   }
 
   if (!updated) {
@@ -144,9 +132,8 @@ export async function DELETE(request: Request) {
   try {
     const scope = await getFamilyDataScope({ userId: user.id });
     removed = await deleteFridgeItemInDb(scope.ownerUserId, body.id);
-  } catch (error) {
-    const message = getErrorMessage(error, "failed to delete fridge item");
-    return NextResponse.json({ message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ message: "failed to delete fridge item" }, { status: 500 });
   }
   if (!removed) {
     return NextResponse.json({ message: "item not found" }, { status: 404 });

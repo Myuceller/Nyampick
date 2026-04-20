@@ -6,20 +6,27 @@ interface ReceiptOcrInput {
   fileName?: string;
 }
 
+type JsonScalar = string | number | boolean | null;
+type JsonValue = JsonScalar | JsonObject | JsonValue[];
+interface JsonObject {
+  [key: string]: JsonValue;
+}
+
+interface ItemsContainer {
+  items?: JsonValue;
+}
+
 function extractJsonArray(text: string): string[] {
   try {
-    const parsed = JSON.parse(text) as unknown;
+    const parsed = JSON.parse(text) as JsonValue;
     if (Array.isArray(parsed)) {
       return parsed.filter((v): v is string => typeof v === "string");
     }
-    if (
-      parsed &&
-      typeof parsed === "object" &&
-      Array.isArray((parsed as { items?: unknown[] }).items)
-    ) {
-      return (parsed as { items: unknown[] }).items.filter(
-        (v): v is string => typeof v === "string"
-      );
+    if (parsed && typeof parsed === "object") {
+      const container = parsed as ItemsContainer;
+      if (Array.isArray(container.items)) {
+        return container.items.filter((v): v is string => typeof v === "string");
+      }
     }
   } catch {
     // ignore parse errors and fallback below

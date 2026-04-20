@@ -3,8 +3,8 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Plus, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AppButton } from "@/components/app-button";
-import { AppSearchInput } from "@/components/app-search-input";
+import { AppButton } from "@/components/ui/app-button";
+import { AppSearchInput } from "@/components/ui/app-search-input";
 import type { DayMeals, MealEntry, MealType } from "@/lib/types";
 import { MEAL_LABELS } from "@/lib/types";
 import { authedFetch } from "@/lib/authed-fetch";
