@@ -35,3 +35,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# local design playgrounds
+baby-meal-planner-ui/
