@@ -36,14 +36,6 @@ export interface ReceiptScanSession {
   candidates: ReceiptScanCandidate[];
 }
 
-export interface FamilyMember {
-  id: string;
-  name: string;
-  role: "mother" | "father" | "grandparent" | "caregiver";
-  status: "connected" | "pending";
-  invitedAt: string;
-}
-
 export interface UserProfile {
   id: string;
   name: string;
@@ -74,7 +66,6 @@ interface MealApiStore {
   fridgeItems: FridgeItem[];
   receiptScans: Record<string, ReceiptScanSession>;
   profile: UserProfile;
-  familyMembers: FamilyMember[];
 }
 
 declare global {
@@ -191,15 +182,6 @@ function createStore(): MealApiStore {
       babyMonthsOld: 11,
       email: "mammanote@example.com",
     },
-    familyMembers: [
-      {
-        id: randomUUID(),
-        name: "하율아빠",
-        role: "father",
-        status: "connected",
-        invitedAt: nowIso(),
-      },
-    ],
   };
 }
 
@@ -418,33 +400,6 @@ export function updateProfile(
   return store.profile;
 }
 
-export function listFamilyMembers(): FamilyMember[] {
-  return getStore().familyMembers;
-}
-
-export function addFamilyMember(input: {
-  name: string;
-  role: FamilyMember["role"];
-}): FamilyMember {
-  const store = getStore();
-  const member: FamilyMember = {
-    id: randomUUID(),
-    name: input.name,
-    role: input.role,
-    status: "pending",
-    invitedAt: nowIso(),
-  };
-  store.familyMembers.push(member);
-  return member;
-}
-
-export function removeFamilyMember(id: string): boolean {
-  const store = getStore();
-  const before = store.familyMembers.length;
-  store.familyMembers = store.familyMembers.filter((member) => member.id !== id);
-  return before !== store.familyMembers.length;
-}
-
 function collectRecentMealNames(days = 7): string[] {
   const meals = getStore().meals;
   const keys = Object.keys(meals).sort((a, b) => (a < b ? 1 : -1)).slice(0, days);
@@ -547,7 +502,7 @@ export function getHomeSummary() {
     date: today,
     todayMeals,
     fridgeItemCount: getStore().fridgeItems.length,
-    familyMemberCount: getStore().familyMembers.length + 1,
+    familyMemberCount: 1,
   };
 }
 

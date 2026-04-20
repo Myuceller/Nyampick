@@ -10,7 +10,17 @@ where user_id::text = '139104d3-f796-4479-a91e-61242bc590bf';
 delete from public.fridge_items
 where user_id::text = '139104d3-f796-4479-a91e-61242bc590bf';
 
-delete from public.family_members
+delete from public.saved_recipes
+where user_id::text = '139104d3-f796-4479-a91e-61242bc590bf';
+
+delete from public.family_access_links
+where guest_user_id::text = '139104d3-f796-4479-a91e-61242bc590bf'
+   or owner_user_id::text = '139104d3-f796-4479-a91e-61242bc590bf';
+
+delete from public.child_invite_codes
+where owner_user_id::text = '139104d3-f796-4479-a91e-61242bc590bf';
+
+delete from public.child_profiles
 where user_id::text = '139104d3-f796-4479-a91e-61242bc590bf';
 
 delete from public.user_profile
@@ -26,6 +36,15 @@ values (
   'haeunmom@example.com'
 );
 
+insert into public.child_profiles (id, user_id, name, months_old, is_primary)
+values (
+  gen_random_uuid(),
+  '139104d3-f796-4479-a91e-61242bc590bf',
+  '하은이',
+  11,
+  true
+);
+
 -- Fridge (cube only uses quantity)
 insert into public.fridge_items (id, user_id, name, category, quantity, expires_at, source)
 values
@@ -36,12 +55,6 @@ values
   (gen_random_uuid()::text, '139104d3-f796-4479-a91e-61242bc590bf', '고등어', 'protein', null, null, 'manual'),
   (gen_random_uuid()::text, '139104d3-f796-4479-a91e-61242bc590bf', '브로콜리', 'vegetable', null, null, 'manual'),
   (gen_random_uuid()::text, '139104d3-f796-4479-a91e-61242bc590bf', '사과', 'fruit', null, null, 'manual');
-
--- Family
-insert into public.family_members (id, user_id, name, role, status, invited_at)
-values
-  (gen_random_uuid()::text, '139104d3-f796-4479-a91e-61242bc590bf', '하은아빠', 'father', 'connected', now()),
-  (gen_random_uuid()::text, '139104d3-f796-4479-a91e-61242bc590bf', '할머니', 'grandparent', 'pending', now());
 
 -- Meals (today)
 insert into public.meal_entries (id, user_id, date, meal_type, menu_name, quantity, memo, reaction)

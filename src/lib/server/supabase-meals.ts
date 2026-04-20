@@ -7,6 +7,7 @@ const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
 type MealRow = {
   id: string;
   user_id: string;
+  child_id: string | null;
   date: string;
   meal_type: MealType;
   menu_name: string;
@@ -51,13 +52,40 @@ export async function ensureMealSeedData(userId: string) {
   void userId;
 }
 
-export async function getAllMealsFromDb(userId: string): Promise<Record<string, DayMeals>> {
+function applyMealScope(query: any, userId: string, childId?: string) {
+  let scoped = query.eq("user_id", userId);
+  if (childId) {
+    scoped = scoped.eq("child_id", childId);
+  }
+  return scoped;
+}
+
+export async function backfillMealEntriesChildId(
+  userId: string,
+  childId: string
+): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase
+    .from("meal_entries")
+    .update({ child_id: childId })
+    .eq("user_id", userId)
+    .is("child_id", null);
+  if (error) throw error;
+}
+
+export async function getAllMealsFromDb(
+  userId: string,
+  childId?: string
+): Promise<Record<string, DayMeals>> {
   await ensureMealSeedData(userId);
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
+  const { data, error } = await applyMealScope(
+    supabase
     .from("meal_entries")
-    .select("id,user_id,date,meal_type,menu_name,quantity,memo,reaction")
-    .eq("user_id", userId)
+    .select("id,user_id,child_id,date,meal_type,menu_name,quantity,memo,reaction"),
+    userId,
+    childId
+  )
     .order("date", { ascending: false });
 
   if (error) throw error;
@@ -66,15 +94,19 @@ export async function getAllMealsFromDb(userId: string): Promise<Record<string, 
 
 export async function getMealsByDateFromDb(
   userId: string,
-  date: string
+  date: string,
+  childId?: string
 ): Promise<DayMeals | null> {
   await ensureMealSeedData(userId);
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
+  const { data, error } = await applyMealScope(
+    supabase
     .from("meal_entries")
-    .select("id,user_id,date,meal_type,menu_name,quantity,memo,reaction")
-    .eq("user_id", userId)
-    .eq("date", date);
+    .select("id,user_id,child_id,date,meal_type,menu_name,quantity,memo,reaction")
+    .eq("date", date),
+    userId,
+    childId
+  );
 
   if (error) throw error;
   const rows = (data ?? []) as MealRow[];
@@ -86,12 +118,14 @@ export async function addMealItemsToDb(
   userId: string,
   date: string,
   mealType: MealType,
-  items: string[]
+  items: string[],
+  childId?: string
 ): Promise<DayMeals> {
   const supabase = getSupabaseAdmin();
   const rows: MealRow[] = items.map((menuName) => ({
     id: randomUUID(),
     user_id: userId,
+    child_id: childId ?? null,
     date,
     meal_type: mealType,
     menu_name: menuName,
@@ -103,7 +137,7 @@ export async function addMealItemsToDb(
   const { error } = await supabase.from("meal_entries").insert(rows);
   if (error) throw error;
 
-  const day = await getMealsByDateFromDb(userId, date);
+  const day = await getMealsByDateFromDb(userId, date, childId);
   return day ?? createEmptyDay(date);
 }
 
@@ -112,7 +146,8 @@ export async function updateMealEntryInDb(
   date: string,
   mealType: MealType,
   entryId: string,
-  patch: Partial<Pick<MealEntry, "menuName" | "quantity" | "memo" | "reaction">>
+  patch: Partial<Pick<MealEntry, "menuName" | "quantity" | "memo" | "reaction">>,
+  childId?: string
 ): Promise<DayMeals | null> {
   const supabase = getSupabaseAdmin();
   const updatePatch: Partial<MealRow> = {};
@@ -122,49 +157,60 @@ export async function updateMealEntryInDb(
   if (patch.memo !== undefined) updatePatch.memo = patch.memo ?? null;
   if (patch.reaction !== undefined) updatePatch.reaction = patch.reaction ?? null;
 
-  const { error } = await supabase
+  const { error } = await applyMealScope(
+    supabase
     .from("meal_entries")
     .update(updatePatch)
-    .eq("user_id", userId)
     .eq("id", entryId)
     .eq("date", date)
-    .eq("meal_type", mealType);
+    .eq("meal_type", mealType),
+    userId,
+    childId
+  );
 
   if (error) throw error;
-  return getMealsByDateFromDb(userId, date);
+  return getMealsByDateFromDb(userId, date, childId);
 }
 
 export async function removeMealEntryInDb(
   userId: string,
   date: string,
   mealType: MealType,
-  entryId: string
+  entryId: string,
+  childId?: string
 ): Promise<DayMeals | null> {
   const supabase = getSupabaseAdmin();
-  const { error } = await supabase
+  const { error } = await applyMealScope(
+    supabase
     .from("meal_entries")
     .delete()
-    .eq("user_id", userId)
     .eq("id", entryId)
     .eq("date", date)
-    .eq("meal_type", mealType);
+    .eq("meal_type", mealType),
+    userId,
+    childId
+  );
 
   if (error) throw error;
-  return getMealsByDateFromDb(userId, date);
+  return getMealsByDateFromDb(userId, date, childId);
 }
 
 export async function replaceMealsByDateInDb(
   userId: string,
   date: string,
-  meals: Pick<DayMeals, "breakfast" | "lunch" | "dinner" | "snack">
+  meals: Pick<DayMeals, "breakfast" | "lunch" | "dinner" | "snack">,
+  childId?: string
 ): Promise<DayMeals> {
   const supabase = getSupabaseAdmin();
 
-  const { error: deleteError } = await supabase
+  const { error: deleteError } = await applyMealScope(
+    supabase
     .from("meal_entries")
     .delete()
-    .eq("user_id", userId)
-    .eq("date", date);
+    .eq("date", date),
+    userId,
+    childId
+  );
   if (deleteError) throw deleteError;
 
   const rows: MealRow[] = [];
@@ -173,6 +219,7 @@ export async function replaceMealsByDateInDb(
       rows.push({
         id: entry.id || randomUUID(),
         user_id: userId,
+        child_id: childId ?? null,
         date,
         meal_type: mealType,
         menu_name: entry.menuName,
@@ -189,7 +236,7 @@ export async function replaceMealsByDateInDb(
   }
 
   return (
-    (await getMealsByDateFromDb(userId, date)) ?? {
+    (await getMealsByDateFromDb(userId, date, childId)) ?? {
       date,
       breakfast: [],
       lunch: [],

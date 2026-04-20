@@ -108,6 +108,8 @@ export default function FridgeEditPage() {
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedDeleteIds, setSelectedDeleteIds] = useState<Set<string>>(new Set());
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const cancelDeleteLabel = "취소하기";
+  const bulkDeleteLabel = "선택한 재료 삭제";
   const longPressTimerRef = useRef<number | null>(null);
   const longPressTriggeredRef = useRef(false);
 
@@ -506,19 +508,27 @@ export default function FridgeEditPage() {
 
       {isDeleteMode ? (
         <div className="pointer-events-none fixed bottom-[calc(24px+env(safe-area-inset-bottom))] left-1/2 z-20 w-full max-w-[480px] -translate-x-1/2 px-4">
-          <div className="pointer-events-auto grid grid-cols-2 gap-2">
+          <div className="pointer-events-auto flex w-full items-center gap-2">
             <AppButton
-              label="취소하기"
+              label={cancelDeleteLabel}
               onClick={cancelDeleteMode}
               bgClassName="bg-[#7b8782]"
               className="h-12 rounded-full"
+              style={{
+                flexBasis: 0,
+                flexGrow: cancelDeleteLabel.length,
+              }}
             />
             <AppButton
-              label="선택한 재료 삭제"
+              label={bulkDeleteLabel}
               onClick={confirmBulkDelete}
               disabled={selectedDeleteIds.size === 0}
               bgClassName="bg-[#ff2f3e]"
               className="h-12 rounded-full disabled:opacity-40"
+              style={{
+                flexBasis: 0,
+                flexGrow: bulkDeleteLabel.length,
+              }}
             />
           </div>
         </div>

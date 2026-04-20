@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/server/api-auth";
+import { getFamilyDataScope } from "@/lib/server/family-access";
 import {
   getReceiptScanSession,
   isFridgeCategory,
@@ -53,11 +54,12 @@ export async function POST(request: Request) {
   );
 
   try {
+    const scope = await getFamilyDataScope({ userId: user.id });
     const created = await Promise.all(
       selectedCandidates.map((candidate) => {
         const picked = selectedMap.get(candidate.tempId)!;
         return addFridgeItemToDb({
-          userId: user.id,
+          userId: scope.ownerUserId,
           name: candidate.name,
           category:
             picked.category && isFridgeCategory(picked.category)

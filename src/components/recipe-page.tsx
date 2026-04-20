@@ -577,7 +577,7 @@ export function RecipePage() {
   };
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-[#f2f3f2] pb-[116px]">
+    <div className="flex min-h-[100dvh] flex-col bg-white pb-[116px]">
       <div className="px-4 pb-3 pt-12">
         <div className="mb-6 flex items-center">
           <h1 className="text-[24px] font-black leading-none tracking-[-0.03em] text-[#1f2423]">
@@ -624,10 +624,10 @@ export function RecipePage() {
             <div className="flex h-36 w-36 items-center justify-center rounded-full bg-[#e6dbef]">
               <Sparkles className="h-14 w-14 text-[#8f24e8]" />
             </div>
-            <h2 className="mt-9 text-[37px] font-black leading-tight text-[#202624]">
+            <h2 className="mt-9 text-[22px] font-semibold leading-tight text-[#202624]">
               냉장고 재료로 뭘 만들까요?
             </h2>
-            <p className="mt-2 text-[15px] font-medium text-[#7d8682]">
+            <p className="mt-2 text-[16px] font-medium text-[#7d8682]">
               AI가 우리 아이를 위한 레시피를 추천해요
             </p>
             <button
@@ -667,12 +667,12 @@ export function RecipePage() {
               openAiRecommendSheet();
             }}
             bgClassName="bg-gradient-to-r from-[#7000ff] to-[#bb18ff]"
-            className="flex-1 rounded-full py-4 text-[18px] font-extrabold shadow-[0_8px_22px_rgba(119,30,235,0.35)]"
+            className="h-[50px] flex-1 rounded-full text-[18px] font-semibold shadow-[0_8px_22px_rgba(119,30,235,0.35)]"
           />
           <AppButton
             label="레시피 추가"
             onClick={() => setOpenAddForm(true)}
-            className="flex-1 rounded-full py-4 text-[18px] font-extrabold shadow-[0_8px_22px_rgba(87,191,142,0.3)]"
+            className="h-[50px] flex-1 rounded-full text-[18px] font-semibold shadow-[0_8px_22px_rgba(87,191,142,0.3)]"
           />
         </div>
       ) : null}

@@ -17,8 +17,6 @@ type FridgeSectionKey =
   | "fruit"
   | "dairy"
   | "grain"
-  | "sauce"
-  | "snack"
   | "other";
 
 interface FridgeItem {
@@ -47,6 +45,13 @@ interface ReceiptCandidate {
 }
 
 type ReceiptStage = "capture" | "scanning" | "result";
+type AddPopupStage = "input" | "review";
+
+interface DraftIngredient {
+  id: string;
+  name: string;
+  type: FridgeSectionKey;
+}
 
 const SECTION_ORDER: FridgeSectionKey[] = [
   "cube",
@@ -55,20 +60,16 @@ const SECTION_ORDER: FridgeSectionKey[] = [
   "fruit",
   "dairy",
   "grain",
-  "sauce",
-  "snack",
   "other",
 ];
 
 const SECTION_META: Record<FridgeSectionKey, { label: string; emoji: string; chipLabel: string }> = {
-  cube: { label: "큐브 이유식", emoji: "🧊", chipLabel: "큐브 이유식" },
+  cube: { label: "큐브", emoji: "🧊", chipLabel: "큐브" },
   protein: { label: "단백질", emoji: "🥩", chipLabel: "단백질" },
   vegetable: { label: "채소", emoji: "🥦", chipLabel: "채소" },
   fruit: { label: "과일", emoji: "🍎", chipLabel: "과일" },
   dairy: { label: "유제품", emoji: "🥛", chipLabel: "유제품" },
   grain: { label: "곡물", emoji: "🌾", chipLabel: "곡물" },
-  sauce: { label: "소스", emoji: "🧂", chipLabel: "소스" },
-  snack: { label: "간식", emoji: "🍪", chipLabel: "간식" },
   other: { label: "기타", emoji: "🍽️", chipLabel: "기타" },
 };
 
@@ -78,8 +79,6 @@ const CATEGORY_LABEL: Record<Exclude<FridgeSectionKey, "cube">, string> = {
   fruit: "과일",
   dairy: "유제품",
   grain: "곡물",
-  sauce: "소스",
-  snack: "간식",
   other: "기타",
 };
 
@@ -89,8 +88,6 @@ const CATEGORY_TEXT_COLOR: Record<Exclude<FridgeSectionKey, "cube">, string> = {
   fruit: "text-[#ff4fb5]",
   dairy: "text-[#5f8cff]",
   grain: "text-[#f5a524]",
-  sauce: "text-[#a36d45]",
-  snack: "text-[#ff8b5e]",
   other: "text-[#7d8682]",
 };
 
@@ -105,6 +102,8 @@ export default function FridgePage() {
   const [isAdding, setIsAdding] = useState(false);
   const [newIngredientName, setNewIngredientName] = useState("");
   const [newIngredientType, setNewIngredientType] = useState<FridgeSectionKey>("cube");
+  const [addPopupStage, setAddPopupStage] = useState<AddPopupStage>("input");
+  const [draftIngredients, setDraftIngredients] = useState<DraftIngredient[]>([]);
   const [isScanningReceipt, setIsScanningReceipt] = useState(false);
   const [receiptStage, setReceiptStage] = useState<ReceiptStage>("capture");
   const [receiptScanId, setReceiptScanId] = useState("");
@@ -136,6 +135,15 @@ export default function FridgePage() {
   useEffect(() => {
     void loadFridgeItems();
   }, []);
+
+  const inputLines = useMemo(
+    () =>
+      newIngredientName
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0),
+    [newIngredientName]
+  );
 
   const filteredSections = useMemo(() => {
     const q = keyword.trim();
@@ -175,30 +183,58 @@ export default function FridgePage() {
     []
   );
 
-  const addIngredient = async () => {
-    const trimmed = newIngredientName.trim();
-    if (!trimmed) return;
+  const openAddPopup = () => {
+    setIsAddPopupOpen(true);
+    setAddPopupStage("input");
+    setDraftIngredients([]);
+    setNewIngredientName("");
+    setNewIngredientType("cube");
+  };
+
+  const closeAddPopup = () => {
+    setIsAddPopupOpen(false);
+    setAddPopupStage("input");
+    setDraftIngredients([]);
+    setNewIngredientName("");
+    setNewIngredientType("cube");
+  };
+
+  const moveToReviewStage = () => {
+    if (inputLines.length === 0) return;
+    setDraftIngredients(
+      inputLines.map((line, index) => ({
+        id: `draft-${Date.now()}-${index}`,
+        name: line,
+        type: newIngredientType,
+      }))
+    );
+    setAddPopupStage("review");
+  };
+
+  const addDraftIngredients = async () => {
+    if (draftIngredients.length === 0) return;
 
     try {
       setIsAdding(true);
-      const category = newIngredientType === "cube" ? "other" : newIngredientType;
-      const payloadName = newIngredientType === "cube" && !trimmed.includes("큐브")
-        ? `${trimmed} 큐브`
-        : trimmed;
-
-      const res = await authedFetch("/api/fridge/items", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: payloadName, category }),
-      });
-      const json = (await res.json().catch(() => ({}))) as { message?: string };
-      if (!res.ok) throw new Error(json.message ?? "재료 추가에 실패했습니다.");
+      for (const ingredient of draftIngredients) {
+        const effectiveType = ingredient.type;
+        const category = effectiveType === "cube" ? "other" : effectiveType;
+        const payloadName =
+          effectiveType === "cube" && !ingredient.name.includes("큐브")
+            ? `${ingredient.name} 큐브`
+            : ingredient.name;
+        const res = await authedFetch("/api/fridge/items", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: payloadName, category }),
+        });
+        const json = (await res.json().catch(() => ({}))) as { message?: string };
+        if (!res.ok) throw new Error(json.message ?? "재료 추가에 실패했습니다.");
+      }
 
       await loadFridgeItems();
       setActiveFilter("all");
-      setNewIngredientName("");
-      setNewIngredientType("cube");
-      setIsAddPopupOpen(false);
+      closeAddPopup();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "재료 추가에 실패했습니다.";
@@ -357,7 +393,7 @@ export default function FridgePage() {
           onChange={(key) => setActiveFilter(key as "all" | FridgeSectionKey)}
         />
 
-        <div className="-mx-4 mt-4 bg-[#eef3f0] px-4 pb-40 pt-5">
+        <div className="-mx-4 mt-4 px-4 pb-40 pt-5">
           <div className="space-y-7">
             {isLoading ? (
               <p className="text-center text-[18px] text-[#6f7875]">불러오는 중...</p>
@@ -398,7 +434,7 @@ export default function FridgePage() {
       <div className="pointer-events-none fixed bottom-[calc(86px+env(safe-area-inset-bottom))] left-1/2 z-40 w-full max-w-[480px] -translate-x-1/2 px-4">
         <AppButton
           label="재료 추가"
-          onClick={() => setIsAddPopupOpen(true)}
+          onClick={openAddPopup}
           className="pointer-events-auto mx-auto flex h-12 w-[230px] rounded-full shadow-[0_8px_20px_rgba(87,191,142,0.28)]"
         />
       </div>
@@ -407,10 +443,10 @@ export default function FridgePage() {
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#7f8783]/50 px-4 py-4">
           <div className="mx-auto flex max-h-[calc(100dvh-32px)] w-full max-w-[480px] flex-col overflow-y-auto rounded-[28px] bg-[#f6f7f6] p-4">
             <div className="mb-4 flex items-center justify-center relative">
-              <h2 className="text-[30px] font-bold text-[#1f2725]">냉장고 재료 추가</h2>
+              <h2 className="text-[18px] font-bold text-[#1f2725]">냉장고 재료 추가</h2>
               <button
                 type="button"
-                onClick={() => setIsAddPopupOpen(false)}
+                onClick={closeAddPopup}
                 className="absolute right-0 rounded-md p-1 text-[#1f2725]"
                 aria-label="팝업 닫기"
               >
@@ -421,7 +457,7 @@ export default function FridgePage() {
             <button
               type="button"
               onClick={() => {
-                setIsAddPopupOpen(false);
+                closeAddPopup();
                 setIsReceiptPopupOpen(true);
                 setReceiptStage("capture");
                 setReceiptScanId("");
@@ -445,45 +481,109 @@ export default function FridgePage() {
               <div className="h-px flex-1 bg-[#d4dbd8]" />
             </div>
 
-            <label className="text-[18px] font-bold text-[#1f2725]">재료명</label>
-            <input
-              value={newIngredientName}
-              onChange={(event) => setNewIngredientName(event.target.value)}
-              placeholder="예: 브로콜리, 당근, 소고기 큐브 ..."
-              className="mb-6 mt-2 h-12 w-full rounded-[12px] border border-[#d1d8d5] bg-[#f8f9f8] px-4 text-[18px] outline-none placeholder:text-[#97a19e]"
-            />
+            {addPopupStage === "input" ? (
+              <>
+                <label className="text-[18px] font-bold text-[#1f2725]">재료명</label>
+                <textarea
+                  value={newIngredientName}
+                  onChange={(event) => setNewIngredientName(event.target.value)}
+                  placeholder={"예:\n브로콜리\n당근\n소고기"}
+                  rows={4}
+                  className="mb-2 mt-2 w-full resize-none rounded-[12px] border border-[#d1d8d5] bg-[#f8f9f8] px-4 py-3 text-[18px] leading-[1.5] outline-none placeholder:text-[#97a19e]"
+                />
+                <p className="mb-6 text-[13px] text-[#7f8a86]">
+                  한 줄에 하나씩 입력하고 엔터로 줄바꿈하면 여러 재료를 한 번에 추가할 수 있어요.
+                </p>
 
-            <p className="mb-2 text-[18px] font-bold text-[#1f2725]">종류</p>
-            <div className="grid grid-cols-4 gap-2">
-              {SECTION_ORDER.map((key) => (
-                <button
-                  key={`add-type-${key}`}
-                  type="button"
-                  onClick={() => setNewIngredientType(key)}
-                  className={`rounded-[12px] border px-1 py-3 text-center ${
-                    newIngredientType === key
-                      ? "border-[#57bf8e] bg-[#eef8f3]"
-                      : "border-[#d0d7d4] bg-[#f7f8f7]"
-                  }`}
-                >
-                  <div className="text-[18px]">{SECTION_META[key].emoji}</div>
-                  <div className="mt-1 text-[16px] font-semibold text-[#2a312f]">
-                    {SECTION_META[key].label}
-                  </div>
-                </button>
-              ))}
-            </div>
+                <p className="mb-2 text-[18px] font-bold text-[#1f2725]">기본 종류</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {SECTION_ORDER.map((key) => (
+                    <button
+                      key={`add-type-${key}`}
+                      type="button"
+                      onClick={() => setNewIngredientType(key)}
+                      className={`rounded-[12px] border px-1 py-3 text-center ${
+                        newIngredientType === key
+                          ? "border-[#57bf8e] bg-[#eef8f3]"
+                          : "border-[#d0d7d4] bg-[#f7f8f7]"
+                      }`}
+                    >
+                      <div className="text-[18px]">{SECTION_META[key].emoji}</div>
+                      <div className="mt-1 text-[16px] font-semibold text-[#2a312f]">
+                        {SECTION_META[key].label}
+                      </div>
+                    </button>
+                  ))}
+                </div>
 
-            <div className="mt-auto pt-4">
-              <button
-                type="button"
-                onClick={addIngredient}
-                disabled={isAdding}
-                className="h-12 w-full rounded-2xl bg-[#57bf8e] text-[20px] font-semibold text-white"
-              >
-                {isAdding ? "추가중..." : "추가하기"}
-              </button>
-            </div>
+                <div className="mt-auto pt-4">
+                  <button
+                    type="button"
+                    onClick={moveToReviewStage}
+                    disabled={inputLines.length === 0}
+                    className="h-12 w-full rounded-2xl bg-[#57bf8e] text-[20px] font-semibold text-white disabled:opacity-60"
+                  >
+                    다음
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="mb-3 text-[18px] font-bold text-[#1f2725]">추가할 재료 확인</p>
+                <div className="mb-4 max-h-[260px] space-y-2 overflow-y-auto rounded-[14px] border border-[#d1d8d5] bg-[#f8f9f8] p-3">
+                  {draftIngredients.map((ingredient) => (
+                    <div
+                      key={ingredient.id}
+                      className="flex items-center justify-between gap-2 rounded-[10px] border border-[#dde2df] bg-white px-3 py-2"
+                    >
+                      <span className="min-w-0 flex-1 truncate text-[16px] text-[#1f2725]">
+                        {ingredient.name}
+                      </span>
+                      <select
+                        value={ingredient.type}
+                        onChange={(event) => {
+                          const nextType = event.target.value as FridgeSectionKey;
+                          setDraftIngredients((prev) =>
+                            prev.map((item) =>
+                              item.id === ingredient.id ? { ...item, type: nextType } : item
+                            )
+                          );
+                        }}
+                        className="h-9 rounded-[10px] border border-[#cfd6d3] bg-white px-2 text-[14px] text-[#2a312f] outline-none"
+                      >
+                        {SECTION_ORDER.map((key) => (
+                          <option key={`draft-type-${ingredient.id}-${key}`} value={key}>
+                            {SECTION_META[key].label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+                <p className="mb-4 text-[13px] text-[#7f8a86]">
+                  각 항목의 종류를 확인한 뒤 한 번에 추가하세요.
+                </p>
+
+                <div className="mt-auto grid grid-cols-2 gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setAddPopupStage("input")}
+                    disabled={isAdding}
+                    className="h-12 rounded-2xl bg-[#e5e7e6] text-[16px] font-semibold text-[#7f8885]"
+                  >
+                    이전
+                  </button>
+                  <button
+                    type="button"
+                    onClick={addDraftIngredients}
+                    disabled={isAdding || draftIngredients.length === 0}
+                    className="h-12 rounded-2xl bg-[#57bf8e] text-[17px] font-semibold text-white disabled:opacity-60"
+                  >
+                    {isAdding ? "추가중..." : "추가하기"}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       ) : null}

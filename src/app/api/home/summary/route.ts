@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/server/api-auth";
+import { getFamilyDataScope } from "@/lib/server/family-access";
 import { getHomeSummaryFromDb } from "@/lib/server/supabase-app-data";
 
 export async function GET(request: Request) {
@@ -9,7 +10,10 @@ export async function GET(request: Request) {
   }
 
   try {
-    return NextResponse.json({ summary: await getHomeSummaryFromDb(user.id) });
+    const scope = await getFamilyDataScope({ userId: user.id });
+    return NextResponse.json({
+      summary: await getHomeSummaryFromDb(scope.ownerUserId),
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "failed to fetch home summary";

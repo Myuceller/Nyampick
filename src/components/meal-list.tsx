@@ -9,6 +9,7 @@ interface MealListProps {
   dayMeals: DayMeals | undefined;
   selectedDate: Date;
   dateKey: string;
+  readOnly?: boolean;
 }
 
 const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
@@ -24,6 +25,7 @@ export function MealList({
   dayMeals,
   selectedDate,
   dateKey,
+  readOnly = false,
 }: MealListProps) {
   const router = useRouter();
   const dateLabel = formatKoreanDate(selectedDate);
@@ -34,32 +36,34 @@ export function MealList({
 
   return (
     <div className="flex-1 px-4 pb-24 pt-6 bg-[#fdfefd]">
-      <p className="mb-2 text-[12px] text-[#7f8885]">{dateLabel}</p>
-      <div className="mb-4 flex items-center justify-between">
+      <p className="ml-3 mb-2 text-[12px] text-[#7f8885]">{dateLabel}</p>
+      <div className="ml-3 mb-4 flex items-center justify-between">
         <h2 className="text-[20px] font-bold leading-none text-[#242b29]">
           오늘의 식단
         </h2>
-        <button
-          type="button"
-          onClick={() => {
-            const emptyDay: DayMeals = {
-              date: dateKey,
-              breakfast: [],
-              lunch: [],
-              dinner: [],
-              snack: [],
-            };
-            localStorage.setItem(
-              `mammanote:meal-edit:init:${dateKey}`,
-              JSON.stringify(dayMeals ?? emptyDay)
-            );
-            router.push(`/meal/edit?date=${dateKey}`);
-          }}
-          className="rounded-md p-1 text-[#1f2523] transition-colors hover:bg-[#dfe5e3]"
-          aria-label="식단 수정"
-        >
-          <SquarePen className="h-6 w-6" />
-        </button>
+        {!readOnly ? (
+          <button
+            type="button"
+            onClick={() => {
+              const emptyDay: DayMeals = {
+                date: dateKey,
+                breakfast: [],
+                lunch: [],
+                dinner: [],
+                snack: [],
+              };
+              localStorage.setItem(
+                `mammanote:meal-edit:init:${dateKey}`,
+                JSON.stringify(dayMeals ?? emptyDay)
+              );
+              router.push(`/meal/edit?date=${dateKey}`);
+            }}
+            className="rounded-md p-1 text-[#1f2523] transition-colors hover:bg-[#dfe5e3]"
+            aria-label="식단 수정"
+          >
+            <SquarePen className="h-6 w-6" />
+          </button>
+        ) : null}
       </div>
 
       {totalMealCount === 0 ? (

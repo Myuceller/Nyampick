@@ -23,11 +23,13 @@ export function ConfirmModal({
 
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/35 px-4">
-      <div className="w-full max-w-[480px] rounded-[28px] bg-[#f6f7f6] px-4 pb-6 pt-7">
-        <h3 className="text-center text-[40px] font-bold text-[#1f2725]">{title}</h3>
-        <p className="mt-3 text-center text-[21px] text-[#7b8581]">{description}</p>
+      <div className="flex h-[250px] w-full max-w-[360px] flex-col rounded-[28px] bg-[#f6f7f6] px-4 pb-6 pt-7">
+        <div className="flex flex-1 flex-col items-center justify-center">
+          <h3 className="text-center text-[25px] font-semibold text-[#1f2725]">{title}</h3>
+          <p className="mt-3 text-center text-[20px] font-normal text-[#7b8581]">{description}</p>
+        </div>
 
-        <div className="mt-7 grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <AppButton
             label={cancelLabel}
             onClick={onCancel}

@@ -12,7 +12,10 @@ begin
 
   delete from public.meal_entries where user_id = target_user_id;
   delete from public.fridge_items where user_id = target_user_id;
-  delete from public.family_members where user_id = target_user_id;
+  delete from public.family_access_links where guest_user_id = target_user_id or owner_user_id = target_user_id;
+  delete from public.child_invite_codes where owner_user_id = target_user_id;
+  delete from public.child_profiles where user_id = target_user_id;
+  delete from public.saved_recipes where user_id = target_user_id;
   delete from public.user_profile where id = target_user_id;
 end
 $$;

@@ -44,13 +44,6 @@ export interface DayMeals {
   snack: MealEntry[];
 }
 
-export interface FamilyMember {
-  id: string;
-  name: string;
-  birthDate: string;
-  monthsOld: number;
-}
-
 export interface NutritionSummary {
   carbs: number;
   protein: number;

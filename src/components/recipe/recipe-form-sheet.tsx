@@ -60,7 +60,7 @@ export function RecipeFormSheet({
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pb-4 pr-1">
           <div>
-            <p className="mb-1 text-[16px] font-extrabold text-[#212726]">메뉴명</p>
+            <p className="mb-1 text-[20px] font-bold text-[#212726]">메뉴명</p>
             <input
               value={name}
               onChange={(event) => onNameChange(event.target.value)}
@@ -70,7 +70,7 @@ export function RecipeFormSheet({
           </div>
 
           <div>
-            <p className="mb-1 text-[16px] font-extrabold text-[#212726]">
+            <p className="mb-1 text-[20px] font-bold text-[#212726]">
               간단 설명 <span className="text-[14px] font-semibold text-[#7a8380]">(선택)</span>
             </p>
             <input
@@ -82,7 +82,7 @@ export function RecipeFormSheet({
           </div>
 
           <div>
-            <p className="mb-1 text-[16px] font-extrabold text-[#212726]">
+            <p className="mb-1 text-[20px] font-bold text-[#212726]">
               레시피 링크 <span className="text-[14px] font-semibold text-[#7a8380]">(선택)</span>
             </p>
             <input
@@ -94,7 +94,7 @@ export function RecipeFormSheet({
           </div>
 
           <div>
-            <p className="mb-1 text-[16px] font-extrabold text-[#212726]">
+            <p className="mb-1 text-[20px] font-bold text-[#212726]">
               레시피 메모 <span className="text-[14px] font-semibold text-[#7a8380]">(선택)</span>
             </p>
             <textarea
@@ -107,7 +107,7 @@ export function RecipeFormSheet({
           </div>
 
           <div>
-            <p className="mb-2 text-[16px] font-extrabold text-[#212726]">
+            <p className="mb-2 text-[20px] font-bold text-[#212726]">
               아기 반응{" "}
               <span className="text-[14px] font-semibold text-[#7a8380]">
                 (나중에 수정 가능, 선택)
@@ -133,7 +133,7 @@ export function RecipeFormSheet({
                     )}
                   >
                     <div className="text-[18px]">{option.emoji}</div>
-                    <div className="mt-1 text-[14px] font-extrabold text-[#222927]">
+                    <div className="mt-1 text-[18px] font-medium text-[#222927]">
                       {option.label}
                     </div>
                   </button>
@@ -148,7 +148,7 @@ export function RecipeFormSheet({
           onClick={onSubmit}
           disabled={submitDisabled}
           className={cn(
-            "h-12 w-full rounded-[14px] text-[22px] font-extrabold text-white",
+            "h-12 w-full rounded-[14px] text-[18px] font-semibold text-white",
             submitDisabled ? "bg-[#a7d9c1]" : "bg-[#57bf8e]"
           )}
         >

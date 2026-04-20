@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import type { MealType } from "@/lib/types";
 import { getAllMealsFromDb, getMealsByDateFromDb } from "@/lib/server/supabase-meals";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+import { listChildrenFromDb } from "@/lib/server/supabase-children";
 
 export type FridgeCategory =
   | "fruit"
@@ -34,14 +35,6 @@ export interface SavedRecipe {
   memo?: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface FamilyMember {
-  id: string;
-  name: string;
-  role: "mother" | "father" | "grandparent" | "caregiver";
-  status: "connected" | "pending";
-  invitedAt: string;
 }
 
 export interface UserProfile {
@@ -187,29 +180,59 @@ export function isFridgeCategory(value: unknown): value is FridgeCategory {
   return typeof value === "string" && FRIDGE_CATEGORIES.includes(value as FridgeCategory);
 }
 
-export async function ensureAppSeedData(userId: string, userEmail?: string) {
+export async function ensureAppSeedData(
+  userId: string,
+  userEmail?: string,
+  userNameHint?: string
+) {
   const supabase = getSupabaseAdmin();
 
-  const { error: profileErr } = await supabase
+  const { data: existing, error: profileErr } = await supabase
     .from("user_profile")
-    .select("id", { count: "exact", head: true })
+    .select("id,name,email")
     .eq("id", userId);
 
   if (profileErr) throw profileErr;
 
-  const guessedName = userEmail?.split("@")[0] || "맘마노트 사용자";
+  const guessedName = userNameHint?.trim() || userEmail?.split("@")[0] || "사용자";
+  const current = existing?.[0];
 
-  const { error: profileUpsertError } = await supabase.from("user_profile").upsert(
-    {
+  if (!current) {
+    const { error: profileInsertError } = await supabase.from("user_profile").insert({
       id: userId,
       name: guessedName,
-      baby_name: "우리 아기",
-      baby_months_old: 11,
+      baby_name: "아기",
+      baby_months_old: 0,
       email: userEmail ?? null,
-    },
-    { onConflict: "id" }
-  );
-  if (profileUpsertError) throw profileUpsertError;
+    });
+    if (profileInsertError) throw profileInsertError;
+    return;
+  }
+
+  const nextPatch: {
+    name?: string;
+    email?: string | null;
+  } = {};
+
+  if (
+    guessedName &&
+    (current.name === "맘마노트 사용자" ||
+      current.name === "사용자" ||
+      current.name.trim().length === 0)
+  ) {
+    nextPatch.name = guessedName;
+  }
+  if (userEmail && !current.email) {
+    nextPatch.email = userEmail;
+  }
+
+  if (Object.keys(nextPatch).length > 0) {
+    const { error: profileUpdateError } = await supabase
+      .from("user_profile")
+      .update(nextPatch)
+      .eq("id", userId);
+    if (profileUpdateError) throw profileUpdateError;
+  }
 }
 
 export async function listFridgeItemsFromDb(
@@ -501,8 +524,12 @@ export async function deleteSavedRecipeInDb(
   return (data?.length ?? 0) > 0;
 }
 
-export async function getProfileFromDb(userId: string, userEmail?: string): Promise<UserProfile> {
-  await ensureAppSeedData(userId, userEmail);
+export async function getProfileFromDb(
+  userId: string,
+  userEmail?: string,
+  userNameHint?: string
+): Promise<UserProfile> {
+  await ensureAppSeedData(userId, userEmail, userNameHint);
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("user_profile")
@@ -539,8 +566,27 @@ export async function updateProfileInDb(
     .update(updatePatch)
     .eq("id", userId)
     .select("id,name,baby_name,baby_months_old,email")
-    .single();
+    .maybeSingle();
   if (error) throw error;
+
+  if (!data) {
+    await ensureAppSeedData(userId, patch.email ?? undefined, patch.name ?? undefined);
+    const { data: inserted, error: insertedError } = await supabase
+      .from("user_profile")
+      .update(updatePatch)
+      .eq("id", userId)
+      .select("id,name,baby_name,baby_months_old,email")
+      .single();
+    if (insertedError) throw insertedError;
+    return {
+      id: inserted.id,
+      name: inserted.name,
+      babyName: inserted.baby_name,
+      babyMonthsOld: inserted.baby_months_old,
+      email: inserted.email ?? undefined,
+    };
+  }
+
   return {
     id: data.id,
     name: data.name,
@@ -548,64 +594,6 @@ export async function updateProfileInDb(
     babyMonthsOld: data.baby_months_old,
     email: data.email ?? undefined,
   };
-}
-
-export async function listFamilyMembersFromDb(userId: string): Promise<FamilyMember[]> {
-  await ensureAppSeedData(userId);
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("family_members")
-    .select("id,user_id,name,role,status,invited_at")
-    .eq("user_id", userId)
-    .order("invited_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    name: row.name,
-    role: row.role,
-    status: row.status,
-    invitedAt: row.invited_at,
-  })) as FamilyMember[];
-}
-
-export async function addFamilyMemberToDb(input: {
-  userId: string;
-  name: string;
-  role: FamilyMember["role"];
-}): Promise<FamilyMember> {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("family_members")
-    .insert({
-      id: randomUUID(),
-      user_id: input.userId,
-      name: input.name,
-      role: input.role,
-      status: "pending",
-      invited_at: nowIso(),
-    })
-    .select("id,user_id,name,role,status,invited_at")
-    .single();
-  if (error) throw error;
-  return {
-    id: data.id,
-    name: data.name,
-    role: data.role,
-    status: data.status,
-    invitedAt: data.invited_at,
-  };
-}
-
-export async function removeFamilyMemberFromDb(userId: string, id: string): Promise<boolean> {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("family_members")
-    .delete()
-    .eq("user_id", userId)
-    .eq("id", id)
-    .select("id");
-  if (error) throw error;
-  return (data?.length ?? 0) > 0;
 }
 
 function collectRecentMealNames(
@@ -695,10 +683,10 @@ export async function getRecipeRecommendationsFromDb(
 
 export async function getHomeSummaryFromDb(userId: string) {
   const today = todayKey();
-  const [todayMeals, fridgeItems, familyMembers] = await Promise.all([
+  const [todayMeals, fridgeItems, children] = await Promise.all([
     getMealsByDateFromDb(userId, today),
     listFridgeItemsFromDb(userId),
-    listFamilyMembersFromDb(userId),
+    listChildrenFromDb(userId),
   ]);
 
   return {
@@ -713,6 +701,6 @@ export async function getHomeSummaryFromDb(userId: string) {
         snack: [],
       },
     fridgeItemCount: fridgeItems.length,
-    familyMemberCount: familyMembers.length + 1,
+    familyMemberCount: Math.max(1, children.length),
   };
 }

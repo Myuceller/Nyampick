@@ -3,6 +3,7 @@ import {
   AuthProviderUnavailableError,
   getUserFromRequest,
 } from "@/lib/server/api-auth";
+import { getFamilyDataScope } from "@/lib/server/family-access";
 import {
   addSavedRecipeToDb,
   deleteSavedRecipeInDb,
@@ -59,7 +60,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    const items = await listSavedRecipesFromDb(user.id);
+    const scope = await getFamilyDataScope({ userId: user.id });
+    const items = await listSavedRecipesFromDb(scope.ownerUserId);
     return NextResponse.json({ items });
   } catch (error) {
     const normalized = normalizeSavedRecipeError(
@@ -105,8 +107,9 @@ export async function POST(request: Request) {
   const source = body.source === "ai" ? "ai" : "manual";
 
   try {
+    const scope = await getFamilyDataScope({ userId: user.id });
     const item = await addSavedRecipeToDb({
-      userId: user.id,
+      userId: scope.ownerUserId,
       title,
       subtitle: typeof body.subtitle === "string" ? body.subtitle.trim() : undefined,
       taste: body.taste,
@@ -155,7 +158,8 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    const item = await updateSavedRecipeInDb(user.id, body.id, {
+    const scope = await getFamilyDataScope({ userId: user.id });
+    const item = await updateSavedRecipeInDb(scope.ownerUserId, body.id, {
       title: typeof body.title === "string" ? body.title.trim() : undefined,
       subtitle:
         typeof body.subtitle === "string" ? body.subtitle.trim() : undefined,
@@ -200,7 +204,8 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    const deleted = await deleteSavedRecipeInDb(user.id, body.id);
+    const scope = await getFamilyDataScope({ userId: user.id });
+    const deleted = await deleteSavedRecipeInDb(scope.ownerUserId, body.id);
     if (!deleted) {
       return NextResponse.json({ message: "recipe not found" }, { status: 404 });
     }

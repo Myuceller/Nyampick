@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/server/api-auth";
+import { getFamilyDataScope } from "@/lib/server/family-access";
 import {
   addFridgeItemToDb,
   deleteFridgeItemInDb,
@@ -24,6 +25,7 @@ export async function GET(request: Request) {
   }
 
   try {
+    const scope = await getFamilyDataScope({ userId: user.id });
     const { searchParams } = new URL(request.url);
     const categoryParam = searchParams.get("category");
     const keyword = searchParams.get("keyword") ?? undefined;
@@ -34,7 +36,7 @@ export async function GET(request: Request) {
     const category = categoryParam && isFridgeCategory(categoryParam) ? categoryParam : undefined;
 
     return NextResponse.json({
-      items: await listFridgeItemsFromDb(user.id, { category, keyword }),
+      items: await listFridgeItemsFromDb(scope.ownerUserId, { category, keyword }),
     });
   } catch (error) {
     const message = getErrorMessage(error, "failed to fetch fridge items");
@@ -65,8 +67,9 @@ export async function POST(request: Request) {
   const category = body.category && isFridgeCategory(body.category) ? body.category : undefined;
 
   try {
+    const scope = await getFamilyDataScope({ userId: user.id });
     const item = await addFridgeItemToDb({
-      userId: user.id,
+      userId: scope.ownerUserId,
       name: body.name.trim(),
       category,
       quantity: body.quantity,
@@ -106,7 +109,8 @@ export async function PATCH(request: Request) {
 
   let updated = null;
   try {
-    updated = await updateFridgeItemInDb(user.id, body.id, {
+    const scope = await getFamilyDataScope({ userId: user.id });
+    updated = await updateFridgeItemInDb(scope.ownerUserId, body.id, {
       name: body.name,
       category,
       quantity: body.quantity,
@@ -138,7 +142,8 @@ export async function DELETE(request: Request) {
 
   let removed = false;
   try {
-    removed = await deleteFridgeItemInDb(user.id, body.id);
+    const scope = await getFamilyDataScope({ userId: user.id });
+    removed = await deleteFridgeItemInDb(scope.ownerUserId, body.id);
   } catch (error) {
     const message = getErrorMessage(error, "failed to delete fridge item");
     return NextResponse.json({ message }, { status: 500 });

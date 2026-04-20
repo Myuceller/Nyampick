@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { DayMeals, MealType } from "@/lib/types";
 import { getUserFromRequest } from "@/lib/server/api-auth";
+import { getFamilyDataScope } from "@/lib/server/family-access";
+import { resolveChildIdForUser } from "@/lib/server/supabase-children";
 import {
   addMealItemsToDb,
   getAllMealsFromDb,
@@ -49,9 +51,20 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const date = searchParams.get("date");
+    const requestedChildId = searchParams.get("childId");
+    const scope = await getFamilyDataScope({
+      userId: user.id,
+      requestedChildId: requestedChildId ?? undefined,
+    });
+    const childId = scope.isLinked
+      ? scope.childId
+      : await resolveChildIdForUser(scope.ownerUserId, scope.childId);
 
     if (!date) {
-      return NextResponse.json({ meals: await getAllMealsFromDb(user.id) });
+      return NextResponse.json({
+        meals: await getAllMealsFromDb(scope.ownerUserId, childId),
+        childId,
+      });
     }
 
     if (!isDateFormat(date)) {
@@ -61,8 +74,9 @@ export async function GET(request: Request) {
       );
     }
 
-    const dayMeals = await getMealsByDateFromDb(user.id, date);
+    const dayMeals = await getMealsByDateFromDb(scope.ownerUserId, date, childId);
     return NextResponse.json({
+      childId,
       meals:
         dayMeals ??
         {
@@ -76,6 +90,9 @@ export async function GET(request: Request) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "failed to fetch meals";
+    if (message === "child not found") {
+      return NextResponse.json({ message }, { status: 404 });
+    }
     return NextResponse.json({ message }, { status: 500 });
   }
 }
@@ -88,6 +105,7 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as {
     date?: string;
+    childId?: string;
     mealType?: MealType;
     items?: string[];
   };
@@ -122,16 +140,27 @@ export async function POST(request: Request) {
   }
 
   try {
+    const scope = await getFamilyDataScope({
+      userId: user.id,
+      requestedChildId: body.childId,
+    });
+    const childId = scope.isLinked
+      ? scope.childId
+      : await resolveChildIdForUser(scope.ownerUserId, scope.childId);
     const updated = await addMealItemsToDb(
-      user.id,
+      scope.ownerUserId,
       body.date,
       body.mealType,
-      cleanedItems
+      cleanedItems,
+      childId
     );
-    return NextResponse.json({ meals: updated }, { status: 201 });
+    return NextResponse.json({ meals: updated, childId }, { status: 201 });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "failed to add meals";
+    if (message === "child not found") {
+      return NextResponse.json({ message }, { status: 404 });
+    }
     return NextResponse.json({ message }, { status: 500 });
   }
 }
@@ -144,6 +173,7 @@ export async function PATCH(request: Request) {
 
   const body = (await request.json()) as {
     date?: string;
+    childId?: string;
     mealType?: MealType;
     entryId?: string;
     menuName?: string;
@@ -190,26 +220,34 @@ export async function PATCH(request: Request) {
     );
   }
 
-  let updated = null;
   try {
-    updated = await updateMealEntryInDb(
-      user.id,
+    const scope = await getFamilyDataScope({
+      userId: user.id,
+      requestedChildId: body.childId,
+    });
+    const childId = scope.isLinked
+      ? scope.childId
+      : await resolveChildIdForUser(scope.ownerUserId, scope.childId);
+    const updated = await updateMealEntryInDb(
+      scope.ownerUserId,
       body.date,
       body.mealType,
       body.entryId,
-      patch
+      patch,
+      childId
     );
+    if (!updated) {
+      return NextResponse.json({ message: "meal data not found" }, { status: 404 });
+    }
+    return NextResponse.json({ meals: updated, childId });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "failed to update meal";
+    if (message === "child not found") {
+      return NextResponse.json({ message }, { status: 404 });
+    }
     return NextResponse.json({ message }, { status: 500 });
   }
-
-  if (!updated) {
-    return NextResponse.json({ message: "meal data not found" }, { status: 404 });
-  }
-
-  return NextResponse.json({ meals: updated });
 }
 
 export async function DELETE(request: Request) {
@@ -220,6 +258,7 @@ export async function DELETE(request: Request) {
 
   const body = (await request.json()) as {
     date?: string;
+    childId?: string;
     mealType?: MealType;
     entryId?: string;
   };
@@ -239,25 +278,33 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ message: "entryId is required" }, { status: 400 });
   }
 
-  let updated = null;
   try {
-    updated = await removeMealEntryInDb(
-      user.id,
+    const scope = await getFamilyDataScope({
+      userId: user.id,
+      requestedChildId: body.childId,
+    });
+    const childId = scope.isLinked
+      ? scope.childId
+      : await resolveChildIdForUser(scope.ownerUserId, scope.childId);
+    const updated = await removeMealEntryInDb(
+      scope.ownerUserId,
       body.date,
       body.mealType,
-      body.entryId
+      body.entryId,
+      childId
     );
+    if (!updated) {
+      return NextResponse.json({ message: "meal data not found" }, { status: 404 });
+    }
+    return NextResponse.json({ meals: updated, childId });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "failed to remove meal";
+    if (message === "child not found") {
+      return NextResponse.json({ message }, { status: 404 });
+    }
     return NextResponse.json({ message }, { status: 500 });
   }
-
-  if (!updated) {
-    return NextResponse.json({ message: "meal data not found" }, { status: 404 });
-  }
-
-  return NextResponse.json({ meals: updated });
 }
 
 export async function PUT(request: Request) {
@@ -268,6 +315,7 @@ export async function PUT(request: Request) {
 
   const body = (await request.json()) as {
     date?: string;
+    childId?: string;
     meals?: Pick<DayMeals, "breakfast" | "lunch" | "dinner" | "snack">;
   };
 
@@ -286,11 +334,26 @@ export async function PUT(request: Request) {
   }
 
   try {
-    const updated = await replaceMealsByDateInDb(user.id, body.date, body.meals);
-    return NextResponse.json({ meals: updated });
+    const scope = await getFamilyDataScope({
+      userId: user.id,
+      requestedChildId: body.childId,
+    });
+    const childId = scope.isLinked
+      ? scope.childId
+      : await resolveChildIdForUser(scope.ownerUserId, scope.childId);
+    const updated = await replaceMealsByDateInDb(
+      scope.ownerUserId,
+      body.date,
+      body.meals,
+      childId
+    );
+    return NextResponse.json({ meals: updated, childId });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "failed to replace meals";
+    if (message === "child not found") {
+      return NextResponse.json({ message }, { status: 404 });
+    }
     return NextResponse.json({ message }, { status: 500 });
   }
 }

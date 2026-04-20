@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Baby, CalendarDays } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { BottomNav } from "@/components/bottom-nav";
 import { MealList } from "@/components/meal-list";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
@@ -53,9 +54,12 @@ function getMealCountByDate(mealData: Record<string, DayMeals>, date: Date) {
 }
 
 export default function Page() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [mealData, setMealData] = useState<Record<string, DayMeals>>({});
+  const [childName, setChildName] = useState("");
+  const [childMonthsOld, setChildMonthsOld] = useState<number | null>(null);
   const [calendarMode, setCalendarMode] = useState<"weekly" | "monthly">(
     "weekly"
   );
@@ -64,10 +68,25 @@ export default function Page() {
     const load = async () => {
       let baseData: Record<string, DayMeals> = {};
       try {
-        const res = await authedFetch("/api/meals", { cache: "no-store" });
-        if (res.ok) {
-          const json = (await res.json()) as { meals?: Record<string, DayMeals> };
-          baseData = json.meals ?? {};
+        const [mealRes, childRes] = await Promise.all([
+          authedFetch("/api/meals", { cache: "no-store" }),
+          authedFetch("/api/children", { cache: "no-store" }),
+        ]);
+
+        if (mealRes.ok) {
+          const mealJson = (await mealRes.json()) as { meals?: Record<string, DayMeals> };
+          baseData = mealJson.meals ?? {};
+        }
+        if (childRes.ok) {
+          const childJson = (await childRes.json()) as {
+            children?: Array<{ name: string; monthsOld: number; isPrimary: boolean }>;
+          };
+          const children = childJson.children ?? [];
+          const primary = children.find((child) => child.isPrimary) ?? children[0];
+          if (primary) {
+            setChildName(primary.name);
+            setChildMonthsOld(primary.monthsOld);
+          }
         }
       } catch {
         baseData = {};
@@ -122,7 +141,7 @@ export default function Page() {
         <p className="text-[14px] text-[#6f7875]">안녕하세요 👋</p>
         <PwaInstallPrompt className="mt-3" />
         <h1 className="mt-2 mb-2 text-[24px] font-extrabold leading-[1.05] tracking-[-0.02em] text-[#1f2725]">
-          하은이의 식단
+          {childName ? `${childName}의 식단` : "식단"}
         </h1>
 
         <div className="mt-3 rounded-[22px] bg-[#fdfefd] px-4 py-4">
@@ -132,17 +151,18 @@ export default function Page() {
                 <Baby className="h-6 w-6 text-[#56be8d]" />
               </div>
               <div>
-                <p className="text-[22px] font-semibold leading-tight text-[#26302d]">
-                  하은이
+                <p className="text-[16px] font-semibold leading-tight text-[#26302d]">
+                  {childName || "이름 미설정"}
                 </p>
                 <p className="text-[14px] leading-tight text-[#77807d]">
-                  생후 11개월
+                  {childMonthsOld === null ? "개월 정보 미설정" : `생후 ${childMonthsOld}개월`}
                 </p>
               </div>
             </div>
             <button
               type="button"
-              className="rounded-[12px] bg-[#57bf8e] px-4 py-2 text-[15px] font-semibold text-white"
+              onClick={() => router.push("/children")}
+              className="rounded-[12px] bg-[#57bf8e] px-4 py-2 text-[10px] font-light text-white"
             >
               아기 관리
             </button>
@@ -180,13 +200,13 @@ export default function Page() {
                     type="button"
                     onClick={() => setSelectedDate(date)}
                     className={cn(
-                      "flex flex-col items-center rounded-[20px] px-1 py-2.5",
+                      "flex flex-col items-center rounded-[12px] px-1 py-2.5",
                       isSelected && "bg-[#57bf8e] text-white"
                     )}
                   >
                     <span
                       className={cn(
-                        "text-[11px]",
+                        "text-[12px]",
                         isSelected ? "text-white/80" : "text-[#7a8380]"
                       )}
                     >

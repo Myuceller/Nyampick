@@ -284,7 +284,7 @@ function MealEditPageContent() {
                   <div className="space-y-1.5">
                     {draft[mealType].map((entry: MealEntry) => (
                       <div key={entry.id} className="flex items-center justify-between">
-                        <span className="text-[18px] text-[#2a312f]">{entry.menuName}</span>
+                        <span className="ml-2 text-[16px] font-normal text-[#2a312f]">{entry.menuName}</span>
                         <button
                           type="button"
                           onClick={() => removeItem(mealType, entry.id)}
