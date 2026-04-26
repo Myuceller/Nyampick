@@ -79,6 +79,7 @@ export function RecipePage() {
         open={vm.openAiSheet}
         view={vm.aiSheetView}
         isGeneratingAi={vm.isGeneratingAi}
+        aiGenerationStage={vm.aiGenerationStage}
         isLoadingFridge={vm.isLoadingFridge}
         ingredientKeyword={vm.ingredientKeyword}
         ingredientSections={vm.ingredientSections}
@@ -118,8 +119,8 @@ export function RecipePage() {
         link={vm.newLink}
         memo={vm.newMemo}
         taste={vm.newTaste}
-        submitLabel="레시피 저장하기"
-        submitDisabled={!vm.newTitle.trim()}
+        submitLabel={vm.isSubmittingCustomRecipe ? "저장 중..." : "레시피 저장하기"}
+        submitDisabled={!vm.newTitle.trim() || vm.isSubmittingCustomRecipe}
         onClose={() => vm.setOpenAddForm(false)}
         onNameChange={vm.setNewTitle}
         onDescriptionChange={vm.setNewSubtitle}
@@ -140,8 +141,8 @@ export function RecipePage() {
         link={vm.editLink}
         memo={vm.editMemo}
         taste={vm.editTaste}
-        submitLabel="수정 완료"
-        submitDisabled={!vm.editName.trim()}
+        submitLabel={vm.isSavingEditedRecipe ? "수정 중..." : "수정 완료"}
+        submitDisabled={!vm.editName.trim() || vm.isSavingEditedRecipe}
         onClose={() => vm.setEditingRecipeId(null)}
         onNameChange={vm.setEditName}
         onDescriptionChange={vm.setEditDescription}

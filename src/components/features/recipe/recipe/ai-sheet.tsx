@@ -5,14 +5,17 @@ import {
   RefreshCw,
   X,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { AppSearchInput } from "@/components/ui/app-search-input";
 import { cn } from "@/lib/utils";
+import type { AiGenerationStage } from "./use-recipe-page";
 import { FridgeSection, GeneratedRecipe } from "./types";
 
 interface AiSheetProps {
   open: boolean;
   view: "select" | "result";
   isGeneratingAi: boolean;
+  aiGenerationStage: AiGenerationStage;
   isLoadingFridge: boolean;
   ingredientKeyword: string;
   ingredientSections: FridgeSection[];
@@ -35,6 +38,7 @@ export function AiSheet({
   open,
   view,
   isGeneratingAi,
+  aiGenerationStage,
   isLoadingFridge,
   ingredientKeyword,
   ingredientSections,
@@ -52,7 +56,51 @@ export function AiSheet({
   onRequestRecommend,
   onSaveGeneratedRecipe,
 }: AiSheetProps) {
+  const [aiProgress, setAiProgress] = useState(0);
+
+  useEffect(() => {
+    if (!isGeneratingAi) {
+      setAiProgress(0);
+      return;
+    }
+
+    const target =
+      aiGenerationStage === "requesting"
+        ? 28
+        : aiGenerationStage === "analyzing"
+          ? 76
+          : 96;
+
+    const timer = window.setInterval(() => {
+      setAiProgress((current) => {
+        if (current >= target) {
+          window.clearInterval(timer);
+          return current;
+        }
+
+        const next = current + Math.max(1, Math.ceil((target - current) / 6));
+        return Math.min(next, target);
+      });
+    }, 90);
+
+    return () => window.clearInterval(timer);
+  }, [aiGenerationStage, isGeneratingAi]);
+
   if (!open) return null;
+
+  const aiStageLabel =
+    aiGenerationStage === "requesting"
+      ? "요청 전송중"
+      : aiGenerationStage === "analyzing"
+        ? "재료 분석중"
+        : "결과 정리중";
+
+  const aiStageDescription =
+    aiGenerationStage === "requesting"
+      ? "추천 요청을 서버로 보내고 있어요"
+      : aiGenerationStage === "analyzing"
+        ? "선택한 재료로 레시피를 분석하고 있어요"
+        : "추천 결과를 화면에 맞게 정리하고 있어요";
 
   return (
     <div className="sheet-backdrop-in fixed inset-0 z-[80] bg-black/35">
@@ -75,10 +123,21 @@ export function AiSheet({
             <div className="flex h-36 w-36 items-center justify-center rounded-full bg-[#e6dbef]">
               <LoaderCircle className="h-16 w-16 animate-spin text-[#8f24e8]" />
             </div>
-            <h4 className="mt-10 text-[44px] font-black text-[#202624]">레시피 생성중</h4>
-            <p className="mt-2 text-[15px] font-medium text-[#7d8682]">
-              해당 재료로 레시피를 찾고 있어요
-            </p>
+            <h4 className="mt-10 text-[36px] font-black text-[#202624]">{aiStageLabel}</h4>
+            <p className="mt-2 text-[15px] font-medium text-[#7d8682]">{aiStageDescription}</p>
+            <div className="mt-6 w-full max-w-[260px]">
+              <div className="h-2.5 overflow-hidden rounded-full bg-[#dfd4f5]">
+                <div
+                  className="h-full rounded-full bg-[#8d27f3] transition-[width] duration-300 ease-out"
+                  style={{ width: `${aiProgress}%` }}
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-between text-[13px] font-semibold text-[#7e5cb0]">
+                <span>요청</span>
+                <span>분석</span>
+                <span>정리</span>
+              </div>
+            </div>
           </div>
         ) : view === "result" ? (
           <>
@@ -253,15 +312,15 @@ export function AiSheet({
             <button
               type="button"
               onClick={onRequestRecommend}
-              disabled={selectedIngredientCount === 0}
+              disabled={selectedIngredientCount === 0 || isGeneratingAi}
               className={cn(
                 "mt-4 h-12 w-full shrink-0 rounded-full text-[18px] font-semibold text-white",
-                selectedIngredientCount > 0
+                selectedIngredientCount > 0 && !isGeneratingAi
                   ? "bg-gradient-to-r from-[#9640ff] to-[#f13693]"
                   : "bg-[#c9cecc]"
               )}
             >
-              레시피 추천받기
+              {isGeneratingAi ? "추천 생성 중..." : "레시피 추천받기"}
             </button>
           </div>
         )}

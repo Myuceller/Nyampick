@@ -5,6 +5,7 @@ import { Baby, CalendarDays } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { MealList } from "@/components/features/meal/meal-list";
+import { HomeSkeleton } from "@/components/features/meal/home-skeleton";
 import { PwaInstallPrompt } from "@/components/layout/pwa-install-prompt";
 import { authedFetch } from "@/lib/authed-fetch";
 import type { DayMeals } from "@/lib/types";
@@ -147,12 +148,10 @@ export default function Page() {
 
   if (!mounted) {
     return (
-      <div className="mx-auto flex min-h-[100dvh] max-w-[480px] flex-col bg-[#f0f4f3]">
-        <div className="flex flex-1 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
-        </div>
+      <>
+        <HomeSkeleton />
         <BottomNav />
-      </div>
+      </>
     );
   }
 
@@ -291,12 +290,12 @@ export default function Page() {
                       key={formatDateKey(date)}
                       type="button"
                       onClick={() => setSelectedDate(date)}
-                      className={cn(
-                        "mx-auto flex h-12 w-10 flex-col items-center justify-center rounded-[12px] text-[#26302d]",
-                        !isSelected && isToday && "bg-[#e8f6ef] ring-1 ring-[#57bf8e]",
-                        isSelected && "bg-[#57bf8e] text-white"
-                      )}
-                    >
+                    className={cn(
+                      "mx-auto flex h-12 w-10 flex-col items-center justify-center rounded-[12px] text-[#26302d]",
+                      !isSelected && isToday && "bg-[#e8f6ef]",
+                      isSelected && "bg-[#57bf8e] text-white"
+                    )}
+                  >
                       <span className="text-[14px] font-semibold leading-none">{date.getDate()}</span>
                       <span className="mt-1 flex h-2 items-center justify-center gap-1">
                         {Array.from({ length: count }).map((_, i) => (

@@ -1,26 +1,21 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { Session } from "@supabase/supabase-js";
 import { Onboarding } from "@/components/features/onboarding/onboarding";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 type AuthMode = "signin" | "signup";
 type ScreenMode = "loading" | "form" | "onboarding";
+type SocialProvider = "google" | "kakao" | null;
 
 function getOAuthRedirectTo() {
   if (typeof window === "undefined") return undefined;
   const envAppUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
   const origin = window.location.origin;
-  const isLocalHost = origin.includes("localhost");
-  const fallbackProdUrl = "https://nyampick.vercel.app";
-
-  // In production, always prefer explicit app URL, and fall back to canonical domain.
-  const baseUrl = isLocalHost
-    ? origin
-    : envAppUrl
-      ? envAppUrl.replace(/\/+$/, "")
-      : fallbackProdUrl;
+  // Prefer env-configured app URL; fall back to current origin.
+  const baseUrl = envAppUrl ? envAppUrl.replace(/\/+$/, "") : origin;
   return `${baseUrl}/auth`;
 }
 
@@ -53,9 +48,13 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSocialSubmitting, setIsSocialSubmitting] = useState(false);
+  const [socialProvider, setSocialProvider] = useState<SocialProvider>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
   const [isEnvMissing, setIsEnvMissing] = useState(false);
+  const isProcessingCallbackRef = useRef(false);
+  const isFinalizingSessionRef = useRef(false);
+  const isBusy = isSubmitting || isSocialSubmitting;
 
   useEffect(() => {
     let active = true;
@@ -68,63 +67,18 @@ export default function AuthPage() {
       return;
     }
 
-    const syncScreenFromSession = async () => {
-      if (typeof window !== "undefined") {
-        const currentUrl = new URL(window.location.href);
-        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-        const hashAccessToken = hashParams.get("access_token");
-        const hashRefreshToken = hashParams.get("refresh_token");
-
-        // Backward compatibility: if implicit-flow tokens arrive in URL hash,
-        // immediately exchange them into client session and then clear the hash.
-        if (hashAccessToken && hashRefreshToken) {
-          const { error } = await supabase.auth.setSession({
-            access_token: hashAccessToken,
-            refresh_token: hashRefreshToken,
-          });
-          if (error && active) {
-            setErrorMessage(error.message);
-          }
-        }
-
-        const oauthError =
-          currentUrl.searchParams.get("error_description") ??
-          hashParams.get("error_description");
-        if (oauthError && active) {
-          setErrorMessage(decodeURIComponent(oauthError.replace(/\+/g, " ")));
-        }
-        const authCode = currentUrl.searchParams.get("code");
-        if (authCode) {
-          const { error } = await supabase.auth.exchangeCodeForSession(authCode);
-          if (error && active) {
-            setErrorMessage(error.message);
-          }
-        }
-        currentUrl.searchParams.delete("code");
-        currentUrl.searchParams.delete("state");
-        currentUrl.searchParams.delete("error");
-        currentUrl.searchParams.delete("error_code");
-        currentUrl.searchParams.delete("error_description");
-
-        const nextSearch = currentUrl.searchParams.toString();
-        window.history.replaceState(
-          {},
-          "",
-          `${currentUrl.pathname}${nextSearch ? `?${nextSearch}` : ""}`
-        );
-      }
-
-      const { data } = await supabase.auth.getSession();
+    const finalizeSession = async (session: Session | null) => {
       if (!active) return;
-      const session = data.session;
       if (!session) {
         setScreenMode("form");
         return;
       }
+      if (isFinalizingSessionRef.current) return;
+      isFinalizingSessionRef.current = true;
 
-      let profileReady = true;
-      await ensureProfileSeeded(session.access_token).catch((error) => {
-        profileReady = false;
+      try {
+        await ensureProfileSeeded(session.access_token);
+      } catch (error) {
         if (active) {
           setErrorMessage(
             error instanceof Error
@@ -132,48 +86,91 @@ export default function AuthPage() {
               : "프로필 초기화 중 오류가 발생했습니다."
           );
           setScreenMode("form");
-          void supabase.auth.signOut();
+          await supabase.auth.signOut();
         }
-      });
-      if (!profileReady) return;
+        return;
+      } finally {
+        isFinalizingSessionRef.current = false;
+      }
 
-      const completed = session.user.user_metadata?.onboarding_completed === true;
-      if (completed) {
+      if (!active) return;
+      if (session.user.user_metadata?.onboarding_completed === true) {
         router.replace("/");
         return;
       }
       setScreenMode("onboarding");
     };
 
+    const syncScreenFromSession = async () => {
+      if (typeof window !== "undefined") {
+        if (isProcessingCallbackRef.current) return;
+        isProcessingCallbackRef.current = true;
+
+        const currentUrl = new URL(window.location.href);
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        const hashAccessToken = hashParams.get("access_token");
+        const hashRefreshToken = hashParams.get("refresh_token");
+        const authCode = currentUrl.searchParams.get("code");
+        const oauthError =
+          currentUrl.searchParams.get("error_description") ??
+          hashParams.get("error_description");
+
+        try {
+          // Backward compatibility: if implicit-flow tokens arrive in URL hash,
+          // immediately exchange them into client session.
+          if (authCode) {
+            const { error } = await supabase.auth.exchangeCodeForSession(authCode);
+            if (error && active) {
+              setErrorMessage(error.message);
+            }
+          } else if (hashAccessToken && hashRefreshToken) {
+            const { error } = await supabase.auth.setSession({
+              access_token: hashAccessToken,
+              refresh_token: hashRefreshToken,
+            });
+            if (error && active) {
+              setErrorMessage(error.message);
+            }
+          }
+        } finally {
+          // Always clear callback params/hash to avoid repeated processing.
+          currentUrl.searchParams.delete("code");
+          currentUrl.searchParams.delete("state");
+          currentUrl.searchParams.delete("error");
+          currentUrl.searchParams.delete("error_code");
+          currentUrl.searchParams.delete("error_description");
+          currentUrl.searchParams.delete("provider_token");
+          currentUrl.searchParams.delete("provider_refresh_token");
+          currentUrl.searchParams.delete("refresh_token");
+          currentUrl.searchParams.delete("access_token");
+          currentUrl.searchParams.delete("expires_in");
+          currentUrl.searchParams.delete("expires_at");
+          currentUrl.searchParams.delete("token_type");
+          currentUrl.searchParams.delete("sb");
+
+          const nextSearch = currentUrl.searchParams.toString();
+          window.history.replaceState(
+            {},
+            "",
+            `${currentUrl.pathname}${nextSearch ? `?${nextSearch}` : ""}`
+          );
+          isProcessingCallbackRef.current = false;
+        }
+
+        if (oauthError && active) {
+          setErrorMessage(decodeURIComponent(oauthError.replace(/\+/g, " ")));
+        }
+      }
+
+      const { data } = await supabase.auth.getSession();
+      await finalizeSession(data.session);
+    };
+
     void syncScreenFromSession();
 
     const listener = supabase.auth.onAuthStateChange((_event, session) => {
       if (!active) return;
-      if (!session) {
-        setScreenMode("form");
-        return;
-      }
-      void (async () => {
-        let profileReady = true;
-        await ensureProfileSeeded(session.access_token).catch((error) => {
-          profileReady = false;
-          if (active) {
-            setErrorMessage(
-              error instanceof Error
-                ? error.message
-                : "프로필 초기화 중 오류가 발생했습니다."
-            );
-            setScreenMode("form");
-            void supabase.auth.signOut();
-          }
-        });
-        if (!profileReady || !active) return;
-        if (session.user.user_metadata?.onboarding_completed === true) {
-          router.replace("/");
-          return;
-        }
-        setScreenMode("onboarding");
-      })();
+      void finalizeSession(session);
     });
 
     return () => {
@@ -275,6 +272,7 @@ export default function AuthPage() {
 
     try {
       setIsSocialSubmitting(true);
+      setSocialProvider(provider);
       const redirectTo = getOAuthRedirectTo();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -312,6 +310,7 @@ export default function AuthPage() {
       );
     } finally {
       setIsSocialSubmitting(false);
+      setSocialProvider(null);
     }
   };
 
@@ -336,10 +335,25 @@ export default function AuthPage() {
         {mode === "signin" ? "로그인해서 식단을 관리하세요." : "회원가입 후 바로 시작할 수 있어요."}
       </p>
 
+      {isEnvMissing ? (
+        <div className="mt-5 text-[14px] text-[#d34a4a]">
+          `.env.local`에 `NEXT_PUBLIC_SUPABASE_ANON_KEY`를 추가해주세요.
+        </div>
+      ) : null}
+
+      {errorMessage ? (
+        <p className="mt-5 text-[14px] text-[#d34a4a]">{errorMessage}</p>
+      ) : null}
+
+      {noticeMessage ? (
+        <p className="mt-5 text-[14px] text-[#4a8d6a]">{noticeMessage}</p>
+      ) : null}
+
       <div className="mt-7 grid grid-cols-2 rounded-full bg-[#dce3e0] p-1">
         <button
           type="button"
           onClick={() => setMode("signin")}
+          disabled={isBusy}
           className={`h-10 rounded-full text-[15px] font-semibold ${
             mode === "signin" ? "bg-[#57bf8e] text-white" : "text-[#69726f]"
           }`}
@@ -349,6 +363,7 @@ export default function AuthPage() {
         <button
           type="button"
           onClick={() => setMode("signup")}
+          disabled={isBusy}
           className={`h-10 rounded-full text-[15px] font-semibold ${
             mode === "signup" ? "bg-[#57bf8e] text-white" : "text-[#69726f]"
           }`}
@@ -373,26 +388,15 @@ export default function AuthPage() {
           className="h-12 w-full rounded-2xl border border-[#cbd5d1] bg-[#f7faf8] px-4 text-[16px] text-[#232a28] outline-none"
         />
 
-        {isEnvMissing ? (
-          <p className="text-[14px] text-[#d34a4a]">
-            `.env.local`에 `NEXT_PUBLIC_SUPABASE_ANON_KEY`를 추가해주세요.
-          </p>
-        ) : null}
-
-        {errorMessage ? (
-          <p className="text-[14px] text-[#d34a4a]">{errorMessage}</p>
-        ) : null}
-        {noticeMessage ? (
-          <p className="text-[14px] text-[#4a8d6a]">{noticeMessage}</p>
-        ) : null}
-
         <button
           type="submit"
-          disabled={isSubmitting || isSocialSubmitting}
+          disabled={isBusy}
           className="mt-2 h-12 w-full rounded-2xl bg-[#57bf8e] text-[17px] font-semibold text-white disabled:opacity-60"
         >
           {isSubmitting
-            ? "처리중..."
+            ? mode === "signin"
+              ? "로그인 중..."
+              : "회원가입 중..."
             : mode === "signin"
               ? "로그인"
               : "회원가입"}
@@ -408,19 +412,23 @@ export default function AuthPage() {
       <div className="space-y-2.5">
         <button
           type="button"
-          disabled={isSubmitting || isSocialSubmitting}
+          disabled={isBusy}
           onClick={() => void signInWithSocial("kakao")}
           className="h-12 w-full rounded-2xl bg-[#fee500] text-[16px] font-semibold text-[#1f2725] disabled:opacity-60"
         >
-          카카오톡으로 로그인하기
+          {isSocialSubmitting && socialProvider === "kakao"
+            ? "카카오 연결 중..."
+            : "카카오톡으로 로그인하기"}
         </button>
         <button
           type="button"
-          disabled={isSubmitting || isSocialSubmitting}
+          disabled={isBusy}
           onClick={() => void signInWithSocial("google")}
           className="h-12 w-full rounded-2xl border border-[#cbd5d1] bg-white text-[16px] font-semibold text-[#1f2725] disabled:opacity-60"
         >
-          구글로 로그인하기
+          {isSocialSubmitting && socialProvider === "google"
+            ? "구글 연결 중..."
+            : "구글로 로그인하기"}
         </button>
       </div>
     </main>

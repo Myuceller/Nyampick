@@ -194,15 +194,6 @@ function MealEditPageContent() {
     if (selectedNames.size === 0) return;
     const selected = Array.from(selectedNames);
     addMenusToTarget(selected);
-    setRecentSearches((prev) => {
-      const next = [...prev];
-      for (const name of selected) {
-        const idx = next.indexOf(name);
-        if (idx !== -1) next.splice(idx, 1);
-        next.unshift(name);
-      }
-      return next.slice(0, 8);
-    });
     setSelectedNames(new Set());
     setSearch("");
   };
@@ -356,9 +347,9 @@ function MealEditPageContent() {
             />
           </div>
 
-          <div className="px-4 pt-3">
+          <div className="px-4 pt-4">
             <p className="text-[16px] text-[#7f8885]">최근 검색어</p>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-2.5">
               {recentSearches.map((tag) => (
                 <button
                   key={tag}
@@ -372,7 +363,7 @@ function MealEditPageContent() {
             </div>
           </div>
 
-          <div className="mt-3 border-b border-[#d2d8d6] px-4">
+          <div className="mt-6 border-b border-[#d2d8d6] px-4">
             <div className="grid grid-cols-3 text-center">
               <button
                 type="button"
@@ -413,7 +404,7 @@ function MealEditPageContent() {
             </div>
           </div>
 
-          <div className="flex gap-2 px-4 pt-3">
+          <div className="flex gap-2 px-4 pt-4">
             {[
               { key: "all", label: "전체" },
               { key: "recipe", label: "내 레시피" },
@@ -438,7 +429,7 @@ function MealEditPageContent() {
             ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 pt-3">
+          <div className="flex-1 overflow-y-auto px-4 pt-5">
             {filteredMenus.length === 0 ? (
               <p className="py-8 text-center text-[16px] font-medium text-[#7f8885]">
                 {menuTab === "freq" ? "자주 먹은 메뉴가 없어요." : "표시할 메뉴가 없어요."}
@@ -447,12 +438,14 @@ function MealEditPageContent() {
               filteredMenus.map((menu) => {
                 const selected = selectedNames.has(menu);
                 return (
-                  <div key={menu} className="flex items-center justify-between border-b border-[#d5dbd9] py-3">
+                  <div
+                    key={menu}
+                    className="flex items-center justify-between border-b border-[#d5dbd9] py-4"
+                  >
                     <span className="text-[20px] text-[#232a28]">{menu}</span>
                     <button
                       type="button"
                       onClick={() => {
-                        addRecentSearch(menu);
                         setSelectedNames((prev) => {
                           const next = new Set(prev);
                           if (next.has(menu)) next.delete(menu);
@@ -462,7 +455,7 @@ function MealEditPageContent() {
                       }}
                       className={cn(
                         "flex h-7 w-7 items-center justify-center rounded-full text-white",
-                        selected ? "bg-[#57bf8e]" : "bg-[#a9dcca]"
+                        selected ? "bg-[#57bf8e]" : "bg-[#dcefe6] text-[#79b79a]"
                       )}
                     >
                       <Plus className="h-5 w-5" />

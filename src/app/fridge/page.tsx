@@ -8,6 +8,7 @@ import { AppButton } from "@/components/ui/app-button";
 import { CategoryChipFilter } from "@/components/ui/category-chip-filter";
 import { AppSearchInput } from "@/components/ui/app-search-input";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { FridgePageSkeleton } from "@/components/features/fridge/fridge-page-skeleton";
 import { authedFetch } from "@/lib/authed-fetch";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,7 @@ interface ReceiptCandidate {
 }
 
 type ReceiptStage = "capture" | "scanning" | "result";
+type ReceiptScanPhase = "uploading" | "analyzing" | "finalizing";
 type AddPopupStage = "input" | "review";
 
 interface DraftIngredient {
@@ -92,6 +94,10 @@ const CATEGORY_TEXT_COLOR: Record<Exclude<FridgeSectionKey, "cube">, string> = {
   other: "text-[#7d8682]",
 };
 
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export default function FridgePage() {
   const router = useRouter();
   const [fridgeItems, setFridgeItems] = useState<FridgeItem[]>([]);
@@ -107,12 +113,42 @@ export default function FridgePage() {
   const [draftIngredients, setDraftIngredients] = useState<DraftIngredient[]>([]);
   const [isScanningReceipt, setIsScanningReceipt] = useState(false);
   const [receiptStage, setReceiptStage] = useState<ReceiptStage>("capture");
+  const [receiptScanPhase, setReceiptScanPhase] = useState<ReceiptScanPhase>("uploading");
   const [receiptScanId, setReceiptScanId] = useState("");
   const [receiptCandidates, setReceiptCandidates] = useState<ReceiptCandidate[]>([]);
   const [selectedReceiptIds, setSelectedReceiptIds] = useState<Set<string>>(new Set());
   const [isConfirmingReceipt, setIsConfirmingReceipt] = useState(false);
+  const [receiptScanProgress, setReceiptScanProgress] = useState(0);
   const albumInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!isScanningReceipt) {
+      setReceiptScanProgress(0);
+      return;
+    }
+
+    const target =
+      receiptScanPhase === "uploading"
+        ? 26
+        : receiptScanPhase === "analyzing"
+          ? 78
+          : 96;
+
+    const timer = window.setInterval(() => {
+      setReceiptScanProgress((current) => {
+        if (current >= target) {
+          window.clearInterval(timer);
+          return current;
+        }
+
+        const next = current + Math.max(1, Math.ceil((target - current) / 6));
+        return Math.min(next, target);
+      });
+    }, 90);
+
+    return () => window.clearInterval(timer);
+  }, [isScanningReceipt, receiptScanPhase]);
 
   const loadFridgeItems = async () => {
     try {
@@ -262,10 +298,19 @@ export default function FridgePage() {
   const handleReceiptFile = async (file: File | null) => {
     if (!file) return;
 
+    let analyzeTimer: ReturnType<typeof setTimeout> | null = null;
+
     try {
       setIsScanningReceipt(true);
       setReceiptStage("scanning");
+      setReceiptScanPhase("uploading");
+      analyzeTimer = setTimeout(() => {
+        setReceiptScanPhase((current) =>
+          current === "uploading" ? "analyzing" : current
+        );
+      }, 700);
       const imageDataUrl = await fileToDataUrl(file);
+      setReceiptScanPhase("analyzing");
 
       const scanRes = await authedFetch("/api/fridge/receipt-scan", {
         method: "POST",
@@ -275,6 +320,10 @@ export default function FridgePage() {
           fileName: file.name,
         }),
       });
+      if (analyzeTimer) {
+        clearTimeout(analyzeTimer);
+        analyzeTimer = null;
+      }
       const scanJson = (await scanRes.json().catch(() => ({}))) as {
         scanId?: string;
         candidates?: ReceiptCandidate[];
@@ -283,6 +332,8 @@ export default function FridgePage() {
       if (!scanRes.ok || !scanJson.scanId) {
         throw new Error(scanJson.message ?? "영수증 스캔에 실패했습니다.");
       }
+      setReceiptScanPhase("finalizing");
+      await wait(250);
 
       const candidates = scanJson.candidates ?? [];
       if (candidates.length === 0) {
@@ -300,7 +351,11 @@ export default function FridgePage() {
       toast.error(message);
       setReceiptStage("capture");
     } finally {
+      if (analyzeTimer) {
+        clearTimeout(analyzeTimer);
+      }
       setIsScanningReceipt(false);
+      setReceiptScanPhase("uploading");
       if (albumInputRef.current) albumInputRef.current.value = "";
       if (cameraInputRef.current) cameraInputRef.current.value = "";
     }
@@ -309,6 +364,7 @@ export default function FridgePage() {
   const closeReceiptPopup = () => {
     setIsReceiptPopupOpen(false);
     setReceiptStage("capture");
+    setReceiptScanPhase("uploading");
     setReceiptScanId("");
     setReceiptCandidates([]);
     setSelectedReceiptIds(new Set());
@@ -365,6 +421,20 @@ export default function FridgePage() {
     }
   };
 
+  const receiptStageLabel =
+    receiptScanPhase === "uploading"
+      ? "요청 전송중"
+      : receiptScanPhase === "analyzing"
+        ? "영수증 분석 중"
+        : "결과 정리중";
+
+  const receiptStageDescription =
+    receiptScanPhase === "uploading"
+      ? "이미지를 업로드하고 있어요"
+      : receiptScanPhase === "analyzing"
+        ? "재료를 인식하고 있어요"
+        : "스캔 결과를 정리하고 있어요";
+
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-[480px] flex-col bg-white pb-24">
       <main className="flex-1 px-4 pt-12">
@@ -395,10 +465,11 @@ export default function FridgePage() {
         />
 
         <div className="-mx-4 mt-4 px-4 pb-40 pt-5">
-          <div className="space-y-7">
-            {isLoading ? (
-              <p className="text-center text-[18px] text-[#6f7875]">불러오는 중...</p>
-            ) : filteredSections.map((section) => (
+          {isLoading ? (
+            <FridgePageSkeleton />
+          ) : (
+            <div className="space-y-7">
+              {filteredSections.map((section) => (
               <section key={section.key}>
                 <h2 className="mb-3 text-[16px] font-bold text-[#2a4a3c]">
                   {section.emoji} {section.label}
@@ -421,8 +492,9 @@ export default function FridgePage() {
                   ))}
                 </div>
               </section>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {!isLoading && filteredSections.length === 0 ? (
             <p className="mt-8 text-center text-[18px] text-[#6f7875]">
@@ -640,16 +712,18 @@ export default function FridgePage() {
                   <button
                     type="button"
                     onClick={() => albumInputRef.current?.click()}
+                    disabled={isScanningReceipt}
                     className="h-12 rounded-2xl bg-[#e5e7e6] text-[16px] font-semibold text-[#7f8885]"
                   >
-                    앨범에서
+                    {isScanningReceipt ? "처리 중..." : "앨범에서"}
                   </button>
                   <button
                     type="button"
                     onClick={() => cameraInputRef.current?.click()}
+                    disabled={isScanningReceipt}
                     className="h-12 rounded-2xl bg-[#57bf8e] text-[16px] font-semibold text-white"
                   >
-                    촬영하기
+                    {isScanningReceipt ? "처리 중..." : "촬영하기"}
                   </button>
                 </div>
               </>
@@ -672,8 +746,21 @@ export default function FridgePage() {
                   <div className="mb-6 flex h-28 w-28 items-center justify-center rounded-[18px] bg-[#e8eeeb]">
                     <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#98aba2] border-t-[#57bf8e]" />
                   </div>
-                  <p className="text-[35px] font-bold text-[#1f2725]">영수증 분석 중</p>
-                  <p className="mt-1 text-[16px] text-[#8a9491]">재료를 인식하고 있어요</p>
+                  <p className="text-[35px] font-bold text-[#1f2725]">{receiptStageLabel}</p>
+                  <p className="mt-1 text-[16px] text-[#8a9491]">{receiptStageDescription}</p>
+                  <div className="mt-6 w-full max-w-[260px]">
+                    <div className="h-2.5 overflow-hidden rounded-full bg-[#dce8e2]">
+                      <div
+                        className="h-full rounded-full bg-[#57bf8e] transition-[width] duration-300 ease-out"
+                        style={{ width: `${receiptScanProgress}%` }}
+                      />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-[13px] font-semibold text-[#4f7f69]">
+                      <span>업로드</span>
+                      <span>분석</span>
+                      <span>정리</span>
+                    </div>
+                  </div>
                 </div>
               </>
             ) : null}

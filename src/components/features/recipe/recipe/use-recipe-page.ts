@@ -14,6 +14,8 @@ import {
   TasteLevel,
 } from "./types";
 
+export type AiGenerationStage = "requesting" | "analyzing" | "finalizing";
+
 interface SavedRecipeApiItem {
   id: string;
   title: string;
@@ -57,6 +59,10 @@ function normalizeTaste(taste: string | undefined): TasteLevel {
   return "보통이에요";
 }
 
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function useRecipePage() {
   const [recipes, setRecipes] = useState<RecipeItem[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>("all");
@@ -72,6 +78,8 @@ export function useRecipePage() {
   const [aiSheetView, setAiSheetView] = useState<AiSheetView>("select");
   const [isLoadingFridge, setIsLoadingFridge] = useState(false);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [aiGenerationStage, setAiGenerationStage] =
+    useState<AiGenerationStage>("requesting");
   const [fridgeItems, setFridgeItems] = useState<FridgeItem[]>([]);
   const [ingredientKeyword, setIngredientKeyword] = useState("");
   const [selectedIngredientIds, setSelectedIngredientIds] = useState<Set<string>>(new Set());
@@ -86,6 +94,8 @@ export function useRecipePage() {
   const [editLink, setEditLink] = useState("");
   const [editMemo, setEditMemo] = useState("");
   const [editTaste, setEditTaste] = useState<TasteLevel>("보통이에요");
+  const [isSubmittingCustomRecipe, setIsSubmittingCustomRecipe] = useState(false);
+  const [isSavingEditedRecipe, setIsSavingEditedRecipe] = useState(false);
 
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const deferredIngredientKeyword = useDeferredValue(ingredientKeyword);
@@ -249,7 +259,7 @@ export function useRecipePage() {
 
   const saveEditedRecipe = async () => {
     const trimmedName = editName.trim();
-    if (!editingRecipeId || trimmedName.length === 0) return;
+    if (!editingRecipeId || trimmedName.length === 0 || isSavingEditedRecipe) return;
     const id = editingRecipeId;
     const patch = {
       title: trimmedName,
@@ -263,31 +273,36 @@ export function useRecipePage() {
         .filter((line) => line.length > 0),
     };
 
-    setRecipes((prev) =>
-      prev.map((recipe) =>
-        recipe.id === id
-          ? {
-              ...recipe,
-              ...patch,
-            }
-          : recipe
-      )
-    );
+    try {
+      setIsSavingEditedRecipe(true);
+      setRecipes((prev) =>
+        prev.map((recipe) =>
+          recipe.id === id
+            ? {
+                ...recipe,
+                ...patch,
+              }
+            : recipe
+        )
+      );
 
-    const res = await authedFetch("/api/recipes/saved", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, ...patch }),
-    });
+      const res = await authedFetch("/api/recipes/saved", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...patch }),
+      });
 
-    if (!res.ok) {
-      await loadSavedRecipes();
-      const json = (await res.json().catch(() => ({}))) as { message?: string };
-      toast.error(json.message ?? "레시피 수정에 실패했습니다.");
-      return;
+      if (!res.ok) {
+        await loadSavedRecipes();
+        const json = (await res.json().catch(() => ({}))) as { message?: string };
+        toast.error(json.message ?? "레시피 수정에 실패했습니다.");
+        return;
+      }
+
+      setEditingRecipeId(null);
+    } finally {
+      setIsSavingEditedRecipe(false);
     }
-
-    setEditingRecipeId(null);
   };
 
   const loadFridgeItemsForAi = async () => {
@@ -405,6 +420,8 @@ export function useRecipePage() {
   };
 
   const requestAiRecipeFromSelection = async () => {
+    if (isGeneratingAi) return;
+
     const selectedNames = fridgeItems
       .filter((item) => selectedIngredientIds.has(item.id))
       .map((item) => item.name);
@@ -414,17 +431,33 @@ export function useRecipePage() {
       return;
     }
 
+    let analyzeTimer: ReturnType<typeof setTimeout> | null = null;
+
     try {
       setIsGeneratingAi(true);
+      setAiGenerationStage("requesting");
+      analyzeTimer = setTimeout(() => {
+        setAiGenerationStage((current) =>
+          current === "requesting" ? "analyzing" : current
+        );
+      }, 700);
+
       const res = await authedFetch("/api/recipes/recommendations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ingredients: selectedNames, limit: 3 }),
       });
+
+      if (analyzeTimer) {
+        clearTimeout(analyzeTimer);
+        analyzeTimer = null;
+      }
+
       const json = (await res.json().catch(() => ({}))) as RecommendationsResponse;
       if (!res.ok) {
         throw new Error(json.message ?? "레시피 추천 생성에 실패했습니다.");
       }
+      setAiGenerationStage("analyzing");
 
       const recommended = (json.recommendations ?? [])
         .filter(
@@ -467,6 +500,8 @@ export function useRecipePage() {
         throw new Error("추천 결과가 비어 있습니다. 재료를 바꿔 다시 시도해주세요.");
       }
 
+      setAiGenerationStage("finalizing");
+      await wait(250);
       setGeneratedRecipes(recommended);
       setSavedGeneratedIds(new Set());
       setAiSheetView("result");
@@ -475,15 +510,20 @@ export function useRecipePage() {
         error instanceof Error ? error.message : "레시피 추천 생성에 실패했습니다.";
       toast.error(message);
     } finally {
+      if (analyzeTimer) {
+        clearTimeout(analyzeTimer);
+      }
       setIsGeneratingAi(false);
+      setAiGenerationStage("requesting");
     }
   };
 
   const submitCustomRecipe = async () => {
     const title = newTitle.trim();
-    if (!title) return;
+    if (!title || isSubmittingCustomRecipe) return;
 
     try {
+      setIsSubmittingCustomRecipe(true);
       const res = await authedFetch("/api/recipes/saved", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -533,6 +573,8 @@ export function useRecipePage() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "레시피 저장에 실패했습니다.";
       toast.error(message);
+    } finally {
+      setIsSubmittingCustomRecipe(false);
     }
   };
 
@@ -564,6 +606,7 @@ export function useRecipePage() {
     setNewMemo,
     newTaste,
     setNewTaste,
+    isSubmittingCustomRecipe,
     submitCustomRecipe,
 
     editingRecipeId,
@@ -578,12 +621,14 @@ export function useRecipePage() {
     setEditMemo,
     editTaste,
     setEditTaste,
+    isSavingEditedRecipe,
     saveEditedRecipe,
 
     openAiSheet,
     aiSheetView,
     setAiSheetView,
     isGeneratingAi,
+    aiGenerationStage,
     isLoadingFridge,
     ingredientKeyword,
     setIngredientKeyword,
