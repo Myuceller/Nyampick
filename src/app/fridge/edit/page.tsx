@@ -8,6 +8,7 @@ import { AppButton } from "@/components/ui/app-button";
 import { AppSearchInput } from "@/components/ui/app-search-input";
 import { CategoryChipFilter } from "@/components/ui/category-chip-filter";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
+import { FridgeEditSkeleton } from "@/components/features/fridge/fridge-edit-skeleton";
 import { authedFetch } from "@/lib/authed-fetch";
 import { cn } from "@/lib/utils";
 
@@ -396,7 +397,7 @@ export default function FridgeEditPage() {
 
       <div className="flex-1 overflow-y-auto bg-[#eef3f0] px-4 pb-28 pt-4">
         {isLoading ? (
-          <p className="text-center text-[18px] text-[#6f7875]">불러오는 중...</p>
+          <FridgeEditSkeleton />
         ) : visibleSectionOrder.length === 0 ? (
           <p className="text-center text-[18px] text-[#6f7875]">표시할 재료가 없습니다.</p>
         ) : (

@@ -12,6 +12,11 @@ interface MealEditState {
   setMode: (mode: MealEditMode) => void;
   openAddForMeal: (mealType: MealType) => void;
   removeItem: (mealType: MealType, entryId: string) => void;
+  updateItemQuantity: (
+    mealType: MealType,
+    entryId: string,
+    quantity: string | undefined
+  ) => void;
   addMenusToTarget: (menuNames: string[]) => void;
 }
 
@@ -67,6 +72,20 @@ export const useMealEditStore = create<MealEditState>((set, get) => ({
         [mealType]: state.draft[mealType].filter((entry) => entry.id !== entryId),
       },
     })),
+  updateItemQuantity: (mealType, entryId, quantity) =>
+    set((state) => ({
+      draft: {
+        ...state.draft,
+        [mealType]: state.draft[mealType].map((entry) =>
+          entry.id === entryId
+            ? {
+                ...entry,
+                quantity,
+              }
+            : entry
+        ),
+      },
+    })),
   addMenusToTarget: (menuNames) => {
     if (menuNames.length === 0) return;
     const { targetMealType } = get();
@@ -85,4 +104,3 @@ export const useMealEditStore = create<MealEditState>((set, get) => ({
     });
   },
 }));
-

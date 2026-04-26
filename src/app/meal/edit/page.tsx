@@ -47,6 +47,13 @@ function parseDateLabel(dateKey: string) {
   return `${month}월 ${day}일 ${dayOfWeek}요일의\n식단을 수정해요`;
 }
 
+function parseCubeCount(quantity?: string) {
+  if (!quantity) return 1;
+  const numeric = Number.parseInt(quantity, 10);
+  if (!Number.isInteger(numeric) || numeric <= 0) return 1;
+  return numeric;
+}
+
 function MealEditPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -59,6 +66,7 @@ function MealEditPageContent() {
   const setMode = useMealEditStore((state) => state.setMode);
   const openAddForMeal = useMealEditStore((state) => state.openAddForMeal);
   const removeItem = useMealEditStore((state) => state.removeItem);
+  const updateItemQuantity = useMealEditStore((state) => state.updateItemQuantity);
   const addMenusToTarget = useMealEditStore((state) => state.addMenusToTarget);
   const [search, setSearch] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -259,31 +267,69 @@ function MealEditPageContent() {
     <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-[#ffffff]">
       {mode === "edit" ? (
         <>
-          <div className="px-4 pb-4 pt-8">
-            <h1 className="whitespace-pre-line text-[24px] font-extrabold leading-tight text-[#1f2725]">
+          <div className="px-4 pb-4 pt-12">
+            <h1 className="whitespace-pre-line text-[24px] font-extrabold leading-[1.5] text-[#1f2725]">
               {parseDateLabel(date)}
             </h1>
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 pb-28">
-            <div className="space-y-5">
+            <div className="space-y-7">
               {MEAL_TYPES.map((mealType) => (
                 <section
                   key={mealType}
-                  className="rounded-[14px] border border-[#d4d9d7] bg-[#ffffff] px-3.5 py-3.5"
+                  className="rounded-[14px] border border-[#d4d9d7] bg-[#ffffff] px-4 py-4"
                 >
-                  <h2 className="mb-2 text-[18px] font-medium text-[#1f2725]">{MEAL_LABELS[mealType]}</h2>
-                  <div className="space-y-1.5">
+                  <h2
+                    className={cn(
+                      "mb-3 text-[18px] text-[#1f2725]",
+                      mealType === "snack" ? "font-semibold" : "font-extrabold"
+                    )}
+                  >
+                    {MEAL_LABELS[mealType]}
+                  </h2>
+                  <div className="space-y-2.5">
                     {draft[mealType].map((entry: MealEntry) => (
                       <div key={entry.id} className="flex items-center justify-between">
                         <span className="ml-2 text-[16px] font-normal text-[#2a312f]">{entry.menuName}</span>
-                        <button
-                          type="button"
-                          onClick={() => removeItem(mealType, entry.id)}
-                          className="rounded-md p-1 text-[#1f2523] hover:bg-[#e6ece9]"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          {entry.menuName.includes("큐브") ? (
+                            <div className="flex items-center gap-1 rounded-lg border border-[#cdd7d3] bg-[#f1f4f3] px-1.5 py-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const next = Math.max(1, parseCubeCount(entry.quantity) - 1);
+                                  updateItemQuantity(mealType, entry.id, `${next}개`);
+                                }}
+                                className="flex h-6 w-6 items-center justify-center rounded-md text-[#55625d] hover:bg-[#e4ebe8]"
+                                aria-label="큐브 개수 감소"
+                              >
+                                -
+                              </button>
+                              <span className="min-w-[38px] text-center text-[14px] font-semibold text-[#2b322f]">
+                                {parseCubeCount(entry.quantity)}개
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const next = parseCubeCount(entry.quantity) + 1;
+                                  updateItemQuantity(mealType, entry.id, `${next}개`);
+                                }}
+                                className="flex h-6 w-6 items-center justify-center rounded-md text-[#55625d] hover:bg-[#e4ebe8]"
+                                aria-label="큐브 개수 증가"
+                              >
+                                +
+                              </button>
+                            </div>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => removeItem(mealType, entry.id)}
+                            className="rounded-md p-1 text-[#1f2523] hover:bg-[#e6ece9]"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -363,7 +409,7 @@ function MealEditPageContent() {
             </div>
           </div>
 
-          <div className="mt-6 border-b border-[#d2d8d6] px-4">
+          <div className="mt-10 border-b border-[#d2d8d6] px-4">
             <div className="grid grid-cols-3 text-center">
               <button
                 type="button"
@@ -429,45 +475,47 @@ function MealEditPageContent() {
             ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 pt-5">
+          <div className="flex-1 overflow-y-auto px-4 pt-6">
             {filteredMenus.length === 0 ? (
               <p className="py-8 text-center text-[16px] font-medium text-[#7f8885]">
                 {menuTab === "freq" ? "자주 먹은 메뉴가 없어요." : "표시할 메뉴가 없어요."}
               </p>
             ) : (
-              filteredMenus.map((menu) => {
-                const selected = selectedNames.has(menu);
-                return (
-                  <div
-                    key={menu}
-                    className="flex items-center justify-between border-b border-[#d5dbd9] py-4"
-                  >
-                    <span className="text-[20px] text-[#232a28]">{menu}</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedNames((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(menu)) next.delete(menu);
-                          else next.add(menu);
-                          return next;
-                        });
-                      }}
-                      className={cn(
-                        "flex h-7 w-7 items-center justify-center rounded-full text-white",
-                        selected ? "bg-[#57bf8e]" : "bg-[#dcefe6] text-[#79b79a]"
-                      )}
+              <div className="space-y-3">
+                {filteredMenus.map((menu) => {
+                  const selected = selectedNames.has(menu);
+                  return (
+                    <div
+                      key={menu}
+                      className="flex items-center justify-between rounded-[12px] border border-[#d5dbd9] bg-white px-3.5 py-4"
                     >
-                      <Plus className="h-5 w-5" />
-                    </button>
-                  </div>
-                );
-              })
+                      <span className="text-[20px] text-[#232a28]">{menu}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedNames((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(menu)) next.delete(menu);
+                            else next.add(menu);
+                            return next;
+                          });
+                        }}
+                        className={cn(
+                          "flex h-7 w-7 items-center justify-center rounded-full text-white",
+                          selected ? "bg-[#57bf8e]" : "bg-[#dcefe6] text-[#79b79a]"
+                        )}
+                      >
+                        <Plus className="h-5 w-5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
 
-          <div className="px-4 pb-4 pt-2">
-            <p className="mb-2 text-center text-sm text-[#97a09d]">
+          <div className="px-4 pb-4 pt-3">
+            <p className="mb-4 text-center text-sm text-[#97a09d]">
               현재 선택한 메뉴는 {MEAL_LABELS[targetMealType]}에 추가돼요
             </p>
             <AppButton

@@ -9,6 +9,12 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 type AuthMode = "signin" | "signup";
 type ScreenMode = "loading" | "form" | "onboarding";
 type SocialProvider = "google" | "kakao" | null;
+type LoadingPhase =
+  | "session"
+  | "oauth"
+  | "profile"
+  | "redirect"
+  | "onboarding";
 
 function getOAuthRedirectTo() {
   if (typeof window === "undefined") return undefined;
@@ -40,6 +46,60 @@ async function ensureProfileSeeded(accessToken: string) {
   }
 }
 
+function toFriendlyAuthErrorMessage(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return "인증 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+  }
+
+  const raw = error.message || "";
+  const normalized = raw.toLowerCase();
+
+  if (
+    normalized.includes("invalid login credentials") ||
+    normalized.includes("invalid_credentials")
+  ) {
+    return "이메일 또는 비밀번호가 올바르지 않습니다.";
+  }
+
+  if (normalized.includes("email not confirmed")) {
+    return "이메일 인증 후 로그인해주세요.";
+  }
+
+  if (normalized.includes("too many requests") || normalized.includes("rate limit")) {
+    return "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.";
+  }
+
+  if (normalized.includes("network") || normalized.includes("failed to fetch")) {
+    return "네트워크 연결이 불안정합니다. 인터넷 상태를 확인해주세요.";
+  }
+
+  if (normalized.includes("unable to exchange external code")) {
+    return "소셜 로그인 인증 코드 처리에 실패했습니다. 다시 시도해주세요.";
+  }
+
+  if (normalized.includes("duplicate_email_account")) {
+    return "이미 같은 이메일로 가입된 계정이 있습니다. 기존 로그인 방식을 사용해주세요.";
+  }
+
+  return raw;
+}
+
+function getLoadingPhaseMessage(phase: LoadingPhase) {
+  switch (phase) {
+    case "oauth":
+      return "소셜 로그인 인증을 확인하고 있어요...";
+    case "profile":
+      return "프로필 정보를 준비하고 있어요...";
+    case "redirect":
+      return "메인 화면으로 이동하고 있어요...";
+    case "onboarding":
+      return "시작 설정을 불러오고 있어요...";
+    case "session":
+    default:
+      return "로그인 상태를 확인하고 있어요...";
+  }
+}
+
 export default function AuthPage() {
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>("signin");
@@ -52,9 +112,24 @@ export default function AuthPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
   const [isEnvMissing, setIsEnvMissing] = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState<LoadingPhase>("session");
+  const [showLoadingFallback, setShowLoadingFallback] = useState(false);
   const isProcessingCallbackRef = useRef(false);
   const isFinalizingSessionRef = useRef(false);
   const isBusy = isSubmitting || isSocialSubmitting;
+
+  useEffect(() => {
+    if (screenMode !== "loading") {
+      setShowLoadingFallback(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowLoadingFallback(true);
+    }, 7000);
+
+    return () => window.clearTimeout(timer);
+  }, [screenMode]);
 
   useEffect(() => {
     let active = true;
@@ -70,21 +145,19 @@ export default function AuthPage() {
     const finalizeSession = async (session: Session | null) => {
       if (!active) return;
       if (!session) {
+        setLoadingPhase("session");
         setScreenMode("form");
         return;
       }
       if (isFinalizingSessionRef.current) return;
       isFinalizingSessionRef.current = true;
+      setLoadingPhase("profile");
 
       try {
         await ensureProfileSeeded(session.access_token);
       } catch (error) {
         if (active) {
-          setErrorMessage(
-            error instanceof Error
-              ? error.message
-              : "프로필 초기화 중 오류가 발생했습니다."
-          );
+          setErrorMessage(toFriendlyAuthErrorMessage(error));
           setScreenMode("form");
           await supabase.auth.signOut();
         }
@@ -95,9 +168,11 @@ export default function AuthPage() {
 
       if (!active) return;
       if (session.user.user_metadata?.onboarding_completed === true) {
+        setLoadingPhase("redirect");
         router.replace("/");
         return;
       }
+      setLoadingPhase("onboarding");
       setScreenMode("onboarding");
     };
 
@@ -119,17 +194,19 @@ export default function AuthPage() {
           // Backward compatibility: if implicit-flow tokens arrive in URL hash,
           // immediately exchange them into client session.
           if (authCode) {
+            setLoadingPhase("oauth");
             const { error } = await supabase.auth.exchangeCodeForSession(authCode);
             if (error && active) {
-              setErrorMessage(error.message);
+              setErrorMessage(toFriendlyAuthErrorMessage(error));
             }
           } else if (hashAccessToken && hashRefreshToken) {
+            setLoadingPhase("oauth");
             const { error } = await supabase.auth.setSession({
               access_token: hashAccessToken,
               refresh_token: hashRefreshToken,
             });
             if (error && active) {
-              setErrorMessage(error.message);
+              setErrorMessage(toFriendlyAuthErrorMessage(error));
             }
           }
         } finally {
@@ -158,10 +235,15 @@ export default function AuthPage() {
         }
 
         if (oauthError && active) {
-          setErrorMessage(decodeURIComponent(oauthError.replace(/\+/g, " ")));
+          setErrorMessage(
+            toFriendlyAuthErrorMessage(
+              new Error(decodeURIComponent(oauthError.replace(/\+/g, " ")))
+            )
+          );
         }
       }
 
+      setLoadingPhase("session");
       const { data } = await supabase.auth.getSession();
       await finalizeSession(data.session);
     };
@@ -227,9 +309,7 @@ export default function AuthPage() {
         setMode("signin");
       }
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "인증 처리에 실패했습니다."
-      );
+      setErrorMessage(toFriendlyAuthErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -252,9 +332,7 @@ export default function AuthPage() {
       localStorage.setItem("nyampick:onboarding:done", "true");
       router.replace("/");
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "온보딩 완료 처리에 실패했습니다."
-      );
+      setErrorMessage(toFriendlyAuthErrorMessage(error));
     }
   };
 
@@ -305,9 +383,7 @@ export default function AuthPage() {
         );
         return;
       }
-      setErrorMessage(
-        error instanceof Error ? error.message : "소셜 로그인에 실패했습니다."
-      );
+      setErrorMessage(toFriendlyAuthErrorMessage(error));
     } finally {
       setIsSocialSubmitting(false);
       setSocialProvider(null);
@@ -316,8 +392,53 @@ export default function AuthPage() {
 
   if (screenMode === "loading") {
     return (
-      <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] items-center justify-center bg-[rgb(243,248,244)]">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#b8c5bf] border-t-[#57bf8e]" />
+      <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-[rgb(243,248,244)] px-5 pb-10 pt-14">
+        <div className="animate-pulse">
+          <div className="h-10 w-24 rounded-full bg-[#d7e1dc]" />
+          <div className="mt-3 h-5 w-56 rounded-full bg-[#dfe7e3]" />
+
+          <div className="mt-7 grid grid-cols-2 rounded-full bg-[#dce3e0] p-1">
+            <div className="h-10 rounded-full bg-[#cbd5d1]" />
+            <div className="h-10 rounded-full bg-transparent" />
+          </div>
+
+          <div className="mt-5 space-y-3">
+            <div className="h-12 w-full rounded-2xl bg-[#e2e9e5]" />
+            <div className="h-12 w-full rounded-2xl bg-[#e2e9e5]" />
+            <div className="mt-2 h-12 w-full rounded-2xl bg-[#d2ddd8]" />
+          </div>
+
+          <div className="my-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-[#d2dbd7]" />
+            <div className="h-3 w-10 rounded-full bg-[#dce4e0]" />
+            <div className="h-px flex-1 bg-[#d2dbd7]" />
+          </div>
+
+          <div className="space-y-2.5">
+            <div className="h-12 w-full rounded-2xl bg-[#ebd95f]" />
+            <div className="h-12 w-full rounded-2xl bg-[#e6ece9]" />
+          </div>
+        </div>
+
+        <p className="mt-5 text-[14px] text-[#5f6865]">{getLoadingPhaseMessage(loadingPhase)}</p>
+        {showLoadingFallback ? (
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="h-10 flex-1 rounded-xl bg-[#57bf8e] px-4 text-[14px] font-semibold text-white"
+            >
+              다시 시도
+            </button>
+            <button
+              type="button"
+              onClick={() => setScreenMode("form")}
+              className="h-10 flex-1 rounded-xl border border-[#c5cfcb] bg-white px-4 text-[14px] font-semibold text-[#4f5956]"
+            >
+              로그인 화면으로
+            </button>
+          </div>
+        ) : null}
       </main>
     );
   }

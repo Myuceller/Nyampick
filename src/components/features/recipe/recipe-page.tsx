@@ -65,13 +65,14 @@ export function RecipePage() {
         )}
       </div>
 
-      {!vm.isOverlayOpen && vm.activeTab !== "ai" ? (
+      {!vm.isOverlayOpen && !vm.shouldShowAiEmpty ? (
         <RecipeFloatingActions
           onAiClick={() => {
             vm.setActiveTab("ai");
             vm.openAiRecommendSheet();
           }}
           onAddClick={() => vm.setOpenAddForm(true)}
+          showAddButton={vm.activeTab !== "ai"}
         />
       ) : null}
 
