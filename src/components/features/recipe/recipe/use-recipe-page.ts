@@ -1,7 +1,18 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { authedFetch } from "@/lib/authed-fetch";
+import type { ApiMessageResponseDto } from "@/lib/dto/common";
+import type { FridgeItemsResponseDto } from "@/lib/dto/fridge";
+import type {
+  RecommendationsResponseDto,
+  SavedRecipeMutationResponseDto,
+  SavedRecipesResponseDto,
+} from "@/lib/dto/recipe";
 import { SECTION_META, SECTION_ORDER, sectionFromItem } from "./constants";
+import {
+  mapRecommendationDtoToGeneratedRecipe,
+  mapSavedRecipeDtoToItem,
+} from "./recipe-mappers";
 import {
   AiSheetView,
   FridgeItem,
@@ -9,55 +20,11 @@ import {
   FridgeSectionKey,
   GeneratedRecipe,
   RecipeItem,
-  RecipeSource,
   TabKey,
   TasteLevel,
 } from "./types";
 
 export type AiGenerationStage = "requesting" | "analyzing" | "finalizing";
-
-interface SavedRecipeApiItem {
-  id: string;
-  title: string;
-  subtitle?: string;
-  taste?: TasteLevel;
-  source?: RecipeSource;
-  favorite?: boolean;
-  link?: string;
-  memo?: string;
-}
-
-interface SavedRecipesResponse {
-  items?: SavedRecipeApiItem[];
-  message?: string;
-}
-
-interface FridgeItemsResponse {
-  items?: FridgeItem[];
-  message?: string;
-}
-
-interface RecommendationApiItem {
-  title?: string;
-  subtitle?: string;
-  taste?: TasteLevel;
-  ingredients?: string[];
-  steps?: string[];
-  source_name?: string;
-  source_url?: string;
-}
-
-interface RecommendationsResponse {
-  recommendations?: RecommendationApiItem[];
-  message?: string;
-}
-
-function normalizeTaste(taste: string | undefined): TasteLevel {
-  if (taste === "좋아해요" || taste === "보통이에요" || taste === "싫어해요") {
-    return taste;
-  }
-  return "보통이에요";
-}
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -165,25 +132,10 @@ export function useRecipePage() {
     try {
       setIsLoadingSavedRecipes(true);
       const res = await authedFetch("/api/recipes/saved", { cache: "no-store" });
-      const json = (await res.json().catch(() => ({}))) as SavedRecipesResponse;
+      const json = (await res.json().catch(() => ({}))) as SavedRecipesResponseDto;
       if (!res.ok) throw new Error(json.message ?? "저장 레시피를 불러오지 못했습니다.");
 
-      const mapped = (json.items ?? []).map((item: SavedRecipeApiItem): RecipeItem => ({
-        id: item.id,
-        title: item.title,
-        subtitle: item.subtitle ?? "",
-        taste: normalizeTaste(item.taste),
-        source: item.source === "ai" ? "ai" : "manual",
-        favorite: Boolean(item.favorite),
-        ctaLabel: "레시피 보기 ↗",
-        link: item.link,
-        memo: item.memo,
-        ingredients: [],
-        steps: (item.memo ?? "")
-          .split("\n")
-          .map((line) => line.trim())
-          .filter((line) => line.length > 0),
-      }));
+      const mapped = (json.items ?? []).map(mapSavedRecipeDtoToItem);
       setRecipes(mapped);
     } catch (error) {
       const message =
@@ -224,7 +176,7 @@ export function useRecipePage() {
           recipe.id === id ? { ...recipe, favorite: current.favorite } : recipe
         )
       );
-      const json = (await res.json().catch(() => ({}))) as { message?: string };
+      const json = (await res.json().catch(() => ({}))) as ApiMessageResponseDto;
       toast.error(json.message ?? "즐겨찾기 변경에 실패했습니다.");
     }
   };
@@ -242,7 +194,7 @@ export function useRecipePage() {
 
     if (!res.ok) {
       setRecipes(previous);
-      const json = (await res.json().catch(() => ({}))) as { message?: string };
+      const json = (await res.json().catch(() => ({}))) as ApiMessageResponseDto;
       toast.error(json.message ?? "레시피 삭제에 실패했습니다.");
     }
   };
@@ -294,7 +246,7 @@ export function useRecipePage() {
 
       if (!res.ok) {
         await loadSavedRecipes();
-        const json = (await res.json().catch(() => ({}))) as { message?: string };
+        const json = (await res.json().catch(() => ({}))) as ApiMessageResponseDto;
         toast.error(json.message ?? "레시피 수정에 실패했습니다.");
         return;
       }
@@ -309,9 +261,9 @@ export function useRecipePage() {
     try {
       setIsLoadingFridge(true);
       const res = await authedFetch("/api/fridge/items", { cache: "no-store" });
-      const json = (await res.json().catch(() => ({}))) as FridgeItemsResponse;
+      const json = (await res.json().catch(() => ({}))) as FridgeItemsResponseDto;
       if (!res.ok) throw new Error(json.message ?? "냉장고 재료를 불러오지 못했습니다.");
-      setFridgeItems(json.items ?? []);
+      setFridgeItems((json.items ?? []) as FridgeItem[]);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "냉장고 재료를 불러오지 못했습니다.";
@@ -388,25 +340,14 @@ export function useRecipePage() {
         }),
       });
 
-      const json = (await res.json().catch(() => ({}))) as {
-        item?: SavedRecipeApiItem;
-        message?: string;
-      };
+      const json = (await res.json().catch(() => ({}))) as SavedRecipeMutationResponseDto;
 
       if (!res.ok || !json.item) {
         throw new Error(json.message ?? "레시피 저장에 실패했습니다.");
       }
 
       const saved: RecipeItem = {
-        id: json.item.id,
-        title: json.item.title,
-        subtitle: json.item.subtitle ?? "",
-        taste: normalizeTaste(json.item.taste),
-        source: json.item.source === "ai" ? "ai" : "manual",
-        favorite: Boolean(json.item.favorite),
-        ctaLabel: "레시피 보기 ↗",
-        link: json.item.link,
-        memo: json.item.memo,
+        ...mapSavedRecipeDtoToItem(json.item),
         ingredients: item.ingredients,
         steps: item.steps,
       };
@@ -453,48 +394,17 @@ export function useRecipePage() {
         analyzeTimer = null;
       }
 
-      const json = (await res.json().catch(() => ({}))) as RecommendationsResponse;
+      const json = (await res.json().catch(() => ({}))) as RecommendationsResponseDto;
       if (!res.ok) {
         throw new Error(json.message ?? "레시피 추천 생성에 실패했습니다.");
       }
       setAiGenerationStage("analyzing");
 
       const recommended = (json.recommendations ?? [])
-        .filter(
-          (item: RecommendationApiItem) =>
-            typeof item.title === "string" &&
-            typeof item.subtitle === "string" &&
-            typeof item.taste === "string" &&
-            Array.isArray(item.ingredients) &&
-            Array.isArray(item.steps)
+        .map((item, idx) =>
+          mapRecommendationDtoToGeneratedRecipe(item, `ai-result-${Date.now()}-${idx}`)
         )
-        .map((item: RecommendationApiItem, idx: number): GeneratedRecipe => ({
-          id: `ai-result-${Date.now()}-${idx}`,
-          title: (item.title ?? "").trim(),
-          subtitle: (item.subtitle ?? "").trim(),
-          taste: normalizeTaste(item.taste),
-          ingredients: (item.ingredients ?? [])
-            .filter((v): v is string => typeof v === "string")
-            .map((v) => v.trim())
-            .filter((v) => v.length > 0)
-            .slice(0, 8),
-          steps: (item.steps ?? [])
-            .filter((v): v is string => typeof v === "string")
-            .map((v) => v.trim())
-            .filter((v) => v.length > 0)
-            .slice(0, 5),
-          sourceName:
-            typeof item.source_name === "string" ? item.source_name.trim() : "",
-          sourceUrl:
-            typeof item.source_url === "string" ? item.source_url.trim() : "",
-        }))
-        .filter(
-          (item) =>
-            item.title.length > 0 &&
-            item.subtitle.length > 0 &&
-            item.ingredients.length > 0 &&
-            item.steps.length > 0
-        );
+        .filter((item): item is GeneratedRecipe => item !== null);
 
       if (recommended.length === 0) {
         throw new Error("추천 결과가 비어 있습니다. 재료를 바꿔 다시 시도해주세요.");
@@ -536,31 +446,13 @@ export function useRecipePage() {
           source: "manual",
         }),
       });
-      const json = (await res.json().catch(() => ({}))) as {
-        item?: SavedRecipeApiItem;
-        message?: string;
-      };
+      const json = (await res.json().catch(() => ({}))) as SavedRecipeMutationResponseDto;
 
       if (!res.ok || !json.item) {
         throw new Error(json.message ?? "레시피 저장에 실패했습니다.");
       }
 
-      const newRecipe: RecipeItem = {
-        id: json.item.id,
-        title: json.item.title,
-        subtitle: json.item.subtitle ?? "",
-        taste: normalizeTaste(json.item.taste),
-        source: json.item.source === "ai" ? "ai" : "manual",
-        favorite: Boolean(json.item.favorite),
-        ctaLabel: "레시피 보기 ↗",
-        link: json.item.link,
-        memo: json.item.memo,
-        ingredients: [],
-        steps: (json.item.memo ?? "")
-          .split("\n")
-          .map((line) => line.trim())
-          .filter((line) => line.length > 0),
-      };
+      const newRecipe: RecipeItem = mapSavedRecipeDtoToItem(json.item);
 
       setRecipes((prev) => [newRecipe, ...prev]);
       setOpenAddForm(false);

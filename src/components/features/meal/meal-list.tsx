@@ -34,6 +34,21 @@ export function MealList({
     0
   );
 
+  const openMealEditor = () => {
+    const emptyDay: DayMeals = {
+      date: dateKey,
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      snack: [],
+    };
+    localStorage.setItem(
+      `nyampick:meal-edit:init:${dateKey}`,
+      JSON.stringify(dayMeals ?? emptyDay)
+    );
+    router.push(`/meal/edit?date=${dateKey}`);
+  };
+
   return (
     <div className="flex-1 px-4 pb-24 pt-6 bg-[#fdfefd]">
       <p className="ml-3 mb-2 text-[12px] text-[#7f8885]">{dateLabel}</p>
@@ -44,20 +59,7 @@ export function MealList({
         {!readOnly ? (
           <button
             type="button"
-            onClick={() => {
-              const emptyDay: DayMeals = {
-                date: dateKey,
-                breakfast: [],
-                lunch: [],
-                dinner: [],
-                snack: [],
-              };
-              localStorage.setItem(
-                `nyampick:meal-edit:init:${dateKey}`,
-                JSON.stringify(dayMeals ?? emptyDay)
-              );
-              router.push(`/meal/edit?date=${dateKey}`);
-            }}
+            onClick={openMealEditor}
             className="rounded-md p-1 text-[#1f2523] transition-colors hover:bg-[#dfe5e3]"
             aria-label="식단 수정"
           >
@@ -71,6 +73,15 @@ export function MealList({
           <p className="text-[18px] font-normal text-[#6e7673]">
             아직 식단이 준비되지 않았습니다
           </p>
+          {!readOnly ? (
+            <button
+              type="button"
+              onClick={openMealEditor}
+              className="mt-4 h-11 rounded-xl bg-[#57bf8e] px-5 text-[15px] font-semibold text-white"
+            >
+              식단 추가하기
+            </button>
+          ) : null}
         </div>
       ) : (
         <div className="flex flex-col gap-5">

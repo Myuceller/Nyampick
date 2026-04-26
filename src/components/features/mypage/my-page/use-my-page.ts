@@ -2,34 +2,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { authedFetch } from "@/lib/authed-fetch";
+import type { ChildrenResponseDto } from "@/lib/dto/children";
+import type { ApiMessageResponseDto } from "@/lib/dto/common";
+import type { ProfileResponseDto } from "@/lib/dto/profile";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
-
-interface ProfileResponse {
-  profile?: {
-    id: string;
-    name: string;
-    babyName: string;
-    babyMonthsOld: number;
-    email?: string;
-  };
-}
-
-interface ChildSummary {
-  id: string;
-  name: string;
-  monthsOld: number;
-  isPrimary: boolean;
-}
-
-interface ChildrenResponse {
-  children?: ChildSummary[];
-  linkedMode?: boolean;
-  linkedInfo?: {
-    ownerName?: string;
-    ownerEmail?: string;
-    childName?: string;
-  } | null;
-}
 
 export function useMyPage() {
   const router = useRouter();
@@ -67,14 +43,14 @@ export function useMyPage() {
           authedFetch("/api/children", { cache: "no-store" }),
         ]);
         if (profileRes.ok) {
-          const json = (await profileRes.json()) as ProfileResponse;
+          const json = (await profileRes.json()) as ProfileResponseDto;
           setProfileName(json.profile?.name ?? "");
           if (!session.user.email && json.profile?.email) {
             setUserEmail(json.profile.email);
           }
         }
         if (childrenRes.ok) {
-          const json = (await childrenRes.json()) as ChildrenResponse;
+          const json = (await childrenRes.json()) as ChildrenResponseDto;
           const children = json.children ?? [];
           const primary = children.find((child) => child.isPrimary) ?? children[0];
           if (primary) {
@@ -103,12 +79,7 @@ export function useMyPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: profileName.trim() }),
       });
-      const json = (await res.json().catch(() => ({}))) as {
-        profile?: {
-          name?: string;
-        };
-        message?: string;
-      };
+      const json = (await res.json().catch(() => ({}))) as ProfileResponseDto;
       if (!res.ok) {
         throw new Error(json.message ?? "내 정보 저장에 실패했습니다.");
       }
@@ -144,9 +115,7 @@ export function useMyPage() {
           monthsOld: months,
         }),
       });
-      const json = (await res.json().catch(() => ({}))) as {
-        message?: string;
-      };
+      const json = (await res.json().catch(() => ({}))) as ApiMessageResponseDto;
       if (!res.ok) {
         throw new Error(json.message ?? "아기 정보 저장에 실패했습니다.");
       }

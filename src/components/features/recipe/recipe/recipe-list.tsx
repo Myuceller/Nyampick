@@ -14,6 +14,10 @@ interface RecipeListProps {
   onDelete: (id: string) => void;
 }
 
+function SkeletonBlock({ className }: { className: string }) {
+  return <div className={`animate-pulse rounded-[12px] bg-[#e2e7e5] ${className}`} />;
+}
+
 export function RecipeList({
   isLoading,
   recipes,
@@ -24,14 +28,37 @@ export function RecipeList({
   onOpenEdit,
   onDelete,
 }: RecipeListProps) {
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <article
+            key={`recipe-skeleton-${index}`}
+            className="rounded-[14px] border border-[#c7cdca] bg-white px-4 py-4"
+          >
+            <div className="mb-2 flex items-start justify-between">
+              <div className="space-y-2">
+                <SkeletonBlock className="h-6 w-40" />
+                <SkeletonBlock className="h-5 w-52" />
+              </div>
+              <div className="flex items-center gap-2">
+                <SkeletonBlock className="h-7 w-7 rounded-full" />
+                <SkeletonBlock className="h-7 w-7 rounded-full" />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <SkeletonBlock className="h-8 w-20 rounded-full" />
+              <SkeletonBlock className="h-8 w-24 rounded-full" />
+              <SkeletonBlock className="h-8 w-28 rounded-full" />
+            </div>
+          </article>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
-      {isLoading ? (
-        <div className="rounded-[14px] border border-dashed border-[#bfc6c3] bg-[#f3f4f3] px-4 py-10 text-center text-[16px] font-semibold text-[#6e7774]">
-          저장된 레시피를 불러오는 중...
-        </div>
-      ) : null}
-
       {recipes.map((recipe) => (
         <article
           key={recipe.id}
