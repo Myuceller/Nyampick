@@ -1,150 +1,36 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
 import { Baby, CalendarDays } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { MealList } from "@/components/features/meal/meal-list";
 import { HomeSkeleton } from "@/components/features/meal/home-skeleton";
 import { PwaInstallPrompt } from "@/components/layout/pwa-install-prompt";
-import { authedFetch } from "@/lib/authed-fetch";
-import type { DayMeals } from "@/lib/types";
 import { cn } from "@/lib/utils";
-
-function formatDateKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
-
-function getWeekDaysMondayStart(baseDate: Date): Date[] {
-  const day = baseDate.getDay();
-  const mondayOffset = day === 0 ? -6 : 1 - day;
-  const monday = new Date(baseDate);
-  monday.setDate(baseDate.getDate() + mondayOffset);
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    return d;
-  });
-}
-
-function getMonthDays(date: Date): Array<Date | null> {
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  const days: Array<Date | null> = [];
-
-  for (let i = 0; i < firstDay.getDay(); i += 1) {
-    days.push(null);
-  }
-
-  for (let d = 1; d <= lastDay.getDate(); d += 1) {
-    days.push(new Date(year, month, d));
-  }
-
-  return days;
-}
-
-function getMealCountByDate(mealData: Record<string, DayMeals>, date: Date) {
-  const key = formatDateKey(date);
-  const day = mealData[key];
-  if (!day) return 0;
-  return (
-    day.breakfast.length + day.lunch.length + day.dinner.length + day.snack.length
-  );
-}
-
-function getMealMarkerCountByDate(
-  mealData: Record<string, DayMeals>,
-  date: Date
-) {
-  const key = formatDateKey(date);
-  const day = mealData[key];
-  if (!day) return 0;
-
-  const filledMeals = [
-    day.breakfast.length > 0,
-    day.lunch.length > 0,
-    day.dinner.length > 0,
-    day.snack.length > 0,
-  ].filter(Boolean).length;
-
-  return Math.min(3, filledMeals);
-}
-
-const MEAL_DOT_COLORS = ["bg-[#9ad7bc]", "bg-[#b6dfcb]", "bg-[#efdbc2]"] as const;
+import { useHomePage } from "@/features/meal/hooks/use-home-page";
+import {
+  formatDateKey,
+  getMealMarkerCountByDate,
+  MEAL_DOT_COLORS,
+} from "@/features/meal/lib/home-page-utils";
 
 export default function Page() {
-  const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
-  const [mealData, setMealData] = useState<Record<string, DayMeals>>({});
-  const [childName, setChildName] = useState("");
-  const [childMonthsOld, setChildMonthsOld] = useState<number | null>(null);
-  const [calendarMode, setCalendarMode] = useState<"weekly" | "monthly">(
-    "weekly"
-  );
-
-  useEffect(() => {
-    const load = async () => {
-      let baseData: Record<string, DayMeals> = {};
-      try {
-        const [mealRes, childRes] = await Promise.all([
-          authedFetch("/api/meals", { cache: "no-store" }),
-          authedFetch("/api/children", { cache: "no-store" }),
-        ]);
-
-        if (mealRes.ok) {
-          const mealJson = (await mealRes.json()) as { meals?: Record<string, DayMeals> };
-          baseData = mealJson.meals ?? {};
-        }
-        if (childRes.ok) {
-          const childJson = (await childRes.json()) as {
-            children?: Array<{ name: string; monthsOld: number; isPrimary: boolean }>;
-          };
-          const children = childJson.children ?? [];
-          const primary = children.find((child) => child.isPrimary) ?? children[0];
-          if (primary) {
-            setChildName(primary.name);
-            setChildMonthsOld(primary.monthsOld);
-          }
-        }
-      } catch {
-        baseData = {};
-      }
-
-      const editedRaw = localStorage.getItem("nyampick:meal-edit:result");
-      if (editedRaw) {
-        try {
-          const parsed = JSON.parse(editedRaw) as {
-            date: string;
-            dayMeals: DayMeals;
-          };
-          if (parsed?.date && parsed?.dayMeals) {
-            baseData[parsed.date] = parsed.dayMeals;
-          }
-        } catch {
-          // ignore invalid persisted edit payload
-        }
-        localStorage.removeItem("nyampick:meal-edit:result");
-      }
-
-      setMealData(baseData);
-      setMounted(true);
-    };
-
-    void load();
-  }, []);
-
-  const dateKey = formatDateKey(selectedDate);
-  const todayKey = useMemo(() => formatDateKey(new Date()), []);
-  const currentDayMeals = mealData[dateKey];
-  const weekDays = useMemo(
-    () => getWeekDaysMondayStart(selectedDate),
-    [selectedDate]
-  );
-  const monthDays = useMemo(() => getMonthDays(selectedDate), [selectedDate]);
-  const monthLabel = `${selectedDate.getFullYear()}년 ${selectedDate.getMonth() + 1}월`;
+  const {
+    calendarMode,
+    childMonthsOld,
+    childName,
+    currentDayMeals,
+    dateKey,
+    mealData,
+    monthDays,
+    monthLabel,
+    mounted,
+    router,
+    selectedDate,
+    setCalendarMode,
+    setSelectedDate,
+    todayKey,
+    weekDays,
+  } = useHomePage();
 
   if (!mounted) {
     return (

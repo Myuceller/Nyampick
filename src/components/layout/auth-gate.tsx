@@ -4,14 +4,37 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
+type GateStatus = "checking" | "ready" | "env-missing";
+
+let cachedHasSession: boolean | null = null;
+let sessionBootstrapPromise: Promise<boolean> | null = null;
+
+async function resolveHasSession() {
+  if (cachedHasSession !== null) return cachedHasSession;
+  if (sessionBootstrapPromise) return sessionBootstrapPromise;
+
+  sessionBootstrapPromise = (async () => {
+    const supabase = getSupabaseBrowser();
+    const { data } = await supabase.auth.getSession();
+    cachedHasSession = Boolean(data.session);
+    return cachedHasSession;
+  })();
+
+  try {
+    return await sessionBootstrapPromise;
+  } finally {
+    sessionBootstrapPromise = null;
+  }
+}
+
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [status, setStatus] = useState<"checking" | "ready" | "env-missing">(
-    "checking"
-  );
-
   const isPublicPath = useMemo(() => pathname?.startsWith("/auth"), [pathname]);
+  const [status, setStatus] = useState<GateStatus>(() => {
+    if (isPublicPath || cachedHasSession) return "ready";
+    return "checking";
+  });
 
   useEffect(() => {
     if (isPublicPath) {
@@ -25,9 +48,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     try {
       const supabase = getSupabaseBrowser();
 
-      void supabase.auth.getSession().then(({ data }) => {
+      void resolveHasSession().then((hasSession) => {
         if (!active) return;
-        if (data.session) {
+        if (hasSession) {
           setStatus("ready");
           return;
         }
@@ -37,9 +60,11 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       const listener = supabase.auth.onAuthStateChange((_event, session) => {
         if (!active) return;
         if (session) {
+          cachedHasSession = true;
           setStatus("ready");
           return;
         }
+        cachedHasSession = false;
         router.replace("/auth");
       });
       unsubscribe = () => listener.data.subscription.unsubscribe();
