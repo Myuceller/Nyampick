@@ -56,7 +56,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         onNext={nextSlide}
       />
 
-      <style jsx>{`
+      <style jsx global>{`
         :global(body) {
           font-family: "Pretendard", sans-serif;
         }
@@ -74,14 +74,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           background-color: var(--bg-color);
         }
 
-        .slider-container {
+        .onboarding-screen .slider-container {
           display: flex;
           width: 300vw;
           height: 100dvh;
           transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
-        .slide {
+        .onboarding-screen .slide {
           width: 100vw;
           height: 100dvh;
           display: flex;
@@ -92,25 +92,25 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           box-sizing: border-box;
         }
 
-        .visual-area {
+        .onboarding-screen .visual-area {
           position: relative;
           width: 280px;
           height: 280px;
           margin-bottom: 30px;
         }
 
-        .main-img {
+        .onboarding-screen .main-img {
           width: 100%;
           height: 100%;
           object-fit: contain;
           filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.05));
         }
 
-        .baby-float {
+        .onboarding-screen .baby-float {
           animation: babyFloat 4s ease-in-out infinite;
         }
 
-        .spoon-action {
+        .onboarding-screen .spoon-action {
           position: absolute;
           top: 40%;
           right: 10%;
@@ -118,11 +118,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           animation: eatAction 2.5s ease-in-out infinite;
         }
 
-        .calendar-tilt {
+        .onboarding-screen .calendar-tilt {
           animation: tilt 3s ease-in-out infinite;
         }
 
-        .heart-beat {
+        .onboarding-screen .heart-beat {
           position: absolute;
           top: 50%;
           left: 50%;
@@ -131,21 +131,21 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           animation: pulse 1.5s infinite;
         }
 
-        .title {
+        .onboarding-screen .title {
           font-size: 24px;
           font-weight: 800;
           color: var(--text-color);
           margin-bottom: 12px;
         }
 
-        .desc {
+        .onboarding-screen .desc {
           font-size: 16px;
           color: #999;
           line-height: 1.6;
           text-align: center;
         }
 
-        .footer-ui {
+        .onboarding-screen .footer-ui {
           position: fixed;
           bottom: 40px;
           width: 100%;
@@ -155,13 +155,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           z-index: 100;
         }
 
-        .dots {
+        .onboarding-screen .dots {
           display: flex;
           gap: 8px;
           margin-bottom: 25px;
         }
 
-        .dot {
+        .onboarding-screen .dot {
           width: 8px;
           height: 8px;
           border-radius: 50%;
@@ -170,13 +170,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           cursor: pointer;
         }
 
-        .dot.active {
+        .onboarding-screen .dot.active {
           width: 24px;
           border-radius: 10px;
           background: var(--primary-color);
         }
 
-        .nav-buttons {
+        .onboarding-screen .nav-buttons {
           display: flex;
           gap: 12px;
           justify-content: center;
@@ -184,7 +184,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           width: 100%;
         }
 
-        .btn {
+        .onboarding-screen .btn {
           border: none;
           height: 56px;
           border-radius: 16px;
@@ -198,14 +198,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           white-space: nowrap;
         }
 
-        .next-btn {
+        .onboarding-screen .next-btn {
           background: var(--primary-color);
           color: white;
           width: 180px;
           box-shadow: 0 10px 20px rgba(93, 193, 149, 0.2);
         }
 
-        .prev-btn {
+        .onboarding-screen .prev-btn {
           background: #f0f2f5;
           color: #777;
           width: 90px;
@@ -255,17 +255,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         }
 
         @media (max-width: 420px) {
-          .next-btn {
+          .onboarding-screen .next-btn {
             width: 170px;
           }
         }
 
         @media (max-height: 740px) {
-          .slide {
+          .onboarding-screen .slide {
             padding-top: 12vh;
           }
 
-          .footer-ui {
+          .onboarding-screen .footer-ui {
             bottom: 24px;
           }
         }

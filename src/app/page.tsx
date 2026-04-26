@@ -53,6 +53,26 @@ function getMealCountByDate(mealData: Record<string, DayMeals>, date: Date) {
   );
 }
 
+function getMealMarkerCountByDate(
+  mealData: Record<string, DayMeals>,
+  date: Date
+) {
+  const key = formatDateKey(date);
+  const day = mealData[key];
+  if (!day) return 0;
+
+  const filledMeals = [
+    day.breakfast.length > 0,
+    day.lunch.length > 0,
+    day.dinner.length > 0,
+    day.snack.length > 0,
+  ].filter(Boolean).length;
+
+  return Math.min(3, filledMeals);
+}
+
+const MEAL_DOT_COLORS = ["bg-[#9ad7bc]", "bg-[#b6dfcb]", "bg-[#efdbc2]"] as const;
+
 export default function Page() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -92,7 +112,7 @@ export default function Page() {
         baseData = {};
       }
 
-      const editedRaw = localStorage.getItem("mammanote:meal-edit:result");
+      const editedRaw = localStorage.getItem("nyampick:meal-edit:result");
       if (editedRaw) {
         try {
           const parsed = JSON.parse(editedRaw) as {
@@ -105,7 +125,7 @@ export default function Page() {
         } catch {
           // ignore invalid persisted edit payload
         }
-        localStorage.removeItem("mammanote:meal-edit:result");
+        localStorage.removeItem("nyampick:meal-edit:result");
       }
 
       setMealData(baseData);
@@ -116,6 +136,7 @@ export default function Page() {
   }, []);
 
   const dateKey = formatDateKey(selectedDate);
+  const todayKey = useMemo(() => formatDateKey(new Date()), []);
   const currentDayMeals = mealData[dateKey];
   const weekDays = useMemo(
     () => getWeekDaysMondayStart(selectedDate),
@@ -136,8 +157,8 @@ export default function Page() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-[480px] flex-col bg-[rgb(#F3F8F4)] pb-24">
-      <div className="px-4 pb-4 pt-11">
+    <div className="mx-auto flex min-h-[100dvh] max-w-[480px] flex-col bg-[#fdfefd] pb-24">
+      <div className="bg-[#f3f8f4] px-4 pb-4 pt-11">
         <p className="text-[14px] text-[#6f7875]">안녕하세요 👋</p>
         <PwaInstallPrompt className="mt-3" />
         <h1 className="mt-2 mb-2 text-[24px] font-extrabold leading-[1.05] tracking-[-0.02em] text-[#1f2725]">
@@ -192,7 +213,8 @@ export default function Page() {
             <div className="grid grid-cols-7 gap-1.5">
               {weekDays.map((date) => {
                 const isSelected = formatDateKey(date) === dateKey;
-                const count = getMealCountByDate(mealData, date);
+                const isToday = formatDateKey(date) === todayKey;
+                const count = getMealMarkerCountByDate(mealData, date);
                 const dayLabel = ["일", "월", "화", "수", "목", "금", "토"][date.getDay()];
                 return (
                   <button
@@ -201,6 +223,7 @@ export default function Page() {
                     onClick={() => setSelectedDate(date)}
                     className={cn(
                       "flex flex-col items-center rounded-[12px] px-1 py-2.5",
+                      !isSelected && isToday && "bg-[#e8f6ef]",
                       isSelected && "bg-[#57bf8e] text-white"
                     )}
                   >
@@ -215,29 +238,24 @@ export default function Page() {
                     <span className="text-[14px] font-bold leading-none">
                       {date.getDate()}
                     </span>
-                    <div className="mt-1 flex flex-col gap-1">
-                      {count > 0 && (
-                        <>
-                          <span
-                            className={cn(
-                              "h-[3px] w-4 rounded-full",
-                              isSelected ? "bg-white/70" : "bg-[#9ad7bc]"
-                            )}
-                          />
-                          <span
-                            className={cn(
-                              "h-[3px] w-4 rounded-full",
-                              isSelected ? "bg-white/60" : "bg-[#b6dfcb]"
-                            )}
-                          />
-                          <span
-                            className={cn(
-                              "h-[3px] w-4 rounded-full",
-                              isSelected ? "bg-white/50" : "bg-[#efdbc2]"
-                            )}
-                          />
-                        </>
-                      )}
+                    <div className="mt-1 flex h-[17px] flex-col justify-between">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <span
+                          key={`${formatDateKey(date)}-weekly-line-${i + 1}`}
+                          className={cn(
+                            "h-[3px] w-4 rounded-full",
+                            i < count
+                              ? isSelected
+                                ? i === 0
+                                  ? "bg-white/70"
+                                  : i === 1
+                                    ? "bg-white/60"
+                                    : "bg-white/50"
+                                : MEAL_DOT_COLORS[i]
+                              : "bg-transparent"
+                          )}
+                        />
+                      ))}
                     </div>
                   </button>
                 );
@@ -263,20 +281,31 @@ export default function Page() {
               <div className="mt-1 grid grid-cols-7 gap-y-2 text-center">
                 {monthDays.map((date, idx) => {
                   if (!date) {
-                    return <div key={`empty-${idx}`} className="h-10" />;
+                    return <div key={`empty-${idx}`} className="h-12" />;
                   }
                   const isSelected = formatDateKey(date) === dateKey;
+                  const isToday = formatDateKey(date) === todayKey;
+                  const count = getMealMarkerCountByDate(mealData, date);
                   return (
                     <button
                       key={formatDateKey(date)}
                       type="button"
                       onClick={() => setSelectedDate(date)}
                       className={cn(
-                        "mx-auto h-10 w-10 rounded-[12px] text-[14px] font-semibold text-[#26302d]",
+                        "mx-auto flex h-12 w-10 flex-col items-center justify-center rounded-[12px] text-[#26302d]",
+                        !isSelected && isToday && "bg-[#e8f6ef] ring-1 ring-[#57bf8e]",
                         isSelected && "bg-[#57bf8e] text-white"
                       )}
                     >
-                      {date.getDate()}
+                      <span className="text-[14px] font-semibold leading-none">{date.getDate()}</span>
+                      <span className="mt-1 flex h-2 items-center justify-center gap-1">
+                        {Array.from({ length: count }).map((_, i) => (
+                          <span
+                            key={`${formatDateKey(date)}-monthly-dot-${i + 1}`}
+                            className={cn("h-1.5 w-1.5 rounded-full", MEAL_DOT_COLORS[i])}
+                          />
+                        ))}
+                      </span>
                     </button>
                   );
                 })}

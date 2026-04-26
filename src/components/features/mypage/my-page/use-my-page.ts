@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { authedFetch } from "@/lib/authed-fetch";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
@@ -114,9 +115,9 @@ export function useMyPage() {
       if (json.profile?.name) {
         setProfileName(json.profile.name);
       }
-      alert("내 정보를 저장했습니다.");
+      toast.success("내 정보를 저장했습니다.");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "내 정보 저장에 실패했습니다.");
+      toast.error(e instanceof Error ? e.message : "내 정보 저장에 실패했습니다.");
     } finally {
       setSaving(false);
     }
@@ -124,12 +125,12 @@ export function useMyPage() {
 
   const saveBabyProfile = async () => {
     if (!primaryChildId) {
-      alert("대표 아기 정보를 찾지 못했습니다.");
+      toast.error("대표 아기 정보를 찾지 못했습니다.");
       return;
     }
     const months = Number.parseInt(babyMonthsOld, 10);
     if (!Number.isInteger(months) || months < 0) {
-      alert("개월 수는 0 이상의 정수여야 합니다.");
+      toast.error("개월 수는 0 이상의 정수여야 합니다.");
       return;
     }
     try {
@@ -149,9 +150,9 @@ export function useMyPage() {
       if (!res.ok) {
         throw new Error(json.message ?? "아기 정보 저장에 실패했습니다.");
       }
-      alert("아기 정보를 저장했습니다.");
+      toast.success("아기 정보를 저장했습니다.");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "아기 정보 저장에 실패했습니다.");
+      toast.error(e instanceof Error ? e.message : "아기 정보 저장에 실패했습니다.");
     } finally {
       setBabySaving(false);
     }

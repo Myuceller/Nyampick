@@ -65,7 +65,7 @@ export function RecipePage() {
         )}
       </div>
 
-      {!vm.isOverlayOpen ? (
+      {!vm.isOverlayOpen && vm.activeTab !== "ai" ? (
         <RecipeFloatingActions
           onAiClick={() => {
             vm.setActiveTab("ai");

@@ -41,12 +41,21 @@ export async function POST(request: Request) {
       : 3;
 
   try {
-    const recommendations = await generateRecipeRecommendationsWithOpenAI({
+    const result = await generateRecipeRecommendationsWithOpenAI({
       ingredients,
       limit,
     });
+    console.info("[recipes/recommendations] usage", {
+      userId: user.id,
+      ingredientsCount: ingredients.length,
+      limit,
+      usage: result.usage,
+    });
 
-    return NextResponse.json({ recommendations });
+    return NextResponse.json({
+      recommendations: result.recommendations,
+      usage: result.usage,
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "failed to generate recommendations";

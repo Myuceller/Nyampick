@@ -82,7 +82,7 @@ export function AiSheet({
           </div>
         ) : view === "result" ? (
           <>
-            <h4 className="text-[34px] font-extrabold text-[#212726]">
+            <h4 className="text-[20px] font-bold text-[#212726]">
               레시피 추천 결과가 나왔어요!
             </h4>
             <div className="mt-4 flex items-center justify-between">
@@ -103,7 +103,7 @@ export function AiSheet({
                 return (
                   <article
                     key={item.id}
-                    className="rounded-[14px] border border-[#c7cdca] bg-[#f4f5f4] px-4 py-4"
+                    className="rounded-[14px] border border-[#c7cdca] bg-white px-4 py-4"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>

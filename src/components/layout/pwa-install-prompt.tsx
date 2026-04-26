@@ -28,7 +28,7 @@ export function PwaInstallPrompt({ className = "" }: { className?: string }) {
   const [installed, setInstalled] = useState(true);
 
   useEffect(() => {
-    const dismissedState = localStorage.getItem("mammanote:pwa-install-dismissed");
+    const dismissedState = localStorage.getItem("nyampick:pwa-install-dismissed");
     if (dismissedState === "1") {
       setDismissed(true);
     }
@@ -43,7 +43,7 @@ export function PwaInstallPrompt({ className = "" }: { className?: string }) {
     const onAppInstalled = () => {
       setInstalled(true);
       setDeferredPrompt(null);
-      localStorage.setItem("mammanote:pwa-install-dismissed", "1");
+      localStorage.setItem("nyampick:pwa-install-dismissed", "1");
     };
 
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
@@ -70,7 +70,7 @@ export function PwaInstallPrompt({ className = "" }: { className?: string }) {
 
   const close = () => {
     setDismissed(true);
-    localStorage.setItem("mammanote:pwa-install-dismissed", "1");
+    localStorage.setItem("nyampick:pwa-install-dismissed", "1");
   };
 
   const install = async () => {
@@ -78,7 +78,7 @@ export function PwaInstallPrompt({ className = "" }: { className?: string }) {
     await deferredPrompt.prompt();
     await deferredPrompt.userChoice;
     setDeferredPrompt(null);
-    localStorage.setItem("mammanote:pwa-install-dismissed", "1");
+    localStorage.setItem("nyampick:pwa-install-dismissed", "1");
   };
 
   return (
@@ -87,7 +87,7 @@ export function PwaInstallPrompt({ className = "" }: { className?: string }) {
     >
       <p className="text-[13px] text-[#2a3a33]">
         {showInstallButton
-          ? "맘마노트를 앱처럼 설치해 빠르게 열어보세요."
+          ? "냠픽를 앱처럼 설치해 빠르게 열어보세요."
           : "Safari 공유 버튼에서 '홈 화면에 추가'를 누르면 앱처럼 쓸 수 있어요."}
       </p>
       <div className="flex items-center gap-2">

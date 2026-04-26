@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/server/api-auth";
-import { getProfileFromDb, updateProfileInDb } from "@/lib/server/supabase-app-data";
+import {
+  DuplicateEmailAccountError,
+  getProfileFromDb,
+  updateProfileInDb,
+} from "@/lib/server/supabase-app-data";
 
 type MetadataScalar = string | number | boolean | null;
 type MetadataValue = MetadataScalar | MetadataObject | MetadataValue[];
@@ -8,12 +12,14 @@ interface MetadataObject {
   [key: string]: MetadataValue;
 }
 
+function asString(value: MetadataValue | undefined): string | undefined {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
+}
+
 function readDisplayNameFromUser(user: {
   user_metadata?: MetadataObject | null;
 }): string | undefined {
   const metadata = user.user_metadata ?? {};
-  const asString = (value: MetadataValue | undefined) =>
-    typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
 
   const direct =
     asString(metadata.full_name) ||
@@ -35,6 +41,29 @@ function readDisplayNameFromUser(user: {
   return asString(kakaoProfile?.nickname);
 }
 
+function readEmailFromUser(user: {
+  email?: string | null;
+  user_metadata?: MetadataObject | null;
+}): string | undefined {
+  if (user.email && user.email.trim().length > 0) {
+    return user.email.trim();
+  }
+
+  const metadata = user.user_metadata ?? {};
+  const direct =
+    asString(metadata.email) ||
+    asString(metadata.email_address) ||
+    asString(metadata.preferred_email);
+  if (direct) return direct;
+
+  const kakaoAccount =
+    metadata.kakao_account && typeof metadata.kakao_account === "object"
+      ? (metadata.kakao_account as MetadataObject)
+      : null;
+
+  return asString(kakaoAccount?.email);
+}
+
 export async function GET(request: Request) {
   const user = await getUserFromRequest(request);
   if (!user) {
@@ -42,14 +71,26 @@ export async function GET(request: Request) {
   }
 
   try {
+    const emailHint = readEmailFromUser(user);
     return NextResponse.json({
       profile: await getProfileFromDb(
         user.id,
-        user.email ?? undefined,
+        emailHint,
         readDisplayNameFromUser(user)
       ),
     });
   } catch (error) {
+    if (error instanceof DuplicateEmailAccountError) {
+      return NextResponse.json(
+        {
+          code: "DUPLICATE_EMAIL_ACCOUNT",
+          message: error.message,
+          email: error.email,
+          existingUserId: error.existingUserId,
+        },
+        { status: 409 }
+      );
+    }
     const message =
       error instanceof Error ? error.message : "failed to fetch profile";
     return NextResponse.json({ message }, { status: 500 });
@@ -84,8 +125,9 @@ export async function PATCH(request: Request) {
   }
 
   try {
+    const emailHint = readEmailFromUser(user);
     const displayNameHint = readDisplayNameFromUser(user);
-    await getProfileFromDb(user.id, user.email ?? undefined, displayNameHint);
+    await getProfileFromDb(user.id, emailHint, displayNameHint);
     return NextResponse.json({
       profile: await updateProfileInDb(user.id, {
         name: body.name?.trim(),
@@ -95,6 +137,17 @@ export async function PATCH(request: Request) {
       }),
     });
   } catch (error) {
+    if (error instanceof DuplicateEmailAccountError) {
+      return NextResponse.json(
+        {
+          code: "DUPLICATE_EMAIL_ACCOUNT",
+          message: error.message,
+          email: error.email,
+          existingUserId: error.existingUserId,
+        },
+        { status: 409 }
+      );
+    }
     const message =
       error instanceof Error ? error.message : "failed to update profile";
     return NextResponse.json({ message }, { status: 500 });

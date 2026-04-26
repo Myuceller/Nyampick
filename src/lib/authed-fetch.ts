@@ -13,7 +13,7 @@ let authListenerBound = false;
 function shouldLogPerf() {
   if (typeof window === "undefined") return false;
   try {
-    return window.localStorage.getItem("mammanote:perf") === "1";
+    return window.localStorage.getItem("nyampick:perf") === "1";
   } catch {
     return false;
   }

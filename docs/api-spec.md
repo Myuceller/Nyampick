@@ -234,7 +234,7 @@ Base URL: `/api`
 ### GET `/api/profile`
 - Output `200`
 ```json
-{ "profile": { "id": "me", "name": "하율맘", "babyName": "하율", "babyMonthsOld": 11, "email": "mammanote@example.com" } }
+{ "profile": { "id": "me", "name": "하율맘", "babyName": "하율", "babyMonthsOld": 11, "email": "nyampick@example.com" } }
 ```
 
 ### PATCH `/api/profile`

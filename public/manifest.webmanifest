@@ -1,6 +1,6 @@
 {
-  "name": "맘마노트",
-  "short_name": "맘마노트",
+  "name": "냠픽",
+  "short_name": "냠픽",
   "description": "아이 성장 단계에 맞춘 식단 관리 앱",
   "start_url": "/",
   "display": "standalone",

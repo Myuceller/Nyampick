@@ -17,6 +17,17 @@ interface GenerateRecipeInput {
   limit: number;
 }
 
+export interface AiUsageSummary {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+}
+
+export interface AiRecipeGenerationResult {
+  recommendations: AiRecipeRecommendation[];
+  usage: AiUsageSummary;
+}
+
 type JsonScalar = string | number | boolean | null;
 type JsonValue = JsonScalar | JsonObject | JsonValue[];
 interface JsonObject {
@@ -180,12 +191,20 @@ async function generateOnce(
   });
 
   const outputText = response.output_text?.trim() ?? "";
-  return parseRecommendations(outputText, { requireSource });
+  const usage = response.usage;
+  return {
+    recommendations: parseRecommendations(outputText, { requireSource }),
+    usage: {
+      inputTokens: usage?.input_tokens ?? 0,
+      outputTokens: usage?.output_tokens ?? 0,
+      totalTokens: usage?.total_tokens ?? 0,
+    },
+  };
 }
 
 export async function generateRecipeRecommendationsWithOpenAI(
   input: GenerateRecipeInput
-): Promise<AiRecipeRecommendation[]> {
+): Promise<AiRecipeGenerationResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error("OPENAI_API_KEY is missing");
@@ -194,15 +213,25 @@ export async function generateRecipeRecommendationsWithOpenAI(
   const model = process.env.OPENAI_MODEL ?? "gpt-4.1-mini";
   const client = new OpenAI({ apiKey });
 
-  const strictRecipes = await generateOnce(client, model, input, true);
-  if (strictRecipes.length >= 1) {
-    return strictRecipes.slice(0, input.limit);
+  const strict = await generateOnce(client, model, input, true);
+  if (strict.recommendations.length >= 1) {
+    return {
+      recommendations: strict.recommendations.slice(0, input.limit),
+      usage: strict.usage,
+    };
   }
 
-  const fallbackRecipes = await generateOnce(client, model, input, false);
-  if (fallbackRecipes.length === 0) {
+  const fallback = await generateOnce(client, model, input, false);
+  if (fallback.recommendations.length === 0) {
     throw new Error("AI가 레시피를 생성하지 못했습니다.");
   }
 
-  return fallbackRecipes.slice(0, input.limit);
+  return {
+    recommendations: fallback.recommendations.slice(0, input.limit),
+    usage: {
+      inputTokens: strict.usage.inputTokens + fallback.usage.inputTokens,
+      outputTokens: strict.usage.outputTokens + fallback.usage.outputTokens,
+      totalTokens: strict.usage.totalTokens + fallback.usage.totalTokens,
+    },
+  };
 }
