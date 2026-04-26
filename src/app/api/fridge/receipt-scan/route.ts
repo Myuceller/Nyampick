@@ -5,6 +5,12 @@ import {
   createReceiptScanSession,
   getReceiptScanSession,
 } from "@/lib/server/meal-api-store";
+import {
+  consumeAiAttempt,
+  getClientIp,
+  registerAiFailure,
+  registerAiSuccess,
+} from "@/lib/server/rate-limit";
 
 export async function POST(request: Request) {
   const user = await getUserFromRequest(request);
@@ -18,19 +24,63 @@ export async function POST(request: Request) {
     fileName?: string;
   };
 
-  let sourceText = body.rawText;
-  if (!sourceText && body.imageDataUrl) {
+  const rawText = typeof body.rawText === "string" ? body.rawText.trim() : "";
+  const imageDataUrl =
+    typeof body.imageDataUrl === "string" ? body.imageDataUrl.trim() : "";
+  const hasRawText = rawText.length > 0;
+  const hasImage = imageDataUrl.length > 0;
+  if (!hasRawText && !hasImage) {
+    return NextResponse.json(
+      { message: "rawText or imageDataUrl is required" },
+      { status: 400 }
+    );
+  }
+
+  // Prevent oversized payload abuse before AI call.
+  if (hasImage && imageDataUrl.length > 7_000_000) {
+    return NextResponse.json(
+      { message: "imageDataUrl is too large" },
+      { status: 400 }
+    );
+  }
+
+  const ip = getClientIp(request);
+  const rateResult = consumeAiAttempt({
+    userId: user.id,
+    ip,
+    action: "ocr",
+  });
+  if (!rateResult.allowed) {
+    const response = NextResponse.json(
+      {
+        message:
+          rateResult.message ?? "요청이 많아 잠시 제한되었습니다. 잠시 후 다시 시도해주세요.",
+      },
+      { status: 429 }
+    );
+    if (rateResult.retryAfterSeconds) {
+      response.headers.set("Retry-After", String(rateResult.retryAfterSeconds));
+    }
+    return response;
+  }
+
+  let sourceText = hasRawText ? rawText : undefined;
+  if (!sourceText && hasImage) {
     try {
       const items = await extractReceiptItemsWithOpenAI({
-        imageDataUrl: body.imageDataUrl,
+        imageDataUrl,
         fileName: body.fileName,
       });
       sourceText = items.join("\n");
+      registerAiSuccess({ userId: user.id, action: "ocr" });
     } catch (error) {
+      registerAiFailure({ userId: user.id, action: "ocr" });
       const message =
         error instanceof Error ? error.message : "영수증 OCR 처리에 실패했습니다.";
       return NextResponse.json({ message }, { status: 500 });
     }
+  } else {
+    registerAiSuccess({ userId: user.id, action: "ocr" });
   }
 
   const session = createReceiptScanSession(sourceText);

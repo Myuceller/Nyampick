@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/server/api-auth";
 import { generateRecipeRecommendationsWithOpenAI } from "@/lib/server/recipe-ai";
+import {
+  consumeAiAttempt,
+  consumeUserDailyTokenBudget,
+  getClientIp,
+  registerAiFailure,
+  registerAiSuccess,
+} from "@/lib/server/rate-limit";
 
 interface RecommendationsRequestBody {
   ingredients?: string[];
@@ -40,23 +47,60 @@ export async function POST(request: Request) {
       ? Math.max(1, Math.min(10, Math.floor(body.limit)))
       : 3;
 
+  const ip = getClientIp(request);
+  const rateResult = consumeAiAttempt({
+    userId: user.id,
+    ip,
+    action: "recipes",
+  });
+  if (!rateResult.allowed) {
+    const response = NextResponse.json(
+      {
+        message:
+          rateResult.message ?? "요청이 많아 잠시 제한되었습니다. 잠시 후 다시 시도해주세요.",
+      },
+      { status: 429 }
+    );
+    if (rateResult.retryAfterSeconds) {
+      response.headers.set("Retry-After", String(rateResult.retryAfterSeconds));
+    }
+    return response;
+  }
+
   try {
     const result = await generateRecipeRecommendationsWithOpenAI({
       ingredients,
       limit,
     });
-    console.info("[recipes/recommendations] usage", {
+
+    const budgetResult = consumeUserDailyTokenBudget({
       userId: user.id,
-      ingredientsCount: ingredients.length,
-      limit,
-      usage: result.usage,
+      tokens: result.usage.totalTokens,
     });
+    if (!budgetResult.allowed) {
+      registerAiFailure({ userId: user.id, action: "recipes" });
+      const response = NextResponse.json(
+        {
+          message:
+            budgetResult.message ??
+            "오늘 사용 가능한 AI 토큰 예산을 모두 사용했습니다. 내일 다시 시도해주세요.",
+        },
+        { status: 429 }
+      );
+      if (budgetResult.retryAfterSeconds) {
+        response.headers.set("Retry-After", String(budgetResult.retryAfterSeconds));
+      }
+      return response;
+    }
+
+    registerAiSuccess({ userId: user.id, action: "recipes" });
 
     return NextResponse.json({
       recommendations: result.recommendations,
       usage: result.usage,
     });
   } catch (error) {
+    registerAiFailure({ userId: user.id, action: "recipes" });
     const message =
       error instanceof Error ? error.message : "failed to generate recommendations";
     return NextResponse.json({ message }, { status: 500 });
