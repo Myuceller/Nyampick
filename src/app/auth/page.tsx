@@ -12,11 +12,37 @@ function getOAuthRedirectTo() {
   if (typeof window === "undefined") return undefined;
   const envAppUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
   const origin = window.location.origin;
+  const isLocalHost = origin.includes("localhost");
+  const fallbackProdUrl = "https://nyampick.vercel.app";
 
-  // In production, force env URL when present to avoid accidental localhost redirects.
-  const baseUrl =
-    envAppUrl && !origin.includes("localhost") ? envAppUrl.replace(/\/+$/, "") : origin;
+  // In production, always prefer explicit app URL, and fall back to canonical domain.
+  const baseUrl = isLocalHost
+    ? origin
+    : envAppUrl
+      ? envAppUrl.replace(/\/+$/, "")
+      : fallbackProdUrl;
   return `${baseUrl}/auth`;
+}
+
+async function ensureProfileSeeded(accessToken: string) {
+  const response = await fetch("/api/profile", {
+    cache: "no-store",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as {
+      message?: string;
+      code?: string;
+    };
+    if (response.status === 409 && body.code === "DUPLICATE_EMAIL_ACCOUNT") {
+      throw new Error(
+        body.message ?? "이미 같은 이메일로 가입된 계정이 있습니다. 기존 로그인 방식을 사용해주세요."
+      );
+    }
+    throw new Error(body.message ?? "프로필 초기화에 실패했습니다.");
+  }
 }
 
 export default function AuthPage() {
@@ -45,16 +71,29 @@ export default function AuthPage() {
     const syncScreenFromSession = async () => {
       if (typeof window !== "undefined") {
         const currentUrl = new URL(window.location.href);
+        const oauthError = currentUrl.searchParams.get("error_description");
+        if (oauthError && active) {
+          setErrorMessage(decodeURIComponent(oauthError.replace(/\+/g, " ")));
+        }
         const authCode = currentUrl.searchParams.get("code");
         if (authCode) {
           const { error } = await supabase.auth.exchangeCodeForSession(authCode);
           if (error && active) {
             setErrorMessage(error.message);
           }
-          currentUrl.searchParams.delete("code");
-          currentUrl.searchParams.delete("state");
-          window.history.replaceState({}, "", currentUrl.pathname);
         }
+        currentUrl.searchParams.delete("code");
+        currentUrl.searchParams.delete("state");
+        currentUrl.searchParams.delete("error");
+        currentUrl.searchParams.delete("error_code");
+        currentUrl.searchParams.delete("error_description");
+
+        const nextSearch = currentUrl.searchParams.toString();
+        window.history.replaceState(
+          {},
+          "",
+          `${currentUrl.pathname}${nextSearch ? `?${nextSearch}` : ""}`
+        );
       }
 
       const { data } = await supabase.auth.getSession();
@@ -64,6 +103,21 @@ export default function AuthPage() {
         setScreenMode("form");
         return;
       }
+
+      let profileReady = true;
+      await ensureProfileSeeded(session.access_token).catch((error) => {
+        profileReady = false;
+        if (active) {
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "프로필 초기화 중 오류가 발생했습니다."
+          );
+          setScreenMode("form");
+          void supabase.auth.signOut();
+        }
+      });
+      if (!profileReady) return;
 
       const completed = session.user.user_metadata?.onboarding_completed === true;
       if (completed) {
@@ -81,11 +135,27 @@ export default function AuthPage() {
         setScreenMode("form");
         return;
       }
-      if (session.user.user_metadata?.onboarding_completed === true) {
-        router.replace("/");
-        return;
-      }
-      setScreenMode("onboarding");
+      void (async () => {
+        let profileReady = true;
+        await ensureProfileSeeded(session.access_token).catch((error) => {
+          profileReady = false;
+          if (active) {
+            setErrorMessage(
+              error instanceof Error
+                ? error.message
+                : "프로필 초기화 중 오류가 발생했습니다."
+            );
+            setScreenMode("form");
+            void supabase.auth.signOut();
+          }
+        });
+        if (!profileReady || !active) return;
+        if (session.user.user_metadata?.onboarding_completed === true) {
+          router.replace("/");
+          return;
+        }
+        setScreenMode("onboarding");
+      })();
     });
 
     return () => {
@@ -164,7 +234,7 @@ export default function AuthPage() {
         data: { onboarding_completed: true },
       });
       if (error) throw error;
-      localStorage.setItem("mammanote:onboarding:done", "true");
+      localStorage.setItem("nyampick:onboarding:done", "true");
       router.replace("/");
     } catch (error) {
       setErrorMessage(
@@ -195,7 +265,7 @@ export default function AuthPage() {
           queryParams:
             provider === "kakao"
               ? {
-                  scope: "profile_nickname profile_image",
+                  scope: "profile_nickname profile_image account_email",
                 }
               : undefined,
         },
@@ -236,7 +306,7 @@ export default function AuthPage() {
   return (
     <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-[rgb(243,248,244)] px-5 pb-10 pt-14">
       <h1 className="text-[34px] font-extrabold tracking-[-0.02em] text-[#1f2725]">
-        맘마노트
+        냠픽
       </h1>
       <p className="mt-2 text-[16px] text-[#6f7875]">
         {mode === "signin" ? "로그인해서 식단을 관리하세요." : "회원가입 후 바로 시작할 수 있어요."}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, Link2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { authedFetch } from "@/lib/authed-fetch";
 
 interface ChildProfile {
@@ -63,7 +64,7 @@ export default function ChildrenPage() {
       setViewerId(json.viewer?.id ?? "");
       setLinkedInfo(json.linkedInfo ?? null);
     } catch (error) {
-      alert(error instanceof Error ? error.message : "아이 정보를 불러오지 못했습니다.");
+      toast.error(error instanceof Error ? error.message : "아이 정보를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -78,7 +79,7 @@ export default function ChildrenPage() {
     const monthsOld = Number.parseInt(newMonthsOld, 10);
     if (!name) return;
     if (!Number.isInteger(monthsOld) || monthsOld < 0) {
-      alert("개월 수는 0 이상의 정수여야 합니다.");
+      toast.error("개월 수는 0 이상의 정수여야 합니다.");
       return;
     }
 
@@ -95,7 +96,7 @@ export default function ChildrenPage() {
       setNewMonthsOld("0");
       await loadChildren();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "아이 추가에 실패했습니다.");
+      toast.error(error instanceof Error ? error.message : "아이 추가에 실패했습니다.");
     } finally {
       setIsSubmitting(false);
     }
@@ -112,7 +113,7 @@ export default function ChildrenPage() {
       if (!res.ok) throw new Error(json.message ?? "대표 아이 설정에 실패했습니다.");
       await loadChildren();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "대표 아이 설정에 실패했습니다.");
+      toast.error(error instanceof Error ? error.message : "대표 아이 설정에 실패했습니다.");
     }
   };
 
@@ -129,7 +130,7 @@ export default function ChildrenPage() {
       if (!res.ok) throw new Error(json.message ?? "아기 삭제에 실패했습니다.");
       await loadChildren();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "아기 삭제에 실패했습니다.");
+      toast.error(error instanceof Error ? error.message : "아기 삭제에 실패했습니다.");
     } finally {
       setDeletingChildId(null);
     }
@@ -144,7 +145,7 @@ export default function ChildrenPage() {
     if (!editingChildId) return;
     const name = editingChildName.trim();
     if (!name) {
-      alert("이름을 입력해주세요.");
+      toast.error("이름을 입력해주세요.");
       return;
     }
     setIsUpdatingName(true);
@@ -160,7 +161,7 @@ export default function ChildrenPage() {
       setEditingChildName("");
       await loadChildren();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "이름 변경에 실패했습니다.");
+      toast.error(error instanceof Error ? error.message : "이름 변경에 실패했습니다.");
     } finally {
       setIsUpdatingName(false);
     }
@@ -184,9 +185,9 @@ export default function ChildrenPage() {
       }
       setInviteCodeByChildId((prev) => ({ ...prev, [childId]: json.code! }));
       await navigator.clipboard.writeText(json.code);
-      alert("초대코드를 복사했습니다.");
+      toast.success("초대코드를 복사했습니다.");
     } catch (error) {
-      alert(error instanceof Error ? error.message : "초대코드 생성에 실패했습니다.");
+      toast.error(error instanceof Error ? error.message : "초대코드 생성에 실패했습니다.");
     } finally {
       setCodeChildId(null);
     }
@@ -205,10 +206,10 @@ export default function ChildrenPage() {
       const json = (await res.json()) as { message?: string };
       if (!res.ok) throw new Error(json.message ?? "초대코드 연결에 실패했습니다.");
       setJoinCode("");
-      alert("가족 데이터에 연결되었습니다.");
+      toast.success("가족 데이터에 연결되었습니다.");
       await loadChildren();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "초대코드 연결에 실패했습니다.");
+      toast.error(error instanceof Error ? error.message : "초대코드 연결에 실패했습니다.");
     } finally {
       setIsJoining(false);
     }
@@ -223,10 +224,10 @@ export default function ChildrenPage() {
       });
       const json = (await res.json()) as { message?: string };
       if (!res.ok) throw new Error(json.message ?? "가족 연결 해제에 실패했습니다.");
-      alert("가족 연결이 해제되었습니다.");
+      toast.success("가족 연결이 해제되었습니다.");
       await loadChildren();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "가족 연결 해제에 실패했습니다.");
+      toast.error(error instanceof Error ? error.message : "가족 연결 해제에 실패했습니다.");
     } finally {
       setIsUnlinking(false);
     }

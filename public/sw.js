@@ -1,5 +1,5 @@
-const CACHE_NAME = "mammanote-v1";
-const RUNTIME_CACHE = "mammanote-runtime-v1";
+const CACHE_NAME = "nyampick-v1";
+const RUNTIME_CACHE = "nyampick-runtime-v1";
 const PRECACHE_URLS = ["/", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

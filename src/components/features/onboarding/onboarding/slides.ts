@@ -13,7 +13,7 @@ export const ONBOARDING_SLIDES: OnboardingSlideData[] = [
     imageSrc: "/baby.png",
     imageAlt: "아기 캐릭터",
     imageClassName: "main-img baby-float",
-    title: "맛있는 첫걸음, 맘마노트",
+    title: "맛있는 첫걸음, 냠픽",
     descTop: "우리 아이 성장 단계에 딱 맞는",
     descBottom: "이유식 식단을 AI가 추천해드려요.",
     overlay: "spoon",

@@ -45,6 +45,18 @@ export interface UserProfile {
   email?: string;
 }
 
+export class DuplicateEmailAccountError extends Error {
+  readonly email: string;
+  readonly existingUserId: string;
+
+  constructor(email: string, existingUserId: string) {
+    super("이미 같은 이메일로 가입된 계정이 있습니다. 기존 로그인 방식으로 로그인해주세요.");
+    this.name = "DuplicateEmailAccountError";
+    this.email = email;
+    this.existingUserId = existingUserId;
+  }
+}
+
 interface RecipeRecommendation {
   id: string;
   title: string;
@@ -188,6 +200,7 @@ export async function ensureAppSeedData(
   userNameHint?: string
 ) {
   const supabase = getSupabaseAdmin();
+  const normalizedEmail = userEmail?.trim().toLowerCase() || undefined;
 
   const { data: existing, error: profileErr } = await supabase
     .from("user_profile")
@@ -198,6 +211,20 @@ export async function ensureAppSeedData(
 
   const guessedName = userNameHint?.trim() || userEmail?.split("@")[0] || "사용자";
   const current = existing?.[0];
+
+  if (normalizedEmail) {
+    const { data: duplicateRows, error: duplicateErr } = await supabase
+      .from("user_profile")
+      .select("id,email")
+      .neq("id", userId)
+      .ilike("email", normalizedEmail)
+      .limit(1);
+    if (duplicateErr) throw duplicateErr;
+    const duplicated = duplicateRows?.[0];
+    if (duplicated?.id) {
+      throw new DuplicateEmailAccountError(normalizedEmail, duplicated.id);
+    }
+  }
 
   if (!current) {
     const { error: profileInsertError } = await supabase.from("user_profile").insert({
@@ -218,7 +245,7 @@ export async function ensureAppSeedData(
 
   if (
     guessedName &&
-    (current.name === "맘마노트 사용자" ||
+    (current.name === "냠픽 사용자" ||
       current.name === "사용자" ||
       current.name.trim().length === 0)
   ) {

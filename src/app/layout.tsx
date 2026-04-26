@@ -1,17 +1,18 @@
 import type { Metadata, Viewport } from "next";
+import { Toaster } from "sonner";
 
 import { AuthGate } from "@/components/layout/auth-gate";
 import { PwaRegister } from "@/components/layout/pwa-register";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "맘마노트",
+  title: "냠픽",
   description: "가정 음식 메뉴와 아이 이유식 추천 서비스",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "맘마노트",
+    title: "냠픽",
   },
   icons: {
     apple: "/icons/icon-192.png",
@@ -39,6 +40,7 @@ export default function RootLayout({
       <body>
         <PwaRegister />
         <AuthGate>{children}</AuthGate>
+        <Toaster richColors position="top-center" />
       </body>
     </html>
   );

@@ -1,15 +1,23 @@
 "use client";
 
-import { Bell, Sprout } from "lucide-react";
+import Image from "next/image";
+import { Bell } from "lucide-react";
 
 export function AppHeader() {
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between bg-card px-4 py-3 shadow-sm">
       <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
-          <Sprout className="h-4.5 w-4.5 text-primary-foreground" />
+        <div className="relative h-8 w-8 overflow-hidden rounded-full">
+          <Image
+            src="/icons/icon-192.png"
+            alt="냠픽 아이콘"
+            fill
+            sizes="32px"
+            className="object-cover"
+            priority
+          />
         </div>
-        <h1 className="text-base font-bold text-foreground">맘마노트</h1>
+        <h1 className="text-base font-bold text-foreground">냠픽</h1>
       </div>
       <button
         type="button"

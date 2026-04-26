@@ -1,4 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { authedFetch } from "@/lib/authed-fetch";
 import { SECTION_META, SECTION_ORDER, sectionFromItem } from "./constants";
 import {
@@ -178,7 +179,7 @@ export function useRecipePage() {
       const message =
         error instanceof Error ? error.message : "저장 레시피를 불러오지 못했습니다.";
       if (!message.includes("saved_recipes 테이블이 없습니다")) {
-        alert(message);
+        toast.error(message);
       }
       setRecipes([]);
     } finally {
@@ -214,7 +215,7 @@ export function useRecipePage() {
         )
       );
       const json = (await res.json().catch(() => ({}))) as { message?: string };
-      alert(json.message ?? "즐겨찾기 변경에 실패했습니다.");
+      toast.error(json.message ?? "즐겨찾기 변경에 실패했습니다.");
     }
   };
 
@@ -232,7 +233,7 @@ export function useRecipePage() {
     if (!res.ok) {
       setRecipes(previous);
       const json = (await res.json().catch(() => ({}))) as { message?: string };
-      alert(json.message ?? "레시피 삭제에 실패했습니다.");
+      toast.error(json.message ?? "레시피 삭제에 실패했습니다.");
     }
   };
 
@@ -282,7 +283,7 @@ export function useRecipePage() {
     if (!res.ok) {
       await loadSavedRecipes();
       const json = (await res.json().catch(() => ({}))) as { message?: string };
-      alert(json.message ?? "레시피 수정에 실패했습니다.");
+      toast.error(json.message ?? "레시피 수정에 실패했습니다.");
       return;
     }
 
@@ -299,7 +300,7 @@ export function useRecipePage() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "냉장고 재료를 불러오지 못했습니다.";
-      alert(message);
+      toast.error(message);
     } finally {
       setIsLoadingFridge(false);
     }
@@ -399,7 +400,7 @@ export function useRecipePage() {
       setSavedGeneratedIds((prev) => new Set(prev).add(item.id));
     } catch (error) {
       const message = error instanceof Error ? error.message : "레시피 저장에 실패했습니다.";
-      alert(message);
+      toast.error(message);
     }
   };
 
@@ -409,7 +410,7 @@ export function useRecipePage() {
       .map((item) => item.name);
 
     if (selectedNames.length === 0) {
-      alert("추천 받을 재료를 1개 이상 선택해주세요.");
+      toast.error("추천 받을 재료를 1개 이상 선택해주세요.");
       return;
     }
 
@@ -472,7 +473,7 @@ export function useRecipePage() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "레시피 추천 생성에 실패했습니다.";
-      alert(message);
+      toast.error(message);
     } finally {
       setIsGeneratingAi(false);
     }
@@ -531,7 +532,7 @@ export function useRecipePage() {
       setActiveTab("all");
     } catch (error) {
       const message = error instanceof Error ? error.message : "레시피 저장에 실패했습니다.";
-      alert(message);
+      toast.error(message);
     }
   };
 

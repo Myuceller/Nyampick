@@ -53,7 +53,7 @@ export function MealList({
                 snack: [],
               };
               localStorage.setItem(
-                `mammanote:meal-edit:init:${dateKey}`,
+                `nyampick:meal-edit:init:${dateKey}`,
                 JSON.stringify(dayMeals ?? emptyDay)
               );
               router.push(`/meal/edit?date=${dateKey}`);
@@ -68,7 +68,7 @@ export function MealList({
 
       {totalMealCount === 0 ? (
         <div className="rounded-[14px] border bg-[#fdfefd] px-4 py-10 text-center">
-          <p className="text-[18px] font-medium text-[#6e7673]">
+          <p className="text-[18px] font-normal text-[#6e7673]">
             아직 식단이 준비되지 않았습니다
           </p>
         </div>
@@ -88,7 +88,7 @@ export function MealList({
                 </div>
 
                 {entries.length > 0 ? (
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1.5 pl-[10px]">
                     {entries.map((entry) => {
                       return (
                         <div
@@ -108,7 +108,7 @@ export function MealList({
                     })}
                   </div>
                 ) : (
-                  <p className="text-[18px] text-[#6e7673]">
+                  <p className="text-[18px] font-normal text-[#6e7673]">
                     아직 식단이 준비되지 않았습니다
                   </p>
                 )}

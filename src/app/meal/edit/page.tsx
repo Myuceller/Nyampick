@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Plus, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { AppButton } from "@/components/ui/app-button";
 import { AppSearchInput } from "@/components/ui/app-search-input";
 import type { DayMeals, MealEntry, MealType } from "@/lib/types";
@@ -13,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
 const FREQUENT_MENUS: string[] = [];
-const RECENT_SEARCH_KEY = "mammanote:meal-edit:recent-searches";
+const RECENT_SEARCH_KEY = "nyampick:meal-edit:recent-searches";
 
 interface SavedRecipeMenuItem {
   id: string;
@@ -70,7 +71,7 @@ function MealEditPageContent() {
 
   useEffect(() => {
     if (!date) return;
-    const initRaw = localStorage.getItem(`mammanote:meal-edit:init:${date}`);
+    const initRaw = localStorage.getItem(`nyampick:meal-edit:init:${date}`);
     if (!initRaw) {
       initialize(date, createEmptyDay(date));
       return;
@@ -115,7 +116,7 @@ function MealEditPageContent() {
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "레시피 목록을 불러오지 못했습니다.";
-        alert(message);
+        toast.error(message);
         setSavedRecipes([]);
       }
     };
@@ -144,7 +145,7 @@ function MealEditPageContent() {
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "냉장고 목록을 불러오지 못했습니다.";
-        alert(message);
+        toast.error(message);
         setFridgeMenus([]);
       }
     };
@@ -249,7 +250,7 @@ function MealEditPageContent() {
       const json = (await response.json()) as { meals?: DayMeals };
       if (json.meals) {
         localStorage.setItem(
-          "mammanote:meal-edit:result",
+          "nyampick:meal-edit:result",
           JSON.stringify({ date, dayMeals: json.meals })
         );
       }
@@ -257,14 +258,14 @@ function MealEditPageContent() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "식단 저장에 실패했습니다.";
-      alert(message);
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-[#f4f5f4]">
+    <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-[#ffffff]">
       {mode === "edit" ? (
         <>
           <div className="px-4 pb-4 pt-8">
@@ -278,7 +279,7 @@ function MealEditPageContent() {
               {MEAL_TYPES.map((mealType) => (
                 <section
                   key={mealType}
-                  className="rounded-[14px] border border-[#d4d9d7] bg-[#f6f7f6] px-3.5 py-3.5"
+                  className="rounded-[14px] border border-[#d4d9d7] bg-[#ffffff] px-3.5 py-3.5"
                 >
                   <h2 className="mb-2 text-[18px] font-medium text-[#1f2725]">{MEAL_LABELS[mealType]}</h2>
                   <div className="space-y-1.5">
@@ -308,7 +309,7 @@ function MealEditPageContent() {
             </div>
           </div>
 
-          <div className="fixed bottom-0 left-1/2 z-20 w-full max-w-[480px] -translate-x-1/2 bg-[#f4f5f4] px-4 pb-6 pt-2">
+          <div className="fixed bottom-0 left-1/2 z-20 w-full max-w-[480px] -translate-x-1/2 bg-[#ffffff] px-4 pb-6 pt-2">
             <div className="grid grid-cols-2 gap-2">
               <AppButton
                 label="취소하기"

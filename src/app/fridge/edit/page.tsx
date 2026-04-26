@@ -3,6 +3,7 @@
 import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, MinusCircle, PlusCircle, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { AppButton } from "@/components/ui/app-button";
 import { AppSearchInput } from "@/components/ui/app-search-input";
 import { CategoryChipFilter } from "@/components/ui/category-chip-filter";
@@ -129,7 +130,7 @@ export default function FridgeEditPage() {
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "냉장고 데이터를 불러오지 못했습니다.";
-        alert(message);
+        toast.error(message);
       } finally {
         setIsLoading(false);
       }
@@ -348,7 +349,7 @@ export default function FridgeEditPage() {
       router.push("/fridge");
     } catch (error) {
       const message = error instanceof Error ? error.message : "저장에 실패했습니다.";
-      alert(message);
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }

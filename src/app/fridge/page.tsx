@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Camera, Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { AppButton } from "@/components/ui/app-button";
 import { CategoryChipFilter } from "@/components/ui/category-chip-filter";
 import { AppSearchInput } from "@/components/ui/app-search-input";
@@ -126,7 +127,7 @@ export default function FridgePage() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "냉장고 데이터를 불러오지 못했습니다.";
-      alert(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -238,7 +239,7 @@ export default function FridgePage() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "재료 추가에 실패했습니다.";
-      alert(message);
+      toast.error(message);
     } finally {
       setIsAdding(false);
     }
@@ -285,7 +286,7 @@ export default function FridgePage() {
 
       const candidates = scanJson.candidates ?? [];
       if (candidates.length === 0) {
-        alert("인식된 항목이 없습니다.");
+        toast.error("인식된 항목이 없습니다.");
         setReceiptStage("capture");
         return;
       }
@@ -296,7 +297,7 @@ export default function FridgePage() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "영수증 스캔 처리에 실패했습니다.";
-      alert(message);
+      toast.error(message);
       setReceiptStage("capture");
     } finally {
       setIsScanningReceipt(false);
@@ -331,7 +332,7 @@ export default function FridgePage() {
       .filter((c) => selectedReceiptIds.has(c.tempId))
       .map((c) => ({ tempId: c.tempId }));
     if (selected.length === 0) {
-      alert("추가할 재료를 1개 이상 선택해주세요.");
+      toast.error("추가할 재료를 1개 이상 선택해주세요.");
       return;
     }
 
@@ -354,11 +355,11 @@ export default function FridgePage() {
       }
       await loadFridgeItems();
       closeReceiptPopup();
-      alert(`${confirmJson.addedCount ?? selected.length}개 항목을 추가했습니다.`);
+      toast.success(`${confirmJson.addedCount ?? selected.length}개 항목을 추가했습니다.`);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "영수증 항목 추가에 실패했습니다.";
-      alert(message);
+      toast.error(message);
     } finally {
       setIsConfirmingReceipt(false);
     }
@@ -435,7 +436,7 @@ export default function FridgePage() {
         <AppButton
           label="재료 추가"
           onClick={openAddPopup}
-          className="pointer-events-auto mx-auto flex h-12 w-[230px] rounded-full shadow-[0_8px_20px_rgba(87,191,142,0.28)]"
+          className="pointer-events-auto mx-auto flex h-12 w-[230px] rounded-full shadow-[0_4px_12px_rgba(87,191,142,0.15)]"
         />
       </div>
 

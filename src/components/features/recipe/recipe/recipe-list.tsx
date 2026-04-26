@@ -44,7 +44,7 @@ export function RecipeList({
               onOpenDetail(recipe.id);
             }
           }}
-          className="rounded-[14px] border border-[#c7cdca] bg-[#f4f5f4] px-4 py-4 text-left"
+          className="rounded-[14px] border border-[#c7cdca] bg-white px-4 py-4 text-left"
         >
           <div className="mb-2 flex items-start justify-between">
             <div>
