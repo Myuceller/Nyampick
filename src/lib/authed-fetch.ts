@@ -10,22 +10,6 @@ let cachedTokenExpiresAtMs = 0;
 let tokenRequestPromise: Promise<string | null> | null = null;
 let authListenerBound = false;
 
-function shouldLogPerf() {
-  if (typeof window === "undefined") return false;
-  try {
-    return window.localStorage.getItem("nyampick:perf") === "1";
-  } catch {
-    return false;
-  }
-}
-
-function toRequestLabel(input: RequestInfo | URL) {
-  if (typeof input === "string") return input;
-  if (input instanceof URL) return input.toString();
-  if (typeof Request !== "undefined" && input instanceof Request) return input.url;
-  return String(input);
-}
-
 function setTokenCache(token: string | null, expiresAtSeconds?: number) {
   if (!token) {
     cachedAccessToken = null;
@@ -96,20 +80,11 @@ export async function authedFetch(
   input: RequestInfo | URL,
   init?: RequestInit
 ) {
-  const perfEnabled = shouldLogPerf();
-  const startedAt = perfEnabled ? performance.now() : 0;
-  const method = (init?.method ?? "GET").toUpperCase();
-  const label = toRequestLabel(input);
   const accessToken = await resolveAccessToken();
   const headers = new Headers(init?.headers);
   if (accessToken) {
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
 
-  const response = await fetch(input, { ...init, headers });
-  if (perfEnabled) {
-    const duration = Math.round((performance.now() - startedAt) * 10) / 10;
-    console.info(`[perf] ${method} ${label} -> ${response.status} (${duration}ms)`);
-  }
-  return response;
+  return fetch(input, { ...init, headers });
 }

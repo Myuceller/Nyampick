@@ -71,7 +71,25 @@ export default function AuthPage() {
     const syncScreenFromSession = async () => {
       if (typeof window !== "undefined") {
         const currentUrl = new URL(window.location.href);
-        const oauthError = currentUrl.searchParams.get("error_description");
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        const hashAccessToken = hashParams.get("access_token");
+        const hashRefreshToken = hashParams.get("refresh_token");
+
+        // Backward compatibility: if implicit-flow tokens arrive in URL hash,
+        // immediately exchange them into client session and then clear the hash.
+        if (hashAccessToken && hashRefreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: hashAccessToken,
+            refresh_token: hashRefreshToken,
+          });
+          if (error && active) {
+            setErrorMessage(error.message);
+          }
+        }
+
+        const oauthError =
+          currentUrl.searchParams.get("error_description") ??
+          hashParams.get("error_description");
         if (oauthError && active) {
           setErrorMessage(decodeURIComponent(oauthError.replace(/\+/g, " ")));
         }
@@ -258,7 +276,7 @@ export default function AuthPage() {
     try {
       setIsSocialSubmitting(true);
       const redirectTo = getOAuthRedirectTo();
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo,
@@ -272,6 +290,12 @@ export default function AuthPage() {
       });
 
       if (error) throw error;
+
+      // Some mobile/in-app browsers do not always auto-redirect reliably.
+      // Force navigation when URL is provided to avoid "stuck" state.
+      if (data?.url) {
+        window.location.assign(data.url);
+      }
     } catch (error) {
       if (
         provider === "kakao" &&
