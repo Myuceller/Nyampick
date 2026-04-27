@@ -12,10 +12,7 @@ export type LoadingPhase =
 
 export function getOAuthRedirectTo() {
   if (typeof window === "undefined") return undefined;
-  const envAppUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  const origin = window.location.origin;
-  const baseUrl = envAppUrl ? envAppUrl.replace(/\/+$/, "") : origin;
-  return `${baseUrl}/auth`;
+  return `${window.location.origin}/auth`;
 }
 
 export async function ensureProfileSeeded(accessToken: string) {
@@ -70,7 +67,14 @@ export function toFriendlyAuthErrorMessage(error: unknown): string {
   }
 
   if (normalized.includes("unable to exchange external code")) {
+    if (normalized.includes("code verifier") || normalized.includes("pkce")) {
+      return "소셜 로그인 세션 확인에 실패했습니다. 같은 브라우저에서 다시 로그인해주세요.";
+    }
     return "소셜 로그인 인증 코드 처리에 실패했습니다. 다시 시도해주세요.";
+  }
+
+  if (normalized.includes("code verifier") || normalized.includes("pkce")) {
+    return "소셜 로그인 세션 확인에 실패했습니다. 같은 브라우저에서 다시 로그인해주세요.";
   }
 
   if (normalized.includes("duplicate_email_account")) {
