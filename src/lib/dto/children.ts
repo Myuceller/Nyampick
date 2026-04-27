@@ -2,6 +2,7 @@ export interface ChildSummaryDto {
   id: string;
   name: string;
   monthsOld: number;
+  allergies?: string[];
   isPrimary: boolean;
 }
 

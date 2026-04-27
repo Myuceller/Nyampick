@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { MealType } from "@/lib/types";
-import { getAllMealsFromDb, getMealsByDateFromDb } from "@/lib/server/supabase-meals";
+import { getAllMealsFromDb } from "@/lib/server/supabase-meals";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { listChildrenFromDb } from "@/lib/server/supabase-children";
 
@@ -294,6 +294,17 @@ export async function listFridgeItemsFromDb(
     addedAt: row.added_at,
     source: row.source,
   })) as FridgeItem[];
+}
+
+export async function countFridgeItemsFromDb(userId: string): Promise<number> {
+  await ensureAppSeedData(userId);
+  const supabase = getSupabaseAdmin();
+  const { count, error } = await supabase
+    .from("fridge_items")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+  if (error) throw error;
+  return count ?? 0;
 }
 
 export async function addFridgeItemToDb(input: {
@@ -715,13 +726,13 @@ export async function getRecipeRecommendationsFromDb(
 
 export async function getHomeSummaryFromDb(userId: string) {
   const today = todayKey();
-  const [todayMeals, allMeals, fridgeItems, children] = await Promise.all([
-    getMealsByDateFromDb(userId, today),
+  const [allMeals, fridgeItemCount, children] = await Promise.all([
     getAllMealsFromDb(userId),
-    listFridgeItemsFromDb(userId),
+    countFridgeItemsFromDb(userId),
     listChildrenFromDb(userId),
   ]);
   const primaryChild = children.find((child) => child.isPrimary) ?? children[0] ?? null;
+  const todayMeals = allMeals[today] ?? null;
 
   return {
     date: today,
@@ -735,7 +746,7 @@ export async function getHomeSummaryFromDb(userId: string) {
         dinner: [],
         snack: [],
       },
-    fridgeItemCount: fridgeItems.length,
+    fridgeItemCount,
     familyMemberCount: Math.max(1, children.length),
     primaryChild: primaryChild
       ? {

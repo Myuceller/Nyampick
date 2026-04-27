@@ -7,6 +7,7 @@ export interface ChildProfile {
   userId: string;
   name: string;
   monthsOld: number;
+  allergies: string[];
   isPrimary: boolean;
   createdAt: string;
   updatedAt: string;
@@ -17,6 +18,7 @@ function toChildProfile(row: {
   user_id: string;
   name: string;
   months_old: number;
+  allergies?: string[] | null;
   is_primary: boolean;
   created_at: string;
   updated_at: string;
@@ -26,6 +28,7 @@ function toChildProfile(row: {
     userId: row.user_id,
     name: row.name,
     monthsOld: row.months_old,
+    allergies: row.allergies ?? [],
     isPrimary: row.is_primary,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -45,13 +48,14 @@ async function seedDefaultChild(userId: string): Promise<ChildProfile> {
     user_id: userId,
     name: profileRow?.baby_name ?? "아기",
     months_old: profileRow?.baby_months_old ?? 0,
+    allergies: [],
     is_primary: true,
   };
 
   const { data, error } = await supabase
     .from("child_profiles")
     .insert(payload)
-    .select("id,user_id,name,months_old,is_primary,created_at,updated_at")
+    .select("id,user_id,name,months_old,allergies,is_primary,created_at,updated_at")
     .single();
   if (error) throw error;
   return toChildProfile(data);
@@ -65,7 +69,7 @@ export async function listChildrenFromDb(userId: string): Promise<ChildProfile[]
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("child_profiles")
-    .select("id,user_id,name,months_old,is_primary,created_at,updated_at")
+    .select("id,user_id,name,months_old,allergies,is_primary,created_at,updated_at")
     .eq("user_id", userId)
     .order("is_primary", { ascending: false })
     .order("created_at", { ascending: true });
@@ -141,6 +145,7 @@ export async function addChildToDb(input: {
   userId: string;
   name: string;
   monthsOld: number;
+  allergies?: string[];
   isPrimary?: boolean;
 }): Promise<ChildProfile> {
   const supabase = getSupabaseAdmin();
@@ -161,9 +166,10 @@ export async function addChildToDb(input: {
       user_id: input.userId,
       name: input.name,
       months_old: input.monthsOld,
+      allergies: input.allergies ?? [],
       is_primary: shouldBePrimary,
     })
-    .select("id,user_id,name,months_old,is_primary,created_at,updated_at")
+    .select("id,user_id,name,months_old,allergies,is_primary,created_at,updated_at")
     .single();
   if (error) throw error;
   return toChildProfile(data);
@@ -172,7 +178,7 @@ export async function addChildToDb(input: {
 export async function updateChildInDb(
   userId: string,
   childId: string,
-  patch: { name?: string; monthsOld?: number; isPrimary?: boolean }
+  patch: { name?: string; monthsOld?: number; allergies?: string[]; isPrimary?: boolean }
 ): Promise<ChildProfile | null> {
   const supabase = getSupabaseAdmin();
   if (patch.isPrimary) {
@@ -182,9 +188,10 @@ export async function updateChildInDb(
       .eq("user_id", userId);
   }
 
-  const updatePatch: Record<string, string | number | boolean> = {};
+  const updatePatch: Record<string, string | number | boolean | string[]> = {};
   if (patch.name !== undefined) updatePatch.name = patch.name;
   if (patch.monthsOld !== undefined) updatePatch.months_old = patch.monthsOld;
+  if (patch.allergies !== undefined) updatePatch.allergies = patch.allergies;
   if (patch.isPrimary !== undefined) updatePatch.is_primary = patch.isPrimary;
 
   const { data, error } = await supabase
@@ -192,7 +199,7 @@ export async function updateChildInDb(
     .update(updatePatch)
     .eq("user_id", userId)
     .eq("id", childId)
-    .select("id,user_id,name,months_old,is_primary,created_at,updated_at")
+    .select("id,user_id,name,months_old,allergies,is_primary,created_at,updated_at")
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;

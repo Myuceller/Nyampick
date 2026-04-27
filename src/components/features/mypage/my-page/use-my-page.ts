@@ -17,6 +17,7 @@ export function useMyPage() {
   const [profileName, setProfileName] = useState("");
   const [babyName, setBabyName] = useState("");
   const [babyMonthsOld, setBabyMonthsOld] = useState("0");
+  const [babyAllergies, setBabyAllergies] = useState<string[]>([]);
   const [childCount, setChildCount] = useState(0);
   const [familyMemberCount, setFamilyMemberCount] = useState(1);
   const [primaryChildId, setPrimaryChildId] = useState<string | null>(null);
@@ -60,6 +61,7 @@ export function useMyPage() {
             setPrimaryChildId(primary.id);
             setBabyName(primary.name);
             setBabyMonthsOld(String(primary.monthsOld));
+            setBabyAllergies(primary.allergies ?? []);
           }
           const nextLinkedMode = Boolean(json.linkedMode);
           setLinkedMode(nextLinkedMode);
@@ -150,6 +152,7 @@ export function useMyPage() {
     setBabyName,
     babyMonthsOld,
     setBabyMonthsOld,
+    babyAllergies,
     childCount,
     familyMemberCount,
     linkedMode,
@@ -158,6 +161,8 @@ export function useMyPage() {
     saveProfile,
     saveBabyProfile,
     logout,
-    openFamilyPage: () => router.push("/children"),
+    openAllergyPage: () => router.push("/allergies"),
+    openBabyPage: () => router.push("/children"),
+    openFamilyPage: () => router.push("/family"),
   };
 }

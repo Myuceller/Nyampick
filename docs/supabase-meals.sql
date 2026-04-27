@@ -59,6 +59,7 @@ create table if not exists public.child_profiles (
   user_id uuid not null references auth.users(id) on delete cascade,
   name text not null,
   months_old int not null default 0,
+  allergies text[] not null default '{}',
   is_primary boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -89,6 +90,7 @@ alter table public.meal_entries add column if not exists user_id uuid;
 alter table public.meal_entries add column if not exists child_id uuid;
 alter table public.fridge_items add column if not exists user_id uuid;
 alter table public.saved_recipes add column if not exists user_id uuid;
+alter table public.child_profiles add column if not exists allergies text[] not null default '{}';
 
 -- Indexes
 create index if not exists meal_entries_user_id_idx on public.meal_entries(user_id);

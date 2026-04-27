@@ -2,20 +2,10 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { ArrowLeft, Link2, MoreHorizontal, X } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, X } from "lucide-react";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { useChildrenPage } from "@/features/children/hooks/use-children-page";
 import { cn } from "@/lib/utils";
-
-const allergySamples = [
-  ["우유", "달걀"],
-  ["갑각류", "열대과일"],
-  [],
-];
-
-function getAllergies(index: number) {
-  return allergySamples[index] ?? [];
-}
 
 function Avatar() {
   return (
@@ -41,34 +31,34 @@ export default function ChildrenPage() {
 
   const {
     addChild,
-    cancelEditChildName,
+    cancelEditChild,
     children,
-    codeChildId,
-    createInviteCode,
     deleteChild,
     deletingChildId,
     editingChildId,
+    editingChildMonthsOld,
     editingChildName,
-    inviteCodeByChildId,
     isSubmitting,
-    isUpdatingName,
+    isUpdatingChild,
     linkedMode,
     loading,
     newMonthsOld,
     newName,
     router,
-    saveChildName,
+    saveChild,
+    setEditingChildMonthsOld,
     setEditingChildName,
     setNewMonthsOld,
     setNewName,
     setPrimaryChild,
-    startEditChildName,
+    startEditChild,
   } = useChildrenPage();
 
   const handleAddChild = async () => {
-    if (!newName.trim()) return;
-    await addChild();
-    setShowAddForm(false);
+    const added = await addChild();
+    if (added) {
+      setShowAddForm(false);
+    }
   };
 
   return (
@@ -110,15 +100,21 @@ export default function ChildrenPage() {
             </div>
           ) : null}
 
-          {children.map((child, index) => {
-            const allergies = getAllergies(index);
+          {children.map((child) => {
+            const allergies = child.allergies ?? [];
             const isActionOpen = actionChildId === child.id;
 
             return (
               <article
                 key={child.id}
+                onClick={() => {
+                  if (!child.isPrimary && !linkedMode) {
+                    void setPrimaryChild(child.id);
+                  }
+                }}
                 className={cn(
                   "relative rounded-[14px] px-5 py-8",
+                  !child.isPrimary && !linkedMode ? "cursor-pointer" : "",
                   child.isPrimary
                     ? "border border-[#57bf8e] bg-white"
                     : "bg-[#f6f7f8]"
@@ -126,9 +122,10 @@ export default function ChildrenPage() {
               >
                 <button
                   type="button"
-                  onClick={() =>
-                    setActionChildId((current) => (current === child.id ? null : child.id))
-                  }
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setActionChildId((current) => (current === child.id ? null : child.id));
+                  }}
                   className="absolute right-4 top-4 rounded-full p-1 text-[#111816] active:bg-[#e8ecea]"
                   aria-label="아기 관리 메뉴"
                 >
@@ -159,75 +156,21 @@ export default function ChildrenPage() {
                   </div>
                 </div>
 
-                {editingChildId === child.id ? (
-                  <div className="mt-5 flex gap-2">
-                    <input
-                      value={editingChildName}
-                      onChange={(event) => setEditingChildName(event.target.value)}
-                      placeholder="새 이름"
-                      className="h-10 min-w-0 flex-1 rounded-xl border border-[#cfd7d3] px-3 text-[14px] outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => void saveChildName()}
-                      disabled={isUpdatingName}
-                      className="h-10 rounded-xl bg-[#57bf8e] px-3 text-[13px] font-semibold text-white disabled:opacity-60"
-                    >
-                      저장
-                    </button>
-                    <button
-                      type="button"
-                      onClick={cancelEditChildName}
-                      className="h-10 rounded-xl border border-[#cad8d2] px-3 text-[13px] font-semibold text-[#5c6663]"
-                    >
-                      취소
-                    </button>
-                  </div>
-                ) : null}
-
-                {inviteCodeByChildId[child.id] ? (
-                  <p className="mt-4 break-all rounded-xl bg-[#eef8f2] px-3 py-2 text-[12px] font-semibold text-[#3b6e58]">
-                    초대코드: {inviteCodeByChildId[child.id]}
-                  </p>
-                ) : null}
-
                 {isActionOpen ? (
-                  <div className="absolute right-4 top-11 z-10 w-[150px] overflow-hidden rounded-[14px] border border-[#e2e6e4] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
-                    {!child.isPrimary ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void setPrimaryChild(child.id);
-                          setActionChildId(null);
-                        }}
-                        disabled={linkedMode}
-                        className="block w-full px-4 py-3 text-left text-[14px] font-semibold text-[#202725] disabled:text-[#a2aaa6]"
-                      >
-                        선택하기
-                      </button>
-                    ) : null}
+                  <div
+                    onClick={(event) => event.stopPropagation()}
+                    className="absolute right-4 top-11 z-10 w-[150px] overflow-hidden rounded-[14px] border border-[#e2e6e4] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)]"
+                  >
                     <button
                       type="button"
                       onClick={() => {
-                        startEditChildName(child);
+                        startEditChild(child);
                         setActionChildId(null);
                       }}
                       disabled={linkedMode}
                       className="block w-full px-4 py-3 text-left text-[14px] font-semibold text-[#202725] disabled:text-[#a2aaa6]"
                     >
-                      이름 변경
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void createInviteCode(child.id);
-                        setActionChildId(null);
-                      }}
-                      disabled={linkedMode || codeChildId === child.id}
-                      className="flex w-full items-center gap-1 px-4 py-3 text-left text-[14px] font-semibold text-[#202725] disabled:text-[#a2aaa6]"
-                    >
-                      <Link2 className="h-4 w-4" />
-                      초대코드
+                      수정하기
                     </button>
                     <button
                       type="button"
@@ -238,7 +181,7 @@ export default function ChildrenPage() {
                       disabled={linkedMode || deletingChildId === child.id}
                       className="block w-full px-4 py-3 text-left text-[14px] font-semibold text-[#ff3030] disabled:text-[#d5a0a0]"
                     >
-                      삭제
+                      삭제하기
                     </button>
                   </div>
                 ) : null}
@@ -294,6 +237,47 @@ export default function ChildrenPage() {
                 className="h-12 w-full rounded-xl bg-[#57bf8e] text-[16px] font-extrabold text-white disabled:opacity-60"
               >
                 {isSubmitting ? "추가 중..." : "추가하기"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {editingChildId ? (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/35 px-4">
+          <div className="mb-4 w-full max-w-[448px] rounded-[24px] bg-white p-5">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-[20px] font-extrabold text-[#202725]">아기 정보 수정</h2>
+              <button
+                type="button"
+                onClick={cancelEditChild}
+                className="rounded-full p-1 text-[#202725]"
+                aria-label="닫기"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <input
+                value={editingChildName}
+                onChange={(event) => setEditingChildName(event.target.value)}
+                placeholder="아기 이름"
+                className="h-12 w-full rounded-xl border border-[#d5ddda] px-4 text-[16px] outline-none"
+              />
+              <input
+                value={editingChildMonthsOld}
+                onChange={(event) => setEditingChildMonthsOld(event.target.value)}
+                inputMode="numeric"
+                placeholder="개월 수"
+                className="h-12 w-full rounded-xl border border-[#d5ddda] px-4 text-[16px] outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => void saveChild()}
+                disabled={isUpdatingChild}
+                className="h-12 w-full rounded-xl bg-[#57bf8e] text-[16px] font-extrabold text-white disabled:opacity-60"
+              >
+                {isUpdatingChild ? "저장 중..." : "저장하기"}
               </button>
             </div>
           </div>

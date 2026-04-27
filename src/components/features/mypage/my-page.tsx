@@ -6,7 +6,6 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useMyPage } from "./my-page/use-my-page";
 
-const allergies = ["우유", "달걀"];
 const appVersion = "v1.0.0";
 
 function getInitial(value: string, fallback: string) {
@@ -163,7 +162,7 @@ export function MyPage() {
               <SectionTitle>아기 관리</SectionTitle>
               <button
                 type="button"
-                onClick={vm.openFamilyPage}
+                onClick={vm.openBabyPage}
                 className="mt-5 flex w-full items-center gap-4 text-left"
               >
                 <div className="relative h-[65px] w-[65px] shrink-0 overflow-hidden rounded-[20px] shadow-[0_8px_20px_rgba(0,0,0,0.10)]">
@@ -199,14 +198,14 @@ export function MyPage() {
               <SectionTitle>알레르기 관리</SectionTitle>
               <button
                 type="button"
-                onClick={() => toast.message("알레르기 관리 화면은 준비 중입니다.")}
+                onClick={vm.openAllergyPage}
                 className="mt-5 block w-full text-left"
               >
                 <p className="text-[18px] font-bold tracking-[-0.02em] text-[#202725]">
                   {babyName}의 알레르기
                 </p>
                 <p className="mt-2 text-[17px] font-semibold text-[#ff3030]">
-                  {allergies.join(", ")}
+                  {vm.babyAllergies.length > 0 ? vm.babyAllergies.join(", ") : "등록된 알레르기 없음"}
                 </p>
               </button>
             </section>

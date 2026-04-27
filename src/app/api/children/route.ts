@@ -9,6 +9,20 @@ import {
   updateChildInDb,
 } from "@/lib/server/supabase-children";
 
+function normalizeAllergies(value: unknown): string[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) return [];
+
+  return Array.from(
+    new Set(
+      value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    )
+  ).slice(0, 20);
+}
+
 export async function GET(request: Request) {
   const user = await getUserFromRequest(request);
   if (!user) {
@@ -48,6 +62,7 @@ export async function POST(request: Request) {
   const body = (await request.json()) as {
     name?: string;
     monthsOld?: number;
+    allergies?: unknown;
     isPrimary?: boolean;
   };
 
@@ -74,6 +89,7 @@ export async function POST(request: Request) {
       userId: scope.ownerUserId,
       name: body.name.trim(),
       monthsOld,
+      allergies: normalizeAllergies(body.allergies),
       isPrimary: body.isPrimary,
     });
     return NextResponse.json({ child }, { status: 201 });
@@ -93,6 +109,7 @@ export async function PATCH(request: Request) {
     id?: string;
     name?: string;
     monthsOld?: number;
+    allergies?: unknown;
     isPrimary?: boolean;
   };
 
@@ -117,6 +134,7 @@ export async function PATCH(request: Request) {
     const child = await updateChildInDb(scope.ownerUserId, body.id, {
       name: body.name?.trim(),
       monthsOld: body.monthsOld,
+      allergies: normalizeAllergies(body.allergies),
       isPrimary: body.isPrimary,
     });
     if (!child) {

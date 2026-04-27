@@ -7,7 +7,17 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: ["/landing", "/icons/", "/og-image.svg", "/manifest.webmanifest"],
-      disallow: ["/api/", "/auth", "/children", "/fridge", "/meal", "/mypage", "/recipe"],
+      disallow: [
+        "/api/",
+        "/allergies",
+        "/auth",
+        "/children",
+        "/family",
+        "/fridge",
+        "/meal",
+        "/mypage",
+        "/recipe",
+      ],
     },
     sitemap: `${appUrl}/sitemap.xml`,
     host: appUrl,
