@@ -29,7 +29,15 @@ export interface RecommendationItemDto {
   source_url?: string;
 }
 
+export interface AllergyWarningDto {
+  allergy: string;
+  matchedValue: string;
+  matchedTerm: string;
+}
+
 export interface RecommendationsResponseDto {
+  allergyWarnings?: AllergyWarningDto[];
+  excludedIngredients?: string[];
   recommendations?: RecommendationItemDto[];
   message?: string;
 }

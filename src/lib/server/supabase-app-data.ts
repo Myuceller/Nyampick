@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { includesAllergyTerm } from "@/lib/allergy-utils";
 import type { MealType } from "@/lib/types";
 import { getAllMealsFromDb } from "@/lib/server/supabase-meals";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
@@ -670,15 +671,27 @@ export async function getRecipeRecommendationsFromDb(
   userId: string,
   limit = 5
 ): Promise<RecipeRecommendation[]> {
-  const [fridgeItems, meals] = await Promise.all([
+  const [fridgeItems, meals, children] = await Promise.all([
     listFridgeItemsFromDb(userId),
     getAllMealsFromDb(userId),
+    listChildrenFromDb(userId),
   ]);
+  const primaryChild = children.find((child) => child.isPrimary) ?? children[0] ?? null;
+  const excludedIngredients = primaryChild?.allergies ?? [];
   const fridgeNames = fridgeItems.map((item) => item.name);
   const recentMeals = collectRecentMealNames(meals, 7);
   const nutritionGap = getNutritionGap(collectRecentMealNames(meals, 3));
 
-  const scored = SAMPLE_RECIPES.map((recipe) => {
+  const candidates = SAMPLE_RECIPES.filter(
+    (recipe) =>
+      !recipe.ingredients.some((ingredient) =>
+        includesAllergyTerm(ingredient, excludedIngredients)
+      ) &&
+      !includesAllergyTerm(recipe.title, excludedIngredients) &&
+      !includesAllergyTerm(recipe.description, excludedIngredients)
+  );
+
+  const scored = candidates.map((recipe) => {
     const fridgeMatchCount = recipe.ingredients.filter((ing) =>
       fridgeNames.some((name) => ing.includes(name) || name.includes(ing))
     ).length;
@@ -714,7 +727,7 @@ export async function getRecipeRecommendationsFromDb(
 
   if (scored.length > 0) return scored;
 
-  return SAMPLE_RECIPES.slice(0, limit).map((recipe) => ({
+  return candidates.slice(0, limit).map((recipe) => ({
     ...recipe,
     reasons: [
       "냉장고 재료 매칭이 적어 기본 추천 레시피를 표시했어요.",

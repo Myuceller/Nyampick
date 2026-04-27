@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { expandAllergyTerms, includesAllergyTerm } from "@/lib/allergy-utils";
 
 export type AiTaste = "좋아해요" | "보통이에요" | "싫어해요";
 
@@ -14,6 +15,7 @@ export interface AiRecipeRecommendation {
 
 interface GenerateRecipeInput {
   ingredients: string[];
+  excludedIngredients?: string[];
   limit: number;
 }
 
@@ -132,6 +134,18 @@ function parseRecommendations(
     );
 }
 
+function filterBlockedRecommendations(
+  recipes: AiRecipeRecommendation[],
+  blockedIngredients: string[]
+) {
+  if (blockedIngredients.length === 0) return recipes;
+
+  return recipes.filter((recipe) => {
+    const fields = [recipe.title, recipe.subtitle, ...recipe.ingredients];
+    return !fields.some((field) => includesAllergyTerm(field, blockedIngredients));
+  });
+}
+
 async function generateOnce(
   client: OpenAI,
   model: string,
@@ -154,6 +168,9 @@ async function generateOnce(
         "source_name은 출처명, source_url은 실제 접속 가능한 링크를 넣는다.",
         "source_name/source_url을 채울 수 없으면 해당 레시피는 제외한다.",
         "입력된 재료를 최대한 활용하고, 이유식/유아식 톤을 유지한다.",
+        input.excludedIngredients?.length
+          ? `제외 재료: ${expandAllergyTerms(input.excludedIngredients).join(", ")}. 제외 재료 또는 그 재료가 들어간 가공식품/대체 표현은 절대 추천하지 않는다.`
+          : "",
       ].join(" ")
     : [
         "너는 영유아 식단 레시피 추천 전문가다.",
@@ -167,6 +184,9 @@ async function generateOnce(
         "ingredients는 3~6개 한국어 재료명 배열로 작성한다.",
         "steps는 3~4개 한국어 조리 순서 배열로 작성한다.",
         "source_name/source_url은 알고 있는 경우에만 넣고, 모르면 빈 문자열로 둔다.",
+        input.excludedIngredients?.length
+          ? `제외 재료: ${expandAllergyTerms(input.excludedIngredients).join(", ")}. 제외 재료 또는 그 재료가 들어간 가공식품/대체 표현은 절대 추천하지 않는다.`
+          : "",
       ].join(" ");
 
   const response = await client.responses.create({
@@ -181,7 +201,13 @@ async function generateOnce(
         content: [
           {
             type: "input_text",
-            text: `선택 재료: ${input.ingredients.join(", ")}\n추천 개수: ${input.limit}`,
+            text: [
+              `선택 재료: ${input.ingredients.join(", ")}`,
+              input.excludedIngredients?.length
+                ? `알레르기 제외 재료: ${expandAllergyTerms(input.excludedIngredients).join(", ")}`
+                : "알레르기 제외 재료: 없음",
+              `추천 개수: ${input.limit}`,
+            ].join("\n"),
           },
         ],
       },
@@ -214,20 +240,28 @@ export async function generateRecipeRecommendationsWithOpenAI(
   const client = new OpenAI({ apiKey });
 
   const strict = await generateOnce(client, model, input, true);
-  if (strict.recommendations.length >= 1) {
+  const strictRecommendations = filterBlockedRecommendations(
+    strict.recommendations,
+    input.excludedIngredients ?? []
+  );
+  if (strictRecommendations.length >= 1) {
     return {
-      recommendations: strict.recommendations.slice(0, input.limit),
+      recommendations: strictRecommendations.slice(0, input.limit),
       usage: strict.usage,
     };
   }
 
   const fallback = await generateOnce(client, model, input, false);
-  if (fallback.recommendations.length === 0) {
+  const fallbackRecommendations = filterBlockedRecommendations(
+    fallback.recommendations,
+    input.excludedIngredients ?? []
+  );
+  if (fallbackRecommendations.length === 0) {
     throw new Error("AI가 레시피를 생성하지 못했습니다.");
   }
 
   return {
-    recommendations: fallback.recommendations.slice(0, input.limit),
+    recommendations: fallbackRecommendations.slice(0, input.limit),
     usage: {
       inputTokens: strict.usage.inputTokens + fallback.usage.inputTokens,
       outputTokens: strict.usage.outputTokens + fallback.usage.outputTokens,

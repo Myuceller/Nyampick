@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { findAllergyMatches } from "@/lib/allergy-utils";
 import { getUserFromRequest } from "@/lib/server/api-auth";
+import { getFamilyDataScope } from "@/lib/server/family-access";
 import { generateRecipeRecommendationsWithOpenAI } from "@/lib/server/recipe-ai";
+import { listChildrenFromDb } from "@/lib/server/supabase-children";
 import {
   consumeAiAttempt,
   consumeUserDailyTokenBudget,
@@ -12,6 +15,16 @@ import {
 interface RecommendationsRequestBody {
   ingredients?: string[];
   limit?: number;
+}
+
+async function getActiveChildAllergies(userId: string): Promise<string[]> {
+  const scope = await getFamilyDataScope({ userId });
+  const children = await listChildrenFromDb(scope.ownerUserId);
+  const activeChild = scope.isLinked
+    ? children.find((child) => child.id === scope.childId) ?? null
+    : children.find((child) => child.isPrimary) ?? children[0] ?? null;
+
+  return activeChild?.allergies ?? [];
 }
 
 export async function POST(request: Request) {
@@ -42,6 +55,15 @@ export async function POST(request: Request) {
     );
   }
 
+  let excludedIngredients: string[] = [];
+  try {
+    excludedIngredients = await getActiveChildAllergies(user.id);
+  } catch {
+    excludedIngredients = [];
+  }
+
+  const allergyWarnings = findAllergyMatches(ingredients, excludedIngredients);
+
   const limit =
     typeof body.limit === "number" && Number.isFinite(body.limit)
       ? Math.max(1, Math.min(10, Math.floor(body.limit)))
@@ -70,6 +92,7 @@ export async function POST(request: Request) {
   try {
     const result = await generateRecipeRecommendationsWithOpenAI({
       ingredients,
+      excludedIngredients,
       limit,
     });
 
@@ -96,6 +119,8 @@ export async function POST(request: Request) {
     registerAiSuccess({ userId: user.id, action: "recipes" });
 
     return NextResponse.json({
+      allergyWarnings,
+      excludedIngredients,
       recommendations: result.recommendations,
       usage: result.usage,
     });

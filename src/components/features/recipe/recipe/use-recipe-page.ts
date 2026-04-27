@@ -398,6 +398,17 @@ export function useRecipePage() {
       if (!res.ok) {
         throw new Error(json.message ?? "레시피 추천 생성에 실패했습니다.");
       }
+      if ((json.allergyWarnings ?? []).length > 0) {
+        const matchedValues = Array.from(
+          new Set((json.allergyWarnings ?? []).map((warning) => warning.matchedValue))
+        );
+        const allergyNames = Array.from(
+          new Set((json.allergyWarnings ?? []).map((warning) => warning.allergy))
+        );
+        toast.warning(
+          `선택한 재료에 ${allergyNames.join(", ")} 알레르기와 관련된 재료가 있어요: ${matchedValues.join(", ")}. 추천에서는 제외할게요.`
+        );
+      }
       setAiGenerationStage("analyzing");
 
       const recommended = (json.recommendations ?? [])
