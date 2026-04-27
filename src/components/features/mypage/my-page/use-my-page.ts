@@ -17,6 +17,8 @@ export function useMyPage() {
   const [profileName, setProfileName] = useState("");
   const [babyName, setBabyName] = useState("");
   const [babyMonthsOld, setBabyMonthsOld] = useState("0");
+  const [childCount, setChildCount] = useState(0);
+  const [familyMemberCount, setFamilyMemberCount] = useState(1);
   const [primaryChildId, setPrimaryChildId] = useState<string | null>(null);
   const [linkedMode, setLinkedMode] = useState(false);
   const [linkedOwnerLabel, setLinkedOwnerLabel] = useState("");
@@ -52,13 +54,16 @@ export function useMyPage() {
         if (childrenRes.ok) {
           const json = (await childrenRes.json()) as ChildrenResponseDto;
           const children = json.children ?? [];
+          setChildCount(children.length);
           const primary = children.find((child) => child.isPrimary) ?? children[0];
           if (primary) {
             setPrimaryChildId(primary.id);
             setBabyName(primary.name);
             setBabyMonthsOld(String(primary.monthsOld));
           }
-          setLinkedMode(Boolean(json.linkedMode));
+          const nextLinkedMode = Boolean(json.linkedMode);
+          setLinkedMode(nextLinkedMode);
+          setFamilyMemberCount(nextLinkedMode ? 2 : 1);
           setLinkedOwnerLabel(json.linkedInfo?.ownerName || json.linkedInfo?.ownerEmail || "");
         }
       } catch (e) {
@@ -145,6 +150,8 @@ export function useMyPage() {
     setBabyName,
     babyMonthsOld,
     setBabyMonthsOld,
+    childCount,
+    familyMemberCount,
     linkedMode,
     linkedOwnerLabel,
     error,

@@ -715,14 +715,17 @@ export async function getRecipeRecommendationsFromDb(
 
 export async function getHomeSummaryFromDb(userId: string) {
   const today = todayKey();
-  const [todayMeals, fridgeItems, children] = await Promise.all([
+  const [todayMeals, allMeals, fridgeItems, children] = await Promise.all([
     getMealsByDateFromDb(userId, today),
+    getAllMealsFromDb(userId),
     listFridgeItemsFromDb(userId),
     listChildrenFromDb(userId),
   ]);
+  const primaryChild = children.find((child) => child.isPrimary) ?? children[0] ?? null;
 
   return {
     date: today,
+    meals: allMeals,
     todayMeals:
       todayMeals ??
       {
@@ -734,5 +737,12 @@ export async function getHomeSummaryFromDb(userId: string) {
       },
     fridgeItemCount: fridgeItems.length,
     familyMemberCount: Math.max(1, children.length),
+    primaryChild: primaryChild
+      ? {
+          id: primaryChild.id,
+          name: primaryChild.name,
+          monthsOld: primaryChild.monthsOld,
+        }
+      : null,
   };
 }

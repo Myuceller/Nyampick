@@ -5,7 +5,10 @@ import { AuthGate } from "@/components/layout/auth-gate";
 import { PwaRegister } from "@/components/layout/pwa-register";
 import "./globals.css";
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(appUrl),
   title: "냠픽",
   description: "가정 음식 메뉴와 아이 이유식 추천 서비스",
   manifest: "/manifest.webmanifest",
