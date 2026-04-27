@@ -7,11 +7,8 @@ import { CategoryChipFilter } from "@/components/ui/category-chip-filter";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { FridgeEditSkeleton } from "@/components/features/fridge/fridge-edit-skeleton";
 import {
-  FridgeItem,
-  FridgeCategory,
   SectionKey,
   SECTION_META,
-  CHIP_ORDER,
   getWiggleStyle,
   useFridgeEditPage,
 } from "@/features/fridge/hooks/use-fridge-edit-page";

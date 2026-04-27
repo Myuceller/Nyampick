@@ -20,37 +20,39 @@ export default function FridgePage() {
   const vm = useFridgePage();
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-[480px] flex-col bg-white pb-24">
-      <main className="flex flex-1 flex-col px-4 pt-12">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-[24px] font-bold tracking-[-0.02em] text-[#1f2725]">
-            내 냉장고
-          </h1>
-          <button
-            type="button"
-            onClick={() => vm.router.push("/fridge/edit")}
-            className="text-[12px] font-semibold text-[#59C090]"
-          >
-            수정하기
-          </button>
+    <div className="mx-auto flex min-h-[100dvh] max-w-[480px] flex-col bg-[#eef3f0] pb-24">
+      <main className="flex flex-1 flex-col">
+        <div className="bg-white px-4 pb-4 pt-12">
+          <div className="mb-6 flex items-center justify-between">
+            <h1 className="text-[24px] font-bold tracking-[-0.02em] text-[#1f2725]">
+              내 냉장고
+            </h1>
+            <button
+              type="button"
+              onClick={() => vm.router.push("/fridge/edit")}
+              className="text-[12px] font-semibold text-[#59C090]"
+            >
+              수정하기
+            </button>
+          </div>
+
+          <AppSearchInput
+            value={vm.keyword}
+            onChange={vm.setKeyword}
+            placeholder="재료 검색"
+            inputClassName="border-transparent bg-[#eef0ef]"
+          />
+
+          <CategoryChipFilter
+            options={vm.filterOptions}
+            activeKey={vm.activeFilter}
+            onChange={(key) => vm.setActiveFilter(key as "all" | FridgeSectionKey)}
+          />
         </div>
 
-        <AppSearchInput
-          value={vm.keyword}
-          onChange={vm.setKeyword}
-          placeholder="재료 검색"
-          inputClassName="border-transparent bg-[#eef0ef]"
-        />
+        <div className="h-px bg-[#d3d7d5]" />
 
-        <CategoryChipFilter
-          options={vm.filterOptions}
-          activeKey={vm.activeFilter}
-          onChange={(key) => vm.setActiveFilter(key as "all" | FridgeSectionKey)}
-        />
-
-        <div className="-mx-4 mt-4 h-px bg-[#d3d7d5]" />
-
-        <div className="-mx-4 bg-[#eef3f0] px-4 pb-40 pt-5">
+        <div className="flex-1 px-4 pb-40 pt-5">
           {vm.isLoading ? (
             <FridgePageSkeleton />
           ) : (
@@ -114,13 +116,17 @@ export default function FridgePage() {
       </main>
 
       {!vm.showEmptyFridgeCta ? (
-        <div className="pointer-events-none fixed bottom-[calc(86px+env(safe-area-inset-bottom))] left-1/2 z-40 w-full max-w-[480px] -translate-x-1/2 px-4">
+        <div className="pointer-events-none fixed bottom-[calc(86px+env(safe-area-inset-bottom))] left-1/2 z-40 w-full max-w-[480px] -translate-x-1/2 bg-[#eef3f0] px-4 pb-4 pt-3">
           <AppButton
             label="재료 추가"
             onClick={vm.openAddPopup}
             className="pointer-events-auto mx-auto flex h-12 w-[230px] rounded-full shadow-[0_4px_12px_rgba(87,191,142,0.15)]"
           />
         </div>
+      ) : null}
+
+      {!vm.showEmptyFridgeCta ? (
+        <div className="pointer-events-none fixed bottom-0 left-1/2 z-30 h-[calc(110px+env(safe-area-inset-bottom))] w-full max-w-[480px] -translate-x-1/2 bg-[#eef3f0]" />
       ) : null}
 
       {vm.isAddPopupOpen ? (

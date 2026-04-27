@@ -4,55 +4,25 @@ import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { authedFetch } from "@/lib/authed-fetch";
+import {
+  FRIDGE_SECTION_META,
+  FRIDGE_SECTION_ORDER,
+  FridgeCategory,
+  FridgeItem,
+  FridgeSectionKey,
+  sectionFromFridgeItem,
+} from "@/features/fridge/lib/fridge-types";
 
-export type FridgeCategory =
-  | "fruit"
-  | "vegetable"
-  | "protein"
-  | "dairy"
-  | "grain"
-  | "sauce"
-  | "snack"
-  | "other";
+export type { FridgeCategory, FridgeItem };
+export type SectionKey = FridgeSectionKey;
 
-export type SectionKey = "cube" | FridgeCategory;
-
-export interface FridgeItem {
-  id: string;
-  name: string;
-  category: FridgeCategory;
-  quantity?: string;
-  expiresAt?: string;
-  addedAt: string;
-  source: "manual" | "receipt";
-}
-
-export const CHIP_ORDER: SectionKey[] = [
-  "cube",
-  "protein",
-  "vegetable",
-  "fruit",
-  "dairy",
-  "grain",
-  "sauce",
-  "snack",
-  "other",
-];
-
-export const SECTION_META: Record<
-  SectionKey,
-  { label: string; emoji: string; chip: string }
-> = {
-  cube: { label: "큐브 이유식", emoji: "🧊", chip: "큐브 이유식" },
-  protein: { label: "단백질", emoji: "🥩", chip: "단백질" },
-  vegetable: { label: "채소", emoji: "🥦", chip: "채소" },
-  fruit: { label: "과일", emoji: "🍎", chip: "과일" },
-  dairy: { label: "유제품", emoji: "🥛", chip: "유제품" },
-  grain: { label: "곡물", emoji: "🌾", chip: "곡물" },
-  sauce: { label: "소스", emoji: "🧂", chip: "소스" },
-  snack: { label: "간식", emoji: "🍪", chip: "간식" },
-  other: { label: "기타", emoji: "🍽️", chip: "기타" },
-};
+export const CHIP_ORDER = FRIDGE_SECTION_ORDER;
+export const SECTION_META = Object.fromEntries(
+  Object.entries(FRIDGE_SECTION_META).map(([key, meta]) => [
+    key,
+    { label: meta.label, emoji: meta.emoji, chip: meta.chipLabel },
+  ])
+) as Record<SectionKey, { label: string; emoji: string; chip: string }>;
 
 function parseQuantity(raw?: string): { value: number; suffix: string } {
   if (!raw) return { value: 0, suffix: "개" };
@@ -188,11 +158,7 @@ export function useFridgeEditPage() {
     };
 
     for (const item of filteredItems) {
-      if (item.name.includes("큐브")) {
-        bySection.cube.push(item);
-      } else {
-        bySection[item.category].push(item);
-      }
+      bySection[sectionFromFridgeItem(item)].push(item);
     }
     return bySection;
   }, [filteredItems]);

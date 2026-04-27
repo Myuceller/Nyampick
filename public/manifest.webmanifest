@@ -2,22 +2,48 @@
   "name": "냠픽",
   "short_name": "냠픽",
   "description": "아이 성장 단계에 맞춘 식단 관리 앱",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#dce3e0",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#fdfefd",
   "theme_color": "#57bf8e",
   "lang": "ko-KR",
   "orientation": "portrait",
+  "categories": ["food", "health", "lifestyle"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "식단 보기",
+      "short_name": "식단",
+      "url": "/",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "냉장고 열기",
+      "short_name": "냉장고",
+      "url": "/fridge",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "레시피 보기",
+      "short_name": "레시피",
+      "url": "/recipe",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

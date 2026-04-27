@@ -1,6 +1,11 @@
-const CACHE_NAME = "nyampick-v1";
-const RUNTIME_CACHE = "nyampick-runtime-v1";
-const PRECACHE_URLS = ["/", "/manifest.webmanifest"];
+const CACHE_NAME = "nyampick-v2";
+const RUNTIME_CACHE = "nyampick-runtime-v2";
+const PRECACHE_URLS = [
+  "/",
+  "/manifest.webmanifest",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -27,6 +32,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
 
   // Never cache Next.js runtime assets/APIs; stale chunk caches break navigation.
   if (url.pathname.startsWith("/_next/") || url.pathname.startsWith("/api/")) {

@@ -4,38 +4,24 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { authedFetch } from "@/lib/authed-fetch";
+import {
+  FRIDGE_CATEGORY_LABEL,
+  FRIDGE_CATEGORY_TEXT_COLOR,
+  FRIDGE_SECTION_META,
+  FRIDGE_SECTION_ORDER,
+  FridgeCategory,
+  FridgeItem,
+  FridgeSection,
+  FridgeSectionKey,
+  sectionFromFridgeItem,
+} from "@/features/fridge/lib/fridge-types";
 
-export type FridgeSectionKey =
-  | "cube"
-  | "protein"
-  | "vegetable"
-  | "fruit"
-  | "dairy"
-  | "grain"
-  | "other";
-
-export interface FridgeItem {
-  id: string;
-  name: string;
-  category: Exclude<FridgeSectionKey, "cube">;
-  quantity?: string;
-  expiresAt?: string;
-  addedAt: string;
-  source: "manual" | "receipt";
-}
-
-export interface FridgeSection {
-  key: FridgeSectionKey;
-  label: string;
-  emoji: string;
-  chipLabel: string;
-  items: FridgeItem[];
-}
+export type { FridgeCategory, FridgeItem, FridgeSection, FridgeSectionKey };
 
 export interface ReceiptCandidate {
   tempId: string;
   name: string;
-  category: Exclude<FridgeSectionKey, "cube">;
+  category: FridgeCategory;
   confidence: number;
 }
 
@@ -49,49 +35,10 @@ export interface DraftIngredient {
   type: FridgeSectionKey;
 }
 
-export const SECTION_ORDER: FridgeSectionKey[] = [
-  "cube",
-  "protein",
-  "vegetable",
-  "fruit",
-  "dairy",
-  "grain",
-  "other",
-];
-
-export const SECTION_META: Record<
-  FridgeSectionKey,
-  { label: string; emoji: string; chipLabel: string }
-> = {
-  cube: { label: "큐브", emoji: "🧊", chipLabel: "큐브" },
-  protein: { label: "단백질", emoji: "🥩", chipLabel: "단백질" },
-  vegetable: { label: "채소", emoji: "🥦", chipLabel: "채소" },
-  fruit: { label: "과일", emoji: "🍎", chipLabel: "과일" },
-  dairy: { label: "유제품", emoji: "🥛", chipLabel: "유제품" },
-  grain: { label: "곡물", emoji: "🌾", chipLabel: "곡물" },
-  other: { label: "기타", emoji: "🍽️", chipLabel: "기타" },
-};
-
-export const CATEGORY_LABEL: Record<Exclude<FridgeSectionKey, "cube">, string> = {
-  protein: "단백질",
-  vegetable: "채소",
-  fruit: "과일",
-  dairy: "유제품",
-  grain: "곡물",
-  other: "기타",
-};
-
-export const CATEGORY_TEXT_COLOR: Record<
-  Exclude<FridgeSectionKey, "cube">,
-  string
-> = {
-  protein: "text-[#ff3b30]",
-  vegetable: "text-[#3fb68b]",
-  fruit: "text-[#ff4fb5]",
-  dairy: "text-[#5f8cff]",
-  grain: "text-[#f5a524]",
-  other: "text-[#7d8682]",
-};
+export const SECTION_ORDER = FRIDGE_SECTION_ORDER;
+export const SECTION_META = FRIDGE_SECTION_META;
+export const CATEGORY_LABEL = FRIDGE_CATEGORY_LABEL;
+export const CATEGORY_TEXT_COLOR = FRIDGE_CATEGORY_TEXT_COLOR;
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -188,18 +135,14 @@ export function useFridgePage() {
     for (const key of SECTION_ORDER) grouped.set(key, []);
 
     const filtered = fridgeItems.filter((item) => {
-      const sectionKey: FridgeSectionKey = item.name.includes("큐브")
-        ? "cube"
-        : item.category;
+      const sectionKey = sectionFromFridgeItem(item);
       if (activeFilter !== "all" && sectionKey !== activeFilter) return false;
       if (q && !item.name.includes(q)) return false;
       return true;
     });
 
     for (const item of filtered) {
-      const sectionKey: FridgeSectionKey = item.name.includes("큐브")
-        ? "cube"
-        : item.category;
+      const sectionKey = sectionFromFridgeItem(item);
       grouped.get(sectionKey)?.push(item);
     }
 

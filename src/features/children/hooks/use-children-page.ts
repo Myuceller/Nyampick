@@ -117,7 +117,6 @@ export function useChildrenPage() {
   };
 
   const deleteChild = async (childId: string, childName: string) => {
-    if (!confirm(`"${childName}" 아기 정보를 삭제할까요?`)) return;
     setDeletingChildId(childId);
     try {
       const res = await authedFetch("/api/children", {
@@ -220,7 +219,6 @@ export function useChildrenPage() {
   };
 
   const unlinkFamily = async () => {
-    if (!confirm("가족 연결을 끊을까요?")) return;
     setIsUnlinking(true);
     try {
       const res = await authedFetch("/api/children/unlink", {

@@ -1,6 +1,7 @@
 "use client";
 
-import { Baby, CalendarDays } from "lucide-react";
+import Image from "next/image";
+import { CalendarDays } from "lucide-react";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { MealList } from "@/components/features/meal/meal-list";
 import { HomeSkeleton } from "@/components/features/meal/home-skeleton";
@@ -53,8 +54,14 @@ export default function Page() {
         <div className="mt-3 rounded-[22px] bg-[#fdfefd] px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#d6ebe2]">
-                <Baby className="h-6 w-6 text-[#56be8d]" />
+              <div className="relative h-11 w-11 overflow-hidden rounded-[12px]">
+                <Image
+                  src="/icons/icon-source-baby.png"
+                  alt=""
+                  fill
+                  sizes="44px"
+                  className="object-contain"
+                />
               </div>
               <div>
                 <p className="text-[16px] font-semibold leading-tight text-[#26302d]">
@@ -200,6 +207,7 @@ export default function Page() {
           <div className="mt-2 text-right">
             <button
               type="button"
+              onClick={() => router.push(`/meal/overview?date=${dateKey}`)}
               className="text-[12px] font-semibold text-[#57bf8e]"
             >
               전체보기

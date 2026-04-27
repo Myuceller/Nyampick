@@ -30,7 +30,10 @@ async function resolveHasSession() {
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isPublicPath = useMemo(() => pathname?.startsWith("/auth"), [pathname]);
+  const isPublicPath = useMemo(
+    () => pathname?.startsWith("/auth") || pathname?.startsWith("/landing"),
+    [pathname]
+  );
   const [status, setStatus] = useState<GateStatus>(() => {
     if (isPublicPath || cachedHasSession) return "ready";
     return "checking";
