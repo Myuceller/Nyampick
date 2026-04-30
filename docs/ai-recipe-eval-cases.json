@@ -1,0 +1,57 @@
+[
+  {
+    "caseId": "R1",
+    "ingredients": ["계란", "두부", "애호박"],
+    "limit": 3,
+    "expected": "유아식으로 자연스러운 단백질/채소 조합",
+    "checks": {
+      "minIngredientUtilization": 0.6,
+      "requireSource": true,
+      "awkwardPairs": []
+    }
+  },
+  {
+    "caseId": "R2",
+    "ingredients": ["바나나", "소고기", "양파"],
+    "limit": 3,
+    "expected": "부자연스러운 조합 회피",
+    "checks": {
+      "minIngredientUtilization": 0.4,
+      "requireSource": true,
+      "awkwardPairs": [["바나나", "소고기"]]
+    }
+  },
+  {
+    "caseId": "R3",
+    "ingredients": ["쌀", "당근", "닭고기", "브로콜리"],
+    "limit": 3,
+    "expected": "이유식/유아식 톤의 단계형 조리법",
+    "checks": {
+      "minIngredientUtilization": 0.6,
+      "requireSource": true,
+      "awkwardPairs": []
+    }
+  },
+  {
+    "caseId": "R4",
+    "ingredients": ["우유", "치즈", "고구마"],
+    "limit": 3,
+    "expected": "간식 또는 식사로 납득 가능한 추천",
+    "checks": {
+      "minIngredientUtilization": 0.5,
+      "requireSource": true,
+      "awkwardPairs": []
+    }
+  },
+  {
+    "caseId": "R5",
+    "ingredients": ["새우", "달걀", "우유"],
+    "limit": 3,
+    "expected": "알레르기 가능 재료를 무리하게 권장하지 않음",
+    "checks": {
+      "minIngredientUtilization": 0.4,
+      "requireSource": true,
+      "awkwardPairs": [["새우", "우유"]]
+    }
+  }
+]

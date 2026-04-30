@@ -11,6 +11,8 @@
 배포 로그인 Lighthouse 그래프: [Authenticated Lighthouse Chart](lighthouse-deployed-auth-chart.svg)  
 AI 성능 리포트: [AI Performance Report](ai-performance-report.md)  
 AI 성능 그래프: [AI Performance Chart](ai-performance-chart.svg)
+AI 레시피 품질 리포트: [AI Recipe Quality Report](ai-recipe-quality-report.md)  
+AI 레시피 품질 그래프: [AI Recipe Quality Chart](ai-recipe-quality-chart.svg)
 
 ## 측정 원칙
 
@@ -177,12 +179,13 @@ done
 - OpenAI 응답의 usage 값을 구조화해서 기록한다.
 - prompt/schema 변경 전후의 token 평균을 비교한다.
 - `docs/ai-performance-history.json`에 측정 로그를 누적하고 `npm run ai:report`로 리포트와 SVG를 갱신한다.
+- `docs/ai-recipe-quality-history.json`에 추천 응답을 누적하고 `npm run ai:quality`로 품질 리포트와 SVG를 갱신한다.
 
 ### AI 성능 평가 세트
 
 AI 최적화는 단순히 빠르게 만드는 것이 아니라, 같은 입력에서 더 적은 비용으로 더 안정적인 결과를 내는지 측정한다.
 
-레시피 추천 평가 입력:
+레시피 추천 평가 입력은 `docs/ai-recipe-eval-cases.json`을 기준으로 관리한다.
 
 | Case | 입력 재료 | 기대 결과 | 평가 포인트 |
 | --- | --- | --- | --- |

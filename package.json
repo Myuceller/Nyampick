@@ -11,6 +11,7 @@
     "test:unit": "node --test tests/*.test.ts",
     "perf:report": "node scripts/performance-report.mjs",
     "ai:report": "node scripts/ai-performance-report.mjs",
+    "ai:quality": "node scripts/ai-recipe-quality-report.mjs",
     "lighthouse:landing": "mkdir -p .tmp && lighthouse http://localhost:3000/landing --form-factor=mobile --screenEmulation.mobile --output=json --output-path=.tmp/lighthouse-landing-mobile.json",
     "lighthouse:home": "mkdir -p .tmp && lighthouse http://localhost:3000/ --form-factor=mobile --screenEmulation.mobile --output=json --output-path=.tmp/lighthouse-home-mobile.json",
     "lighthouse:fridge": "mkdir -p .tmp && lighthouse http://localhost:3000/fridge --form-factor=mobile --screenEmulation.mobile --output=json --output-path=.tmp/lighthouse-fridge-mobile.json",
