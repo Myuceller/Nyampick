@@ -4,6 +4,7 @@ import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { authedFetch } from "@/lib/authed-fetch";
+import { useFridgeEditStore } from "@/features/fridge/stores/fridge-edit-store";
 import {
   FRIDGE_SECTION_META,
   FRIDGE_SECTION_ORDER,
@@ -23,20 +24,6 @@ export const SECTION_META = Object.fromEntries(
     { label: meta.label, emoji: meta.emoji, chip: meta.chipLabel },
   ])
 ) as Record<SectionKey, { label: string; emoji: string; chip: string }>;
-
-function parseQuantity(raw?: string): { value: number; suffix: string } {
-  if (!raw) return { value: 0, suffix: "개" };
-  const matched = raw.trim().match(/^(\d+)\s*(.*)$/);
-  if (!matched) return { value: 0, suffix: raw };
-  return {
-    value: Number(matched[1]),
-    suffix: matched[2] || "개",
-  };
-}
-
-function buildQuantity(value: number, suffix: string) {
-  return `${Math.max(0, value)}${suffix}`;
-}
 
 function hashToUnit(value: string) {
   let hash = 0;
@@ -63,19 +50,40 @@ export function getWiggleStyle(id: string): CSSProperties {
 
 export function useFridgeEditPage() {
   const router = useRouter();
-  const [initialItems, setInitialItems] = useState<FridgeItem[]>([]);
-  const [draftItems, setDraftItems] = useState<FridgeItem[]>([]);
-  const [activeFilter, setActiveFilter] = useState<"all" | SectionKey>("all");
-  const [keyword, setKeyword] = useState("");
-  const [editingQtyId, setEditingQtyId] = useState<string | null>(null);
-  const [editingQtyValue, setEditingQtyValue] = useState(0);
-  const [editingQtySuffix, setEditingQtySuffix] = useState("개");
+  const initialItems = useFridgeEditStore((state) => state.initialItems);
+  const draftItems = useFridgeEditStore((state) => state.draftItems);
+  const activeFilter = useFridgeEditStore((state) => state.activeFilter);
+  const setActiveFilter = useFridgeEditStore((state) => state.setActiveFilter);
+  const keyword = useFridgeEditStore((state) => state.keyword);
+  const setKeyword = useFridgeEditStore((state) => state.setKeyword);
+  const editingQtyId = useFridgeEditStore((state) => state.quantityDraft.id);
+  const editingQtyValue = useFridgeEditStore((state) => state.quantityDraft.value);
+  const editingQtySuffix = useFridgeEditStore((state) => state.quantityDraft.suffix);
+  const initializeItems = useFridgeEditStore((state) => state.initializeItems);
+  const startEditQuantity = useFridgeEditStore((state) => state.startEditQuantity);
+  const setEditingQtyValue = useFridgeEditStore((state) => state.setEditingQtyValue);
+  const commitQuantity = useFridgeEditStore((state) => state.commitQuantity);
+  const pendingDeleteItem = useFridgeEditStore((state) => state.pendingDeleteItem);
+  const setPendingDeleteItem = useFridgeEditStore((state) => state.setPendingDeleteItem);
+  const isDeleteMode = useFridgeEditStore((state) => state.isDeleteMode);
+  const selectedDeleteIds = useFridgeEditStore((state) => state.selectedDeleteIds);
+  const showBulkDeleteConfirm = useFridgeEditStore(
+    (state) => state.showBulkDeleteConfirm
+  );
+  const setShowBulkDeleteConfirm = useFridgeEditStore(
+    (state) => state.setShowBulkDeleteConfirm
+  );
+  const toggleDeleteSelection = useFridgeEditStore(
+    (state) => state.toggleDeleteSelection
+  );
+  const enterDeleteMode = useFridgeEditStore((state) => state.enterDeleteMode);
+  const cancelDeleteMode = useFridgeEditStore((state) => state.cancelDeleteMode);
+  const confirmBulkDelete = useFridgeEditStore((state) => state.confirmBulkDelete);
+  const applyBulkDelete = useFridgeEditStore((state) => state.applyBulkDelete);
+  const requestRemoveItem = useFridgeEditStore((state) => state.requestRemoveItem);
+  const confirmRemoveItem = useFridgeEditStore((state) => state.confirmRemoveItem);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [pendingDeleteItem, setPendingDeleteItem] = useState<FridgeItem | null>(null);
-  const [isDeleteMode, setIsDeleteMode] = useState(false);
-  const [selectedDeleteIds, setSelectedDeleteIds] = useState<Set<string>>(new Set());
-  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const cancelDeleteLabel = "취소하기";
   const bulkDeleteLabel = "선택한 재료 삭제";
   const longPressTimerRef = useRef<number | null>(null);
@@ -92,8 +100,7 @@ export function useFridgeEditPage() {
         }
         const json = (await res.json()) as { items?: FridgeItem[] };
         const items = json.items ?? [];
-        setInitialItems(items);
-        setDraftItems(items);
+        initializeItems(items);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "냉장고 데이터를 불러오지 못했습니다.";
@@ -103,7 +110,7 @@ export function useFridgeEditPage() {
       }
     };
     void load();
-  }, []);
+  }, [initializeItems]);
 
   const initialMap = useMemo(
     () => new Map(initialItems.map((item) => [item.id, item])),
@@ -176,46 +183,6 @@ export function useFridgeEditPage() {
     []
   );
 
-  const startEditQuantity = (item: FridgeItem) => {
-    const parsed = parseQuantity(item.quantity);
-    setEditingQtyId(item.id);
-    setEditingQtyValue(parsed.value);
-    setEditingQtySuffix(parsed.suffix);
-  };
-
-  const commitQuantity = () => {
-    if (!editingQtyId) return;
-    setDraftItems((prev) =>
-      prev.map((item) =>
-        item.id === editingQtyId
-          ? { ...item, quantity: buildQuantity(editingQtyValue, editingQtySuffix) }
-          : item
-      )
-    );
-    setEditingQtyId(null);
-  };
-
-  const removeItem = (id: string) => {
-    setDraftItems((prev) => prev.filter((item) => item.id !== id));
-    if (editingQtyId === id) {
-      setEditingQtyId(null);
-    }
-  };
-
-  const toggleDeleteSelection = (id: string) => {
-    setSelectedDeleteIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const enterDeleteMode = (id: string) => {
-    setIsDeleteMode(true);
-    setSelectedDeleteIds(new Set([id]));
-  };
-
   const clearLongPressTimer = () => {
     if (longPressTimerRef.current) {
       window.clearTimeout(longPressTimerRef.current);
@@ -235,38 +202,6 @@ export function useFridgeEditPage() {
 
   const endLongPress = () => {
     clearLongPressTimer();
-  };
-
-  const cancelDeleteMode = () => {
-    setIsDeleteMode(false);
-    setSelectedDeleteIds(new Set());
-    setShowBulkDeleteConfirm(false);
-  };
-
-  const confirmBulkDelete = () => {
-    if (selectedDeleteIds.size === 0) return;
-    setShowBulkDeleteConfirm(true);
-  };
-
-  const applyBulkDelete = () => {
-    if (selectedDeleteIds.size === 0) return;
-    setDraftItems((prev) => prev.filter((item) => !selectedDeleteIds.has(item.id)));
-    if (editingQtyId && selectedDeleteIds.has(editingQtyId)) {
-      setEditingQtyId(null);
-    }
-    setShowBulkDeleteConfirm(false);
-    setIsDeleteMode(false);
-    setSelectedDeleteIds(new Set());
-  };
-
-  const requestRemoveItem = (item: FridgeItem) => {
-    setPendingDeleteItem(item);
-  };
-
-  const confirmRemoveItem = () => {
-    if (!pendingDeleteItem) return;
-    removeItem(pendingDeleteItem.id);
-    setPendingDeleteItem(null);
   };
 
   const saveChanges = async () => {

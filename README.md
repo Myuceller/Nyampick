@@ -116,6 +116,8 @@ npm run build
 ## 문서
 
 - [API Spec](docs/api-spec.md)
+- [Codex Workflow](docs/codex-workflow.md)
 - [Release Checklist](docs/release-checklist.md)
 - [Deploy ENV Checklist](docs/deploy-env-checklist.md)
 - [Kakao Login Checklist](docs/kakao-login-checklist.md)
+- [Performance Baseline](docs/performance-baseline.md)

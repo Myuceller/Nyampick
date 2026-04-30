@@ -7,7 +7,11 @@
     "dev:clean": "rm -rf .next && next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lighthouse:landing": "mkdir -p .tmp && lighthouse http://localhost:3000/landing --form-factor=mobile --screenEmulation.mobile --output=json --output-path=.tmp/lighthouse-landing-mobile.json",
+    "lighthouse:home": "mkdir -p .tmp && lighthouse http://localhost:3000/ --form-factor=mobile --screenEmulation.mobile --output=json --output-path=.tmp/lighthouse-home-mobile.json",
+    "lighthouse:fridge": "mkdir -p .tmp && lighthouse http://localhost:3000/fridge --form-factor=mobile --screenEmulation.mobile --output=json --output-path=.tmp/lighthouse-fridge-mobile.json",
+    "lighthouse:recipe": "mkdir -p .tmp && lighthouse http://localhost:3000/recipe --form-factor=mobile --screenEmulation.mobile --output=json --output-path=.tmp/lighthouse-recipe-mobile.json"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -67,6 +71,7 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^8.0.0",
     "eslint-config-next": "^14.0.0",
+    "lighthouse": "^13.1.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
