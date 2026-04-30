@@ -1,10 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowLeft, MoreHorizontal, X } from "lucide-react";
+import { toast } from "sonner";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { useChildrenPage } from "@/features/children/hooks/use-children-page";
+import { fileToResizedImageDataUrl } from "@/lib/client-image";
 import { cn } from "@/lib/utils";
 
 const allergySamples = [
@@ -17,7 +19,16 @@ function getAllergies(index: number) {
   return allergySamples[index] ?? [];
 }
 
-function Avatar() {
+function Avatar({ photoUrl }: { photoUrl?: string }) {
+  if (photoUrl) {
+    return (
+      <div
+        className="h-[70px] w-[70px] shrink-0 overflow-hidden rounded-full bg-cover bg-center"
+        style={{ backgroundImage: `url(${photoUrl})` }}
+      />
+    );
+  }
+
   return (
     <div className="relative h-[70px] w-[70px] shrink-0 overflow-hidden rounded-full">
       <Image
@@ -32,12 +43,14 @@ function Avatar() {
 }
 
 export default function ChildrenPage() {
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
   const [pendingDeleteChild, setPendingDeleteChild] = useState<{
     id: string;
     name: string;
   } | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [actionChildId, setActionChildId] = useState<string | null>(null);
+  const [photoTargetChildId, setPhotoTargetChildId] = useState<string | null>(null);
 
   const {
     addChild,
@@ -60,6 +73,8 @@ export default function ChildrenPage() {
     setNewName,
     setPrimaryChild,
     startEditChildName,
+    saveChildPhoto,
+    updatingPhotoChildId,
   } = useChildrenPage();
 
   const handleAddChild = async () => {
@@ -68,8 +83,28 @@ export default function ChildrenPage() {
     setShowAddForm(false);
   };
 
+  const handlePhotoFile = async (file: File | null | undefined) => {
+    if (!file || !photoTargetChildId) return;
+    try {
+      const dataUrl = await fileToResizedImageDataUrl(file);
+      await saveChildPhoto(photoTargetChildId, dataUrl);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "아이 사진을 처리하지 못했습니다.");
+    } finally {
+      setPhotoTargetChildId(null);
+      if (photoInputRef.current) photoInputRef.current.value = "";
+    }
+  };
+
   return (
     <>
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(event) => void handlePhotoFile(event.target.files?.[0])}
+      />
       <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white px-4 pb-28 pt-6">
         <div className="relative flex h-10 items-center justify-center">
           <button
@@ -133,7 +168,7 @@ export default function ChildrenPage() {
                 </button>
 
                 <div className="flex items-center gap-5 pr-7">
-                  <Avatar />
+                  <Avatar photoUrl={child.photoUrl} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="truncate text-[20px] font-extrabold text-[#202725]">
@@ -207,6 +242,18 @@ export default function ChildrenPage() {
                       className="block w-full px-4 py-3 text-left text-[14px] font-semibold text-[#202725] disabled:text-[#a2aaa6]"
                     >
                       이름 변경
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPhotoTargetChildId(child.id);
+                        setActionChildId(null);
+                        photoInputRef.current?.click();
+                      }}
+                      disabled={linkedMode || updatingPhotoChildId === child.id}
+                      className="block w-full px-4 py-3 text-left text-[14px] font-semibold text-[#202725] disabled:text-[#a2aaa6]"
+                    >
+                      사진 등록
                     </button>
                     <button
                       type="button"

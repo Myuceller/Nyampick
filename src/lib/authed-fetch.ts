@@ -1,5 +1,7 @@
 "use client";
 
+import { notifyAuthRequired } from "@/lib/auth-events";
+import { setCachedHasSession } from "@/lib/auth-session-cache";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 const TOKEN_TTL_MS = 15_000;
@@ -14,6 +16,7 @@ function setTokenCache(token: string | null, expiresAtSeconds?: number) {
   if (!token) {
     cachedAccessToken = null;
     cachedTokenExpiresAtMs = 0;
+    setCachedHasSession(false);
     return;
   }
 
@@ -21,6 +24,7 @@ function setTokenCache(token: string | null, expiresAtSeconds?: number) {
   const expiresAtMs = expiresAtSeconds ? expiresAtSeconds * 1000 - EXPIRY_SAFETY_MS : now + TOKEN_TTL_MS;
   cachedAccessToken = token;
   cachedTokenExpiresAtMs = Math.max(now + 1_000, Math.min(now + TOKEN_TTL_MS, expiresAtMs));
+  setCachedHasSession(true);
 }
 
 function getCachedToken() {
@@ -43,15 +47,25 @@ function bindAuthCacheInvalidation() {
   });
 }
 
-async function resolveAccessToken() {
+function canReplayRequestBody(body: BodyInit | null | undefined) {
+  return !(typeof ReadableStream !== "undefined" && body instanceof ReadableStream);
+}
+
+async function resolveAccessToken({ forceRefresh = false } = {}) {
   const cached = getCachedToken();
-  if (cached) return cached;
+  if (cached && !forceRefresh) return cached;
 
   if (tokenRequestPromise) return tokenRequestPromise;
 
   tokenRequestPromise = (async () => {
     const supabase = getSupabaseBrowser();
     bindAuthCacheInvalidation();
+
+    if (forceRefresh) {
+      await supabase.auth.refreshSession().catch(() => {
+        // no-op: fallback to the current session lookup below
+      });
+    }
 
     let { data } = await supabase.auth.getSession();
     let token = data.session?.access_token ?? null;
@@ -86,5 +100,31 @@ export async function authedFetch(
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
 
-  return fetch(input, { ...init, headers });
+  const response = await fetch(input, { ...init, headers });
+  if (response.status !== 401) {
+    return response;
+  }
+
+  if (!canReplayRequestBody(init?.body)) {
+    setTokenCache(null);
+    notifyAuthRequired(input, response.status);
+    return response;
+  }
+
+  setTokenCache(null);
+  const refreshedToken = await resolveAccessToken({ forceRefresh: true });
+  if (!refreshedToken || refreshedToken === accessToken) {
+    notifyAuthRequired(input, response.status);
+    return response;
+  }
+
+  const retryHeaders = new Headers(init?.headers);
+  retryHeaders.set("Authorization", `Bearer ${refreshedToken}`);
+  const retryResponse = await fetch(input, { ...init, headers: retryHeaders });
+  if (retryResponse.status === 401) {
+    setTokenCache(null);
+    notifyAuthRequired(input, retryResponse.status);
+  }
+
+  return retryResponse;
 }

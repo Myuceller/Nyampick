@@ -1,41 +1,30 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { AUTH_REQUIRED_EVENT } from "@/lib/auth-events";
+import { buildAuthRedirectPath } from "@/lib/auth-redirect";
+import {
+  getCachedHasSession,
+  resolveCachedHasSession,
+  setCachedHasSession,
+} from "@/lib/auth-session-cache";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 type GateStatus = "checking" | "ready" | "env-missing";
 
-let cachedHasSession: boolean | null = null;
-let sessionBootstrapPromise: Promise<boolean> | null = null;
-
-async function resolveHasSession() {
-  if (cachedHasSession !== null) return cachedHasSession;
-  if (sessionBootstrapPromise) return sessionBootstrapPromise;
-
-  sessionBootstrapPromise = (async () => {
-    const supabase = getSupabaseBrowser();
-    const { data } = await supabase.auth.getSession();
-    cachedHasSession = Boolean(data.session);
-    return cachedHasSession;
-  })();
-
-  try {
-    return await sessionBootstrapPromise;
-  } finally {
-    sessionBootstrapPromise = null;
-  }
-}
-
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const lastAuthRequiredToastAtRef = useRef(0);
   const isPublicPath = useMemo(
     () => pathname?.startsWith("/auth") || pathname?.startsWith("/landing"),
     [pathname]
   );
+  const currentPath = pathname ?? "/";
   const [status, setStatus] = useState<GateStatus>(() => {
-    if (isPublicPath || cachedHasSession) return "ready";
+    if (isPublicPath || getCachedHasSession()) return "ready";
     return "checking";
   });
 
@@ -47,28 +36,33 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
     let active = true;
     let unsubscribe: (() => void) | null = null;
+    const getAuthRedirectPath = () => buildAuthRedirectPath(`${currentPath}${window.location.search}`);
 
     try {
       const supabase = getSupabaseBrowser();
 
-      void resolveHasSession().then((hasSession) => {
+      void resolveCachedHasSession(async () => {
+        const { data } = await supabase.auth.getSession();
+        return Boolean(data.session);
+      }).then((hasSession) => {
         if (!active) return;
         if (hasSession) {
           setStatus("ready");
           return;
         }
-        router.replace("/auth");
+        router.replace(getAuthRedirectPath());
       });
 
       const listener = supabase.auth.onAuthStateChange((_event, session) => {
         if (!active) return;
-        if (session) {
-          cachedHasSession = true;
+        const hasSession = Boolean(session);
+        setCachedHasSession(hasSession);
+        if (hasSession) {
           setStatus("ready");
           return;
         }
-        cachedHasSession = false;
-        router.replace("/auth");
+        setStatus("checking");
+        router.replace(getAuthRedirectPath());
       });
       unsubscribe = () => listener.data.subscription.unsubscribe();
     } catch {
@@ -79,7 +73,25 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       active = false;
       unsubscribe?.();
     };
-  }, [isPublicPath, router]);
+  }, [currentPath, isPublicPath, router]);
+
+  useEffect(() => {
+    if (isPublicPath) return;
+
+    const onAuthRequired = () => {
+      const now = Date.now();
+      if (now - lastAuthRequiredToastAtRef.current > 2_000) {
+        toast.warning("세션이 만료되어 다시 로그인해주세요.");
+        lastAuthRequiredToastAtRef.current = now;
+      }
+      setCachedHasSession(false);
+      setStatus("checking");
+      router.replace(buildAuthRedirectPath(`${currentPath}${window.location.search}`));
+    };
+
+    window.addEventListener(AUTH_REQUIRED_EVENT, onAuthRequired);
+    return () => window.removeEventListener(AUTH_REQUIRED_EVENT, onAuthRequired);
+  }, [currentPath, isPublicPath, router]);
 
   if (isPublicPath || status === "ready") {
     return <>{children}</>;

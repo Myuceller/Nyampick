@@ -6,7 +6,9 @@
     "route": "/children",
     "before": 5.75,
     "after": 5.21,
-    "unit": "kB"
+    "unit": "kB",
+    "commit": "3a6fded",
+    "reason": "Child-specific invite UI and state were removed from /children after family sharing moved to group scope."
   },
   {
     "date": "2026-04-30",
@@ -15,7 +17,9 @@
     "route": "/mypage",
     "before": 5.14,
     "after": 4.56,
-    "unit": "kB"
+    "unit": "kB",
+    "commit": "3a6fded",
+    "reason": "Unused My Page card components and related imports were removed from the route bundle."
   },
   {
     "date": "2026-04-30",
@@ -24,6 +28,272 @@
     "route": "/family",
     "before": null,
     "after": 153,
-    "unit": "kB"
+    "unit": "kB",
+    "commit": "3a6fded",
+    "reason": "New /family route was introduced for group-level family sharing, so this records the initial bundle baseline."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Harden OAuth callback, profile seed retry, and auth form validation",
+    "metric": "route_size",
+    "route": "/auth",
+    "before": 7.49,
+    "after": 8.16,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Auth page gained callback parsing, profile seed retry, recoverable error handling, and form validation logic."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Share auth session cache between AuthGate and logout flows",
+    "metric": "route_size",
+    "route": "/auth",
+    "before": 8.16,
+    "after": 8.27,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "AuthGate session cache was moved into a shared client utility and synced with fatal auth cleanup."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Share auth session cache between AuthGate and logout flows",
+    "metric": "route_size",
+    "route": "/mypage",
+    "before": 4.56,
+    "after": 4.65,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "My Page logout now updates the shared auth session cache before redirecting to /auth."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Retry authenticated fetch once after 401 token refresh",
+    "metric": "route_size",
+    "route": "/",
+    "before": 6.68,
+    "after": 6.91,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Home imports authedFetch, which now includes 401 token refresh and single retry support."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Retry authenticated fetch once after 401 token refresh",
+    "metric": "route_size",
+    "route": "/children",
+    "before": 5.21,
+    "after": 5.45,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Children page imports authedFetch, which now includes 401 token refresh and single retry support."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Retry authenticated fetch once after 401 token refresh",
+    "metric": "route_size",
+    "route": "/family",
+    "before": 4.83,
+    "after": 5.05,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Family page imports authedFetch, which now includes 401 token refresh and single retry support."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Retry authenticated fetch once after 401 token refresh",
+    "metric": "route_size",
+    "route": "/fridge",
+    "before": 9.06,
+    "after": 9.28,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Fridge page imports authedFetch, which now includes 401 token refresh and single retry support."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Retry authenticated fetch once after 401 token refresh",
+    "metric": "route_size",
+    "route": "/fridge/edit",
+    "before": 7.51,
+    "after": 7.74,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Fridge edit page imports authedFetch, which now includes 401 token refresh and single retry support."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Retry authenticated fetch once after 401 token refresh",
+    "metric": "route_size",
+    "route": "/meal/edit",
+    "before": 5.98,
+    "after": 6.21,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Meal edit page imports authedFetch, which now includes 401 token refresh and single retry support."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Retry authenticated fetch once after 401 token refresh",
+    "metric": "route_size",
+    "route": "/meal/overview",
+    "before": 4.37,
+    "after": 4.6,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Meal overview page imports authedFetch, which now includes 401 token refresh and single retry support."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Retry authenticated fetch once after 401 token refresh",
+    "metric": "route_size",
+    "route": "/mypage",
+    "before": 4.65,
+    "after": 4.8,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "My Page imports authedFetch, which now includes 401 token refresh and single retry support."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Retry authenticated fetch once after 401 token refresh",
+    "metric": "route_size",
+    "route": "/recipe",
+    "before": 11.6,
+    "after": 11.8,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Recipe page imports authedFetch, which now includes 401 token refresh and single retry support."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Redirect protected routes after final authenticated fetch 401",
+    "metric": "route_size",
+    "route": "/",
+    "before": 6.91,
+    "after": 7.07,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Home imports authedFetch, which now dispatches a shared auth-required event after final 401."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Redirect protected routes after final authenticated fetch 401",
+    "metric": "route_size",
+    "route": "/children",
+    "before": 5.45,
+    "after": 5.62,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Children page imports authedFetch, which now dispatches a shared auth-required event after final 401."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Redirect protected routes after final authenticated fetch 401",
+    "metric": "route_size",
+    "route": "/family",
+    "before": 5.05,
+    "after": 5.22,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Family page imports authedFetch, which now dispatches a shared auth-required event after final 401."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Redirect protected routes after final authenticated fetch 401",
+    "metric": "route_size",
+    "route": "/fridge",
+    "before": 9.28,
+    "after": 9.44,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Fridge page imports authedFetch, which now dispatches a shared auth-required event after final 401."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Redirect protected routes after final authenticated fetch 401",
+    "metric": "route_size",
+    "route": "/fridge/edit",
+    "before": 7.74,
+    "after": 7.9,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Fridge edit page imports authedFetch, which now dispatches a shared auth-required event after final 401."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Redirect protected routes after final authenticated fetch 401",
+    "metric": "route_size",
+    "route": "/meal/edit",
+    "before": 6.21,
+    "after": 6.35,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Meal edit page imports authedFetch, which now dispatches a shared auth-required event after final 401."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Redirect protected routes after final authenticated fetch 401",
+    "metric": "route_size",
+    "route": "/meal/overview",
+    "before": 4.6,
+    "after": 4.76,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Meal overview page imports authedFetch, which now dispatches a shared auth-required event after final 401."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Redirect protected routes after final authenticated fetch 401",
+    "metric": "route_size",
+    "route": "/mypage",
+    "before": 4.8,
+    "after": 4.97,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "My Page imports authedFetch, which now dispatches a shared auth-required event after final 401."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Redirect protected routes after final authenticated fetch 401",
+    "metric": "route_size",
+    "route": "/recipe",
+    "before": 11.8,
+    "after": 11.9,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Recipe page imports authedFetch, which now dispatches a shared auth-required event after final 401."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Return users to the original protected route after login",
+    "metric": "route_size",
+    "route": "/auth",
+    "before": 8.27,
+    "after": 8.41,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Auth flow now sanitizes the next query parameter, preserves it through OAuth redirect, and routes completed users back to the original protected path."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Show a return-to-previous-screen notice on auth redirect",
+    "metric": "route_size",
+    "route": "/auth",
+    "before": 8.41,
+    "after": 8.46,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Auth page now detects a safe next path and shows a notice explaining that login will return the user to the previous screen."
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Show toast feedback for logout and expired sessions",
+    "metric": "route_size",
+    "route": "/mypage",
+    "before": 4.97,
+    "after": 4.99,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "My Page logout now shows a success toast, while AuthGate shows a deduped warning toast when an authenticated request ends with a final 401."
   }
 ]

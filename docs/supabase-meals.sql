@@ -37,7 +37,8 @@ create table if not exists public.user_profile (
   name text not null,
   baby_name text not null,
   baby_months_old int not null default 0,
-  email text
+  email text,
+  profile_image_url text
 );
 
 create table if not exists public.saved_recipes (
@@ -59,6 +60,7 @@ create table if not exists public.child_profiles (
   user_id uuid not null references auth.users(id) on delete cascade,
   name text not null,
   months_old int not null default 0,
+  photo_url text,
   is_primary boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -90,6 +92,8 @@ alter table public.meal_entries add column if not exists user_id uuid;
 alter table public.meal_entries add column if not exists child_id uuid;
 alter table public.fridge_items add column if not exists user_id uuid;
 alter table public.saved_recipes add column if not exists user_id uuid;
+alter table public.user_profile add column if not exists profile_image_url text;
+alter table public.child_profiles add column if not exists photo_url text;
 alter table public.family_access_links add column if not exists relationship_label text not null default '가족 구성원';
 
 -- Indexes

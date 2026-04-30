@@ -18,7 +18,7 @@ export function FridgeEditSkeleton() {
             {Array.from({ length: section.rows }).map((_, rowIndex) => (
               <div
                 key={`fridge-edit-skeleton-row-${sectionIndex}-${rowIndex}`}
-                className="flex items-center justify-between rounded-[14px] border border-[#c8cfcd] bg-white px-4 py-3"
+                className="flex items-center justify-between rounded-[16px] border border-[#c2d8cc] bg-white px-5 py-[18px]"
               >
                 <SkeletonBlock className="h-6 w-32" />
                 <div className="flex items-center gap-2">

@@ -29,17 +29,18 @@ npm run build
 
 | Route | Size | First Load JS |
 | --- | ---: | ---: |
-| `/` | 6.68 kB | 166 kB |
-| `/auth` | 7.49 kB | 155 kB |
-| `/children` | 5.21 kB | 165 kB |
-| `/family` | 4.83 kB | 153 kB |
-| `/fridge` | 9.06 kB | 173 kB |
-| `/fridge/edit` | 7.51 kB | 166 kB |
+| `/` | 7.16 kB | 167 kB |
+| `/auth` | 8.46 kB | 156 kB |
+| `/children` | 6.32 kB | 167 kB |
+| `/family` | 5.53 kB | 153 kB |
+| `/fridge` | 9.44 kB | 173 kB |
+| `/fridge/edit` | 7.9 kB | 166 kB |
 | `/landing` | 186 B | 101 kB |
-| `/meal/edit` | 5.98 kB | 161 kB |
-| `/meal/overview` | 4.37 kB | 159 kB |
-| `/mypage` | 4.56 kB | 157 kB |
-| `/recipe` | 11.6 kB | 175 kB |
+| `/meal/edit` | 6.35 kB | 161 kB |
+| `/meal/overview` | 4.76 kB | 160 kB |
+| `/mypage` | 5.3 kB | 158 kB |
+| `/mypage/profile` | 4.82 kB | 160 kB |
+| `/recipe` | 11.9 kB | 176 kB |
 | Shared by all | - | 87.4 kB |
 
 우선 개선 후보:
@@ -248,6 +249,14 @@ AI 최적화는 단순히 빠르게 만드는 것이 아니라, 같은 입력에
 | 2026-04-30 | 가족 연동을 `/family`로 분리하고 `/children`의 아이별 초대 코드 제거 | `/children` route size | 5.75 kB | 5.21 kB | 0.54 kB 감소 |
 | 2026-04-30 | 미사용 마이페이지 카드 컴포넌트 제거 | `/mypage` route size | 5.14 kB | 4.56 kB | 0.58 kB 감소 |
 | 2026-04-30 | 가족 연동 화면 추가 | `/family` First Load JS | - | 153 kB | 신규 라우트 |
+| 2026-04-30 | OAuth callback/profile retry/validation 로직 보강 | `/auth` route size | 7.49 kB | 8.16 kB | 0.67 kB 증가 |
+| 2026-04-30 | AuthGate 세션 캐시를 공용 유틸로 분리하고 로그아웃 동기화 보강 | `/auth` route size | 8.16 kB | 8.27 kB | 0.11 kB 증가 |
+| 2026-04-30 | AuthGate 세션 캐시를 공용 유틸로 분리하고 로그아웃 동기화 보강 | `/mypage` route size | 4.56 kB | 4.65 kB | 0.09 kB 증가 |
+| 2026-04-30 | authedFetch 401 refresh/retry 보강 | 인증 API 사용 route size | - | - | route별 증가분은 `performance-history.json`에 기록 |
+| 2026-04-30 | 최종 401 발생 시 AuthGate로 인증 필요 이벤트 전달 | 인증 API 사용 route size | - | - | route별 증가분은 `performance-history.json`에 기록 |
+| 2026-04-30 | 로그인 후 원래 보호 경로로 복귀하는 `next` redirect 보강 | `/auth` route size | 8.27 kB | 8.41 kB | 0.14 kB 증가 |
+| 2026-04-30 | `next` redirect 로그인 안내 문구 추가 | `/auth` route size | 8.41 kB | 8.46 kB | 0.05 kB 증가 |
+| 2026-04-30 | 로그아웃/세션 만료 토스트 안내 추가 | `/mypage` route size | 4.97 kB | 4.99 kB | 0.02 kB 증가 |
 
 그래프 갱신:
 

@@ -10,6 +10,7 @@ interface ChildProfile {
   name: string;
   monthsOld: number;
   isPrimary: boolean;
+  photoUrl?: string;
 }
 
 export function useChildrenPage() {
@@ -24,6 +25,7 @@ export function useChildrenPage() {
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
   const [editingChildName, setEditingChildName] = useState("");
   const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [updatingPhotoChildId, setUpdatingPhotoChildId] = useState<string | null>(null);
 
   const loadChildren = async () => {
     setLoading(true);
@@ -144,6 +146,25 @@ export function useChildrenPage() {
     }
   };
 
+  const saveChildPhoto = async (childId: string, photoUrl: string) => {
+    setUpdatingPhotoChildId(childId);
+    try {
+      const res = await authedFetch("/api/children", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: childId, photoUrl }),
+      });
+      const json = (await res.json()) as { message?: string };
+      if (!res.ok) throw new Error(json.message ?? "프로필 사진 저장에 실패했습니다.");
+      toast.success("아이 사진을 등록했습니다.");
+      await loadChildren();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "프로필 사진 저장에 실패했습니다.");
+    } finally {
+      setUpdatingPhotoChildId(null);
+    }
+  };
+
   return {
     addChild,
     cancelEditChildName,
@@ -154,6 +175,7 @@ export function useChildrenPage() {
     editingChildName,
     isSubmitting,
     isUpdatingName,
+    updatingPhotoChildId,
     linkedMode,
     loadChildren,
     loading,
@@ -161,6 +183,7 @@ export function useChildrenPage() {
     newName,
     router,
     saveChildName,
+    saveChildPhoto,
     setEditingChildName,
     setNewMonthsOld,
     setNewName,

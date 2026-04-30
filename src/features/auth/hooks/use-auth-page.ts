@@ -3,15 +3,23 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
+import { getAuthNextPath, hasAuthNextPath } from "@/lib/auth-redirect";
+import { setCachedHasSession } from "@/lib/auth-session-cache";
 import {
   AuthMode,
+  FatalProfileSeedError,
   LoadingPhase,
+  RecoverableProfileSeedError,
   ScreenMode,
   SocialProvider,
+  clearAuthCallbackParams,
   ensureProfileSeeded,
   getOAuthRedirectTo,
   getSupabaseOrThrow,
+  normalizeAuthEmail,
+  readAuthCallbackParams,
   toFriendlyAuthErrorMessage,
+  validateAuthForm,
 } from "../lib/auth-utils";
 
 export function useAuthPage() {
@@ -28,8 +36,10 @@ export function useAuthPage() {
   const [isEnvMissing, setIsEnvMissing] = useState(false);
   const [loadingPhase, setLoadingPhase] = useState<LoadingPhase>("session");
   const [showLoadingFallback, setShowLoadingFallback] = useState(false);
+  const [canRetryProfileSeed, setCanRetryProfileSeed] = useState(false);
   const isProcessingCallbackRef = useRef(false);
   const isFinalizingSessionRef = useRef(false);
+  const lastSessionRef = useRef<Session | null>(null);
   const isBusy = isSubmitting || isSocialSubmitting;
 
   useEffect(() => {
@@ -60,12 +70,18 @@ export function useAuthPage() {
     const finalizeSession = async (session: Session | null) => {
       if (!active) return;
       if (!session) {
+        setCachedHasSession(false);
         setLoadingPhase("session");
+        if (hasAuthNextPath()) {
+          setNoticeMessage("다시 로그인하면 이전 화면으로 돌아갑니다.");
+        }
         setScreenMode("form");
         return;
       }
       if (isFinalizingSessionRef.current) return;
       isFinalizingSessionRef.current = true;
+      setCachedHasSession(true);
+      lastSessionRef.current = session;
       setLoadingPhase("profile");
 
       try {
@@ -73,8 +89,13 @@ export function useAuthPage() {
       } catch (error) {
         if (active) {
           setErrorMessage(toFriendlyAuthErrorMessage(error));
+          setCanRetryProfileSeed(error instanceof RecoverableProfileSeedError);
           setScreenMode("form");
-          await supabase.auth.signOut();
+          if (error instanceof FatalProfileSeedError) {
+            await supabase.auth.signOut();
+            setCachedHasSession(false);
+            lastSessionRef.current = null;
+          }
         }
         return;
       } finally {
@@ -84,7 +105,7 @@ export function useAuthPage() {
       if (!active) return;
       if (session.user.user_metadata?.onboarding_completed === true) {
         setLoadingPhase("redirect");
-        router.replace("/");
+        router.replace(getAuthNextPath());
         return;
       }
 
@@ -97,62 +118,44 @@ export function useAuthPage() {
         if (isProcessingCallbackRef.current) return;
         isProcessingCallbackRef.current = true;
 
-        const currentUrl = new URL(window.location.href);
-        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-        const hashAccessToken = hashParams.get("access_token");
-        const hashRefreshToken = hashParams.get("refresh_token");
-        const authCode = currentUrl.searchParams.get("code");
-        const oauthError =
-          currentUrl.searchParams.get("error_description") ??
-          hashParams.get("error_description");
+        const callback = readAuthCallbackParams();
 
         try {
-          if (authCode) {
+          if (callback.authCode) {
             setLoadingPhase("oauth");
-            const { error } = await supabase.auth.exchangeCodeForSession(authCode);
-            if (error && active) {
+            const { error } = await supabase.auth.exchangeCodeForSession(callback.authCode);
+            if (error) {
+              if (!active) return;
               setErrorMessage(toFriendlyAuthErrorMessage(error));
+              setScreenMode("form");
+              return;
             }
-          } else if (hashAccessToken && hashRefreshToken) {
+          } else if (callback.hashAccessToken && callback.hashRefreshToken) {
             setLoadingPhase("oauth");
             const { error } = await supabase.auth.setSession({
-              access_token: hashAccessToken,
-              refresh_token: hashRefreshToken,
+              access_token: callback.hashAccessToken,
+              refresh_token: callback.hashRefreshToken,
             });
-            if (error && active) {
+            if (error) {
+              if (!active) return;
               setErrorMessage(toFriendlyAuthErrorMessage(error));
+              setScreenMode("form");
+              return;
             }
           }
         } finally {
-          currentUrl.searchParams.delete("code");
-          currentUrl.searchParams.delete("state");
-          currentUrl.searchParams.delete("error");
-          currentUrl.searchParams.delete("error_code");
-          currentUrl.searchParams.delete("error_description");
-          currentUrl.searchParams.delete("provider_token");
-          currentUrl.searchParams.delete("provider_refresh_token");
-          currentUrl.searchParams.delete("refresh_token");
-          currentUrl.searchParams.delete("access_token");
-          currentUrl.searchParams.delete("expires_in");
-          currentUrl.searchParams.delete("expires_at");
-          currentUrl.searchParams.delete("token_type");
-          currentUrl.searchParams.delete("sb");
-
-          const nextSearch = currentUrl.searchParams.toString();
-          window.history.replaceState(
-            {},
-            "",
-            `${currentUrl.pathname}${nextSearch ? `?${nextSearch}` : ""}`
-          );
+          if (callback.hasCallback) clearAuthCallbackParams();
           isProcessingCallbackRef.current = false;
         }
 
-        if (oauthError && active) {
+        if (callback.oauthError && active) {
           setErrorMessage(
             toFriendlyAuthErrorMessage(
-              new Error(decodeURIComponent(oauthError.replace(/\+/g, " ")))
+              new Error(decodeURIComponent(callback.oauthError.replace(/\+/g, " ")))
             )
           );
+          setScreenMode("form");
+          return;
         }
       }
 
@@ -178,9 +181,11 @@ export function useAuthPage() {
     event.preventDefault();
     setErrorMessage(null);
     setNoticeMessage(null);
+    setCanRetryProfileSeed(false);
 
-    if (!email.trim() || !password.trim()) {
-      setErrorMessage("이메일과 비밀번호를 입력해주세요.");
+    const validationMessage = validateAuthForm({ mode, email, password });
+    if (validationMessage) {
+      setErrorMessage(validationMessage);
       return;
     }
 
@@ -197,7 +202,7 @@ export function useAuthPage() {
 
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
+          email: normalizeAuthEmail(email),
           password,
         });
         if (error) throw error;
@@ -205,7 +210,7 @@ export function useAuthPage() {
       }
 
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: normalizeAuthEmail(email),
         password,
         options: {
           data: {
@@ -226,6 +231,36 @@ export function useAuthPage() {
     }
   };
 
+  const retryProfileSeed = async () => {
+    setErrorMessage(null);
+    setCanRetryProfileSeed(false);
+    const session = lastSessionRef.current;
+    if (!session) {
+      setScreenMode("loading");
+      return;
+    }
+    setLoadingPhase("profile");
+    await ensureProfileSeeded(session.access_token)
+      .then(() => {
+        if (session.user.user_metadata?.onboarding_completed === true) {
+          setCachedHasSession(true);
+          router.replace(getAuthNextPath());
+          return;
+        }
+        setCachedHasSession(true);
+        setScreenMode("onboarding");
+      })
+      .catch((error) => {
+        setErrorMessage(toFriendlyAuthErrorMessage(error));
+        if (error instanceof RecoverableProfileSeedError) {
+          setCanRetryProfileSeed(true);
+          setScreenMode("form");
+          return;
+        }
+        setScreenMode("form");
+      });
+  };
+
   const completeOnboarding = async () => {
     let supabase: ReturnType<typeof getSupabaseOrThrow>;
     try {
@@ -236,13 +271,15 @@ export function useAuthPage() {
     }
 
     setErrorMessage(null);
+    setCanRetryProfileSeed(false);
     try {
       const { error } = await supabase.auth.updateUser({
         data: { onboarding_completed: true },
       });
       if (error) throw error;
       localStorage.setItem("nyampick:onboarding:done", "true");
-      router.replace("/");
+      setCachedHasSession(true);
+      router.replace(getAuthNextPath());
     } catch (error) {
       setErrorMessage(toFriendlyAuthErrorMessage(error));
     }
@@ -251,6 +288,8 @@ export function useAuthPage() {
   const signInWithSocial = async (provider: "google" | "kakao") => {
     setErrorMessage(null);
     setNoticeMessage(null);
+    setCanRetryProfileSeed(false);
+    let didStartRedirect = false;
 
     let supabase: ReturnType<typeof getSupabaseOrThrow>;
     try {
@@ -277,8 +316,11 @@ export function useAuthPage() {
 
       if (error) throw error;
       if (data?.url) {
+        didStartRedirect = true;
         window.location.assign(data.url);
+        return;
       }
+      throw new Error("소셜 로그인 URL을 받지 못했습니다.");
     } catch (error) {
       if (
         provider === "kakao" &&
@@ -292,8 +334,10 @@ export function useAuthPage() {
       }
       setErrorMessage(toFriendlyAuthErrorMessage(error));
     } finally {
-      setIsSocialSubmitting(false);
-      setSocialProvider(null);
+      if (!didStartRedirect) {
+        setIsSocialSubmitting(false);
+        setSocialProvider(null);
+      }
     }
   };
 
@@ -313,10 +357,12 @@ export function useAuthPage() {
     isEnvMissing,
     loadingPhase,
     showLoadingFallback,
+    canRetryProfileSeed,
     isBusy,
     onSubmit,
     completeOnboarding,
     signInWithSocial,
+    retryProfileSeed,
     openFormScreen: () => setScreenMode("form"),
   };
 }

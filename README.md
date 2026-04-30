@@ -61,6 +61,7 @@ NEXT_PUBLIC_APP_URL=https://nyampick.vercel.app
 npm run dev        # 개발 서버
 npm run dev:clean  # .next 삭제 후 개발 서버
 npm run lint       # ESLint
+npm run test:unit  # Node 내장 러너 기반 단위 테스트
 npx tsc --noEmit   # TypeScript 검사
 npm run build      # 프로덕션 빌드
 npm start          # 빌드 결과 실행

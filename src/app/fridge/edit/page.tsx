@@ -76,13 +76,13 @@ export default function FridgeEditPage() {
                       <div
                         key={item.id}
                         className={cn(
-                          "flex items-center justify-between rounded-[14px] border px-4 py-3",
+                          "flex items-center justify-between rounded-[16px] border px-5 py-[18px]",
                           vm.isDeleteMode
                             ? "cursor-pointer [animation:fridgeWiggle_var(--wiggle-duration)_ease-in-out_infinite] [animation-delay:var(--wiggle-delay)]"
                             : "",
                           vm.isDeleteMode && isSelectedForDelete
                             ? "border-[#ff6e7a] bg-[#f9d9df]"
-                            : "border-[#c8cfcd] bg-white"
+                            : "border-[#c2d8cc] bg-white"
                         )}
                         style={vm.isDeleteMode ? getWiggleStyle(item.id) : undefined}
                         onMouseDown={() => vm.startLongPress(item.id)}

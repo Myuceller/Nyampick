@@ -9,6 +9,10 @@ import {
   updateChildInDb,
 } from "@/lib/server/supabase-children";
 
+function isValidImageDataUrl(value: string): boolean {
+  return /^data:image\/(png|jpe?g|webp);base64,/i.test(value) && value.length <= 1_500_000;
+}
+
 export async function GET(request: Request) {
   const user = await getUserFromRequest(request);
   if (!user) {
@@ -92,6 +96,7 @@ export async function PATCH(request: Request) {
     name?: string;
     monthsOld?: number;
     isPrimary?: boolean;
+    photoUrl?: string | null;
   };
 
   if (typeof body.id !== "string" || body.id.length === 0) {
@@ -102,6 +107,13 @@ export async function PATCH(request: Request) {
       { message: "monthsOld must be a non-negative integer" },
       { status: 400 }
     );
+  }
+  if (
+    body.photoUrl !== undefined &&
+    body.photoUrl !== null &&
+    !isValidImageDataUrl(body.photoUrl)
+  ) {
+    return NextResponse.json({ message: "invalid photoUrl" }, { status: 400 });
   }
 
   try {
@@ -116,6 +128,7 @@ export async function PATCH(request: Request) {
       name: body.name?.trim(),
       monthsOld: body.monthsOld,
       isPrimary: body.isPrimary,
+      photoUrl: body.photoUrl === null ? null : body.photoUrl,
     });
     if (!child) {
       return NextResponse.json({ message: "child not found" }, { status: 404 });

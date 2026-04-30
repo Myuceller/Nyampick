@@ -35,12 +35,16 @@ export default function AuthPage() {
       isEnvMissing={vm.isEnvMissing}
       errorMessage={vm.errorMessage}
       noticeMessage={vm.noticeMessage}
+      canRetryProfileSeed={vm.canRetryProfileSeed}
       onSetMode={vm.setMode}
       onSetEmail={vm.setEmail}
       onSetPassword={vm.setPassword}
       onSubmit={vm.onSubmit}
       onSocialSignIn={(provider) => {
         void vm.signInWithSocial(provider);
+      }}
+      onRetryProfileSeed={() => {
+        void vm.retryProfileSeed();
       }}
     />
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ArrowLeft, Copy, MoreHorizontal, UserRound, X } from "lucide-react";
 import {
   RELATIONSHIP_OPTIONS,
@@ -13,6 +14,15 @@ function getInitial(value: string) {
 }
 
 function MemberAvatar({ member }: { member: FamilyMember }) {
+  if (member.profileImageUrl) {
+    return (
+      <div
+        className="h-[56px] w-[56px] shrink-0 rounded-full bg-cover bg-center"
+        style={{ backgroundImage: `url(${member.profileImageUrl})` }}
+      />
+    );
+  }
+
   if (member.role === "owner") {
     return (
       <div className="flex h-[56px] w-[56px] shrink-0 items-center justify-center rounded-full bg-[#fbfb82] text-[22px] font-extrabold text-[#202725]">
@@ -34,6 +44,7 @@ function SkeletonCard() {
 
 export default function FamilyPage() {
   const vm = useFamilyPage();
+  const [openActionMemberId, setOpenActionMemberId] = useState<string | null>(null);
   const visibleCode = vm.inviteCode || "코드 만들기";
   const canCreateCode = vm.viewerRole === "owner" && !vm.linkedMode;
 
@@ -126,13 +137,35 @@ export default function FamilyPage() {
                   </p>
                 </div>
                 {member.role === "member" ? (
-                  <button
-                    type="button"
-                    className="absolute right-5 top-4 rounded-full p-1 text-[#111816] active:bg-[#eef1ef]"
-                    aria-label="가족 구성원 관리"
-                  >
-                    <MoreHorizontal className="h-5 w-5" />
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenActionMemberId((current) =>
+                          current === member.id ? null : member.id
+                        )
+                      }
+                      className="absolute right-5 top-4 rounded-full p-1 text-[#111816] active:bg-[#eef1ef]"
+                      aria-label="가족 구성원 관리"
+                    >
+                      <MoreHorizontal className="h-5 w-5" />
+                    </button>
+                    {openActionMemberId === member.id ? (
+                      <div className="absolute right-5 top-11 z-10 w-[150px] overflow-hidden rounded-[14px] border border-[#e2e6e4] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpenActionMemberId(null);
+                            void vm.unlinkFamilyMember(member.id);
+                          }}
+                          disabled={vm.unlinkingMemberId === member.id}
+                          className="block w-full px-4 py-3 text-left text-[14px] font-semibold text-[#ff3030] disabled:text-[#d5a0a0]"
+                        >
+                          {vm.unlinkingMemberId === member.id ? "끊는 중..." : "연결 끊기"}
+                        </button>
+                      </div>
+                    ) : null}
+                  </>
                 ) : null}
               </article>
             ))}

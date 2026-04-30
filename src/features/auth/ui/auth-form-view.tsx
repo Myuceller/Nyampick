@@ -14,11 +14,13 @@ interface AuthFormViewProps {
   isEnvMissing: boolean;
   errorMessage: string | null;
   noticeMessage: string | null;
+  canRetryProfileSeed: boolean;
   onSetMode: (mode: AuthMode) => void;
   onSetEmail: (value: string) => void;
   onSetPassword: (value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onSocialSignIn: (provider: "google" | "kakao") => void;
+  onRetryProfileSeed: () => void;
 }
 
 export function AuthFormView({
@@ -32,11 +34,13 @@ export function AuthFormView({
   isEnvMissing,
   errorMessage,
   noticeMessage,
+  canRetryProfileSeed,
   onSetMode,
   onSetEmail,
   onSetPassword,
   onSubmit,
   onSocialSignIn,
+  onRetryProfileSeed,
 }: AuthFormViewProps) {
   return (
     <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-[rgb(243,248,244)] px-5 pb-10 pt-14">
@@ -52,6 +56,16 @@ export function AuthFormView({
       ) : null}
 
       {errorMessage ? <p className="mt-5 text-[14px] text-[#d34a4a]">{errorMessage}</p> : null}
+      {canRetryProfileSeed ? (
+        <button
+          type="button"
+          onClick={onRetryProfileSeed}
+          disabled={isBusy}
+          className="mt-3 h-10 rounded-xl border border-[#b8d6c7] bg-white px-4 text-[14px] font-semibold text-[#2f8d68] disabled:opacity-60"
+        >
+          프로필 준비 다시 시도
+        </button>
+      ) : null}
       {noticeMessage ? <p className="mt-5 text-[14px] text-[#4a8d6a]">{noticeMessage}</p> : null}
 
       <div className="mt-7 grid grid-cols-2 rounded-full bg-[#dce3e0] p-1">

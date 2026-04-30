@@ -64,6 +64,10 @@ function readEmailFromUser(user: {
   return asString(kakaoAccount?.email);
 }
 
+function isValidImageDataUrl(value: string): boolean {
+  return /^data:image\/(png|jpe?g|webp);base64,/i.test(value) && value.length <= 1_500_000;
+}
+
 export async function GET(request: Request) {
   const user = await getUserFromRequest(request);
   if (!user) {
@@ -108,6 +112,7 @@ export async function PATCH(request: Request) {
     babyName?: string;
     babyMonthsOld?: number;
     email?: string;
+    profileImageUrl?: string | null;
   };
 
   if (body.name !== undefined && body.name.trim().length === 0) {
@@ -124,6 +129,14 @@ export async function PATCH(request: Request) {
     );
   }
 
+  if (
+    body.profileImageUrl !== undefined &&
+    body.profileImageUrl !== null &&
+    !isValidImageDataUrl(body.profileImageUrl)
+  ) {
+    return NextResponse.json({ message: "invalid profileImageUrl" }, { status: 400 });
+  }
+
   try {
     const emailHint = readEmailFromUser(user);
     const displayNameHint = readDisplayNameFromUser(user);
@@ -134,6 +147,7 @@ export async function PATCH(request: Request) {
         babyName: body.babyName,
         babyMonthsOld: body.babyMonthsOld,
         email: body.email,
+        profileImageUrl: body.profileImageUrl === null ? null : body.profileImageUrl,
       }),
     });
   } catch (error) {

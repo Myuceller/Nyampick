@@ -1,3 +1,4 @@
+import { getAuthNextPath } from "@/lib/auth-redirect";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 export type AuthMode = "signin" | "signup";
@@ -10,9 +11,52 @@ export type LoadingPhase =
   | "redirect"
   | "onboarding";
 
+const AUTH_CALLBACK_KEYS = [
+  "code",
+  "state",
+  "error",
+  "error_code",
+  "error_description",
+  "provider_token",
+  "provider_refresh_token",
+  "refresh_token",
+  "access_token",
+  "expires_in",
+  "expires_at",
+  "token_type",
+  "sb",
+] as const;
+
+export interface AuthCallbackParams {
+  authCode: string | null;
+  hashAccessToken: string | null;
+  hashRefreshToken: string | null;
+  oauthError: string | null;
+  hasCallback: boolean;
+}
+
+export class RecoverableProfileSeedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RecoverableProfileSeedError";
+  }
+}
+
+export class FatalProfileSeedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "FatalProfileSeedError";
+  }
+}
+
 export function getOAuthRedirectTo() {
   if (typeof window === "undefined") return undefined;
-  return `${window.location.origin}/auth`;
+  const nextPath = getAuthNextPath();
+  const redirectUrl = new URL("/auth", window.location.origin);
+  if (nextPath !== "/") {
+    redirectUrl.searchParams.set("next", nextPath);
+  }
+  return redirectUrl.toString();
 }
 
 export async function ensureProfileSeeded(accessToken: string) {
@@ -30,13 +74,73 @@ export async function ensureProfileSeeded(accessToken: string) {
     };
 
     if (response.status === 409 && body.code === "DUPLICATE_EMAIL_ACCOUNT") {
-      throw new Error(
+      throw new FatalProfileSeedError(
         body.message ?? "이미 같은 이메일로 가입된 계정이 있습니다. 기존 로그인 방식을 사용해주세요."
       );
     }
 
-    throw new Error(body.message ?? "프로필 초기화에 실패했습니다.");
+    const message = body.message ?? "프로필 초기화에 실패했습니다.";
+    if (response.status >= 500 || response.status === 429) {
+      throw new RecoverableProfileSeedError(message);
+    }
+
+    throw new FatalProfileSeedError(message);
   }
+}
+
+export function readAuthCallbackParams(): AuthCallbackParams {
+  const currentUrl = new URL(window.location.href);
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const authCode = currentUrl.searchParams.get("code");
+  const hashAccessToken = hashParams.get("access_token");
+  const hashRefreshToken = hashParams.get("refresh_token");
+  const oauthError =
+    currentUrl.searchParams.get("error_description") ??
+    hashParams.get("error_description");
+
+  return {
+    authCode,
+    hashAccessToken,
+    hashRefreshToken,
+    oauthError,
+    hasCallback: Boolean(authCode || hashAccessToken || hashRefreshToken || oauthError),
+  };
+}
+
+export function clearAuthCallbackParams() {
+  const currentUrl = new URL(window.location.href);
+  for (const key of AUTH_CALLBACK_KEYS) {
+    currentUrl.searchParams.delete(key);
+  }
+
+  const nextSearch = currentUrl.searchParams.toString();
+  window.history.replaceState(
+    {},
+    "",
+    `${currentUrl.pathname}${nextSearch ? `?${nextSearch}` : ""}`
+  );
+}
+
+export function normalizeAuthEmail(value: string) {
+  return value.trim().toLowerCase();
+}
+
+export function validateAuthForm(input: {
+  mode: AuthMode;
+  email: string;
+  password: string;
+}): string | null {
+  const email = normalizeAuthEmail(input.email);
+  if (!email || !input.password.trim()) {
+    return "이메일과 비밀번호를 입력해주세요.";
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return "이메일 형식을 확인해주세요.";
+  }
+  if (input.mode === "signup" && input.password.length < 8) {
+    return "비밀번호는 8자 이상으로 입력해주세요.";
+  }
+  return null;
 }
 
 export function toFriendlyAuthErrorMessage(error: unknown): string {
@@ -56,6 +160,26 @@ export function toFriendlyAuthErrorMessage(error: unknown): string {
 
   if (normalized.includes("email not confirmed")) {
     return "이메일 인증 후 로그인해주세요.";
+  }
+
+  if (normalized.includes("user already registered")) {
+    return "이미 가입된 이메일입니다. 로그인으로 진행해주세요.";
+  }
+
+  if (normalized.includes("password should be at least")) {
+    return "비밀번호는 8자 이상으로 입력해주세요.";
+  }
+
+  if (normalized.includes("signup is disabled")) {
+    return "현재 회원가입이 비활성화되어 있습니다.";
+  }
+
+  if (normalized.includes("email rate limit")) {
+    return "이메일 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.";
+  }
+
+  if (normalized.includes("oauth state") || normalized.includes("state mismatch")) {
+    return "소셜 로그인 상태 확인에 실패했습니다. 다시 시도해주세요.";
   }
 
   if (normalized.includes("too many requests") || normalized.includes("rate limit")) {

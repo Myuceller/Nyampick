@@ -1,31 +1,197 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="920" height="314" viewBox="0 0 920 314" role="img" aria-labelledby="title desc">
-  <title id="title">Performance Change History</title>
-  <desc id="desc">Route size and first load JavaScript changes generated from docs/performance-history.json.</desc>
-  <rect width="920" height="314" fill="#ffffff" />
-  <text x="24" y="34" font-size="24" font-weight="800" fill="#202725">Performance Change History</text>
-  <text x="24" y="58" font-size="13" fill="#6f7875">Generated from docs/performance-history.json</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="1146" viewBox="0 0 920 1146" role="img" aria-labelledby="title desc">
+  <title id="title">Performance Trend History</title>
+  <desc id="desc">Route size and first load JavaScript trends grouped by route and metric from docs/performance-history.json.</desc>
+  <rect width="920" height="1146" fill="#ffffff" />
+  <text x="24" y="34" font-size="24" font-weight="800" fill="#202725">Performance Trend History</text>
+  <text x="24" y="58" font-size="13" fill="#6f7875">Grouped by route and metric from docs/performance-history.json</text>
   <g>
-    <rect x="220" y="48" width="14" height="14" rx="4" fill="#d6ddd9" />
-    <text x="242" y="60" font-size="12" fill="#6f7875">Before</text>
-    <rect x="308" y="48" width="14" height="14" rx="4" fill="#57bf8e" />
-    <text x="330" y="60" font-size="12" fill="#6f7875">After</text>
+    <circle cx="270" cy="72" r="4" fill="#57bf8e" />
+    <text x="282" y="76" font-size="12" fill="#6f7875">Historical point</text>
+    <circle cx="412" cy="72" r="5" fill="#202725" />
+    <text x="424" y="76" font-size="12" fill="#6f7875">Latest point</text>
   </g>
-  <text x="24" y="98" font-size="15" font-weight="700" fill="#202725">/children route size</text>
-<text x="24" y="118" font-size="12" fill="#6f7875">2026-04-30 · -0.54 kB</text>
-<rect x="220" y="84" width="21.0" height="14" rx="4" fill="#d6ddd9" />
-<rect x="220" y="104" width="19.1" height="14" rx="4" fill="#57bf8e" />
-<text x="796" y="96" font-size="12" fill="#6f7875">before 5.75 kB</text>
-<text x="796" y="116" font-size="12" font-weight="700" fill="#202725">after 5.21 kB</text>
-<text x="24" y="152" font-size="15" font-weight="700" fill="#202725">/mypage route size</text>
-<text x="24" y="172" font-size="12" fill="#6f7875">2026-04-30 · -0.58 kB</text>
-<rect x="220" y="138" width="18.8" height="14" rx="4" fill="#d6ddd9" />
-<rect x="220" y="158" width="16.7" height="14" rx="4" fill="#57bf8e" />
-<text x="796" y="150" font-size="12" fill="#6f7875">before 5.14 kB</text>
-<text x="796" y="170" font-size="12" font-weight="700" fill="#202725">after 4.56 kB</text>
-<text x="24" y="206" font-size="15" font-weight="700" fill="#202725">/family first load js</text>
-<text x="24" y="226" font-size="12" fill="#6f7875">2026-04-30 · new</text>
+  <text x="24" y="114" font-size="15" font-weight="700" fill="#202725">/children route size</text>
+<text x="24" y="135" font-size="12" fill="#6f7875">4 points · total -0.13 kB</text>
+<text x="24" y="154" font-size="12" fill="#6f7875">latest 2026-04-30 · +0.17 kB</text>
 
-<rect x="220" y="212" width="560.0" height="14" rx="4" fill="#57bf8e" />
-<text x="796" y="204" font-size="12" fill="#6f7875">before -</text>
-<text x="796" y="224" font-size="12" font-weight="700" fill="#202725">after 153 kB</text>
+    <line x1="270" y1="148" x2="680" y2="148" stroke="#ecf0ee" stroke-width="1" />
+    <path d="M 270.0 110.8 L 406.7 143.2 L 543.3 128.8 L 680.0 118.6" fill="none" stroke="#57bf8e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="270.0" cy="110.8" r="4" fill="#57bf8e" />
+<circle cx="406.7" cy="143.2" r="4" fill="#57bf8e" />
+<circle cx="543.3" cy="128.8" r="4" fill="#57bf8e" />
+<circle cx="680.0" cy="118.6" r="5" fill="#202725" />
+    <text x="268.0" y="168" text-anchor="start" font-size="11" fill="#6f7875">5.75 kB</text>
+<text x="406.7" y="168" text-anchor="middle" font-size="11" fill="#6f7875">5.21 kB</text>
+<text x="543.3" y="168" text-anchor="middle" font-size="11" fill="#6f7875">5.45 kB</text>
+<text x="682.0" y="168" text-anchor="end" font-size="11" fill="#6f7875">5.62 kB</text>
+
+<text x="712" y="118" font-size="12" fill="#6f7875">first 5.75 kB</text>
+<text x="712" y="140" font-size="12" font-weight="700" fill="#202725">latest 5.62 kB</text>
+<text x="712" y="162" font-size="12" fill="#6f7875">Redirect protected routes after f…</text>
+<text x="24" y="202" font-size="15" font-weight="700" fill="#202725">/mypage route size</text>
+<text x="24" y="223" font-size="12" fill="#6f7875">6 points · total -0.15 kB</text>
+<text x="24" y="242" font-size="12" fill="#6f7875">latest 2026-04-30 · +0.02 kB</text>
+
+    <line x1="270" y1="236" x2="680" y2="236" stroke="#ecf0ee" stroke-width="1" />
+    <path d="M 270.0 198.8 L 352.0 231.2 L 434.0 226.1 L 516.0 217.8 L 598.0 208.3 L 680.0 207.2" fill="none" stroke="#57bf8e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="270.0" cy="198.8" r="4" fill="#57bf8e" />
+<circle cx="352.0" cy="231.2" r="4" fill="#57bf8e" />
+<circle cx="434.0" cy="226.1" r="4" fill="#57bf8e" />
+<circle cx="516.0" cy="217.8" r="4" fill="#57bf8e" />
+<circle cx="598.0" cy="208.3" r="4" fill="#57bf8e" />
+<circle cx="680.0" cy="207.2" r="5" fill="#202725" />
+    <text x="268.0" y="256" text-anchor="start" font-size="11" fill="#6f7875">5.14 kB</text>
+<text x="352.0" y="256" text-anchor="middle" font-size="11" fill="#6f7875">4.56 kB</text>
+<text x="434.0" y="256" text-anchor="middle" font-size="11" fill="#6f7875">4.65 kB</text>
+<text x="516.0" y="256" text-anchor="middle" font-size="11" fill="#6f7875">4.8 kB</text>
+<text x="598.0" y="256" text-anchor="middle" font-size="11" fill="#6f7875">4.97 kB</text>
+<text x="682.0" y="256" text-anchor="end" font-size="11" fill="#6f7875">4.99 kB</text>
+
+<text x="712" y="206" font-size="12" fill="#6f7875">first 5.14 kB</text>
+<text x="712" y="228" font-size="12" font-weight="700" fill="#202725">latest 4.99 kB</text>
+<text x="712" y="250" font-size="12" fill="#6f7875">Show toast feedback for logout an…</text>
+<text x="24" y="290" font-size="15" font-weight="700" fill="#202725">/family first load js</text>
+<text x="24" y="311" font-size="12" fill="#6f7875">1 point · total new</text>
+<text x="24" y="330" font-size="12" fill="#6f7875">latest 2026-04-30 · new</text>
+
+    <line x1="270" y1="324" x2="680" y2="324" stroke="#ecf0ee" stroke-width="1" />
+
+    <circle cx="475.0" cy="303.0" r="5" fill="#202725" />
+    <text x="473.0" y="344" text-anchor="start" font-size="11" fill="#6f7875">153 kB</text>
+
+<text x="712" y="294" font-size="12" fill="#6f7875">first 153 kB</text>
+<text x="712" y="316" font-size="12" font-weight="700" fill="#202725">latest 153 kB</text>
+<text x="712" y="338" font-size="12" fill="#6f7875">Add family linking page</text>
+<text x="24" y="378" font-size="15" font-weight="700" fill="#202725">/auth route size</text>
+<text x="24" y="399" font-size="12" fill="#6f7875">5 points · total +0.97 kB</text>
+<text x="24" y="418" font-size="12" fill="#6f7875">latest 2026-04-30 · +0.05 kB</text>
+
+    <line x1="270" y1="412" x2="680" y2="412" stroke="#ecf0ee" stroke-width="1" />
+    <path d="M 270.0 407.2 L 372.5 384.8 L 475.0 381.2 L 577.5 376.5 L 680.0 374.8" fill="none" stroke="#57bf8e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="270.0" cy="407.2" r="4" fill="#57bf8e" />
+<circle cx="372.5" cy="384.8" r="4" fill="#57bf8e" />
+<circle cx="475.0" cy="381.2" r="4" fill="#57bf8e" />
+<circle cx="577.5" cy="376.5" r="4" fill="#57bf8e" />
+<circle cx="680.0" cy="374.8" r="5" fill="#202725" />
+    <text x="268.0" y="432" text-anchor="start" font-size="11" fill="#6f7875">7.49 kB</text>
+<text x="372.5" y="432" text-anchor="middle" font-size="11" fill="#6f7875">8.16 kB</text>
+<text x="475.0" y="432" text-anchor="middle" font-size="11" fill="#6f7875">8.27 kB</text>
+<text x="577.5" y="432" text-anchor="middle" font-size="11" fill="#6f7875">8.41 kB</text>
+<text x="682.0" y="432" text-anchor="end" font-size="11" fill="#6f7875">8.46 kB</text>
+
+<text x="712" y="382" font-size="12" fill="#6f7875">first 7.49 kB</text>
+<text x="712" y="404" font-size="12" font-weight="700" fill="#202725">latest 8.46 kB</text>
+<text x="712" y="426" font-size="12" fill="#6f7875">Show a return-to-previous-screen …</text>
+<text x="24" y="466" font-size="15" font-weight="700" fill="#202725">/ route size</text>
+<text x="24" y="487" font-size="12" fill="#6f7875">3 points · total +0.39 kB</text>
+<text x="24" y="506" font-size="12" fill="#6f7875">latest 2026-04-30 · +0.16 kB</text>
+
+    <line x1="270" y1="500" x2="680" y2="500" stroke="#ecf0ee" stroke-width="1" />
+    <path d="M 270.0 495.2 L 475.0 476.1 L 680.0 462.8" fill="none" stroke="#57bf8e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="270.0" cy="495.2" r="4" fill="#57bf8e" />
+<circle cx="475.0" cy="476.1" r="4" fill="#57bf8e" />
+<circle cx="680.0" cy="462.8" r="5" fill="#202725" />
+    <text x="268.0" y="520" text-anchor="start" font-size="11" fill="#6f7875">6.68 kB</text>
+<text x="475.0" y="520" text-anchor="middle" font-size="11" fill="#6f7875">6.91 kB</text>
+<text x="682.0" y="520" text-anchor="end" font-size="11" fill="#6f7875">7.07 kB</text>
+
+<text x="712" y="470" font-size="12" fill="#6f7875">first 6.68 kB</text>
+<text x="712" y="492" font-size="12" font-weight="700" fill="#202725">latest 7.07 kB</text>
+<text x="712" y="514" font-size="12" fill="#6f7875">Redirect protected routes after f…</text>
+<text x="24" y="554" font-size="15" font-weight="700" fill="#202725">/family route size</text>
+<text x="24" y="575" font-size="12" fill="#6f7875">3 points · total +0.39 kB</text>
+<text x="24" y="594" font-size="12" fill="#6f7875">latest 2026-04-30 · +0.17 kB</text>
+
+    <line x1="270" y1="588" x2="680" y2="588" stroke="#ecf0ee" stroke-width="1" />
+    <path d="M 270.0 583.2 L 475.0 564.9 L 680.0 550.8" fill="none" stroke="#57bf8e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="270.0" cy="583.2" r="4" fill="#57bf8e" />
+<circle cx="475.0" cy="564.9" r="4" fill="#57bf8e" />
+<circle cx="680.0" cy="550.8" r="5" fill="#202725" />
+    <text x="268.0" y="608" text-anchor="start" font-size="11" fill="#6f7875">4.83 kB</text>
+<text x="475.0" y="608" text-anchor="middle" font-size="11" fill="#6f7875">5.05 kB</text>
+<text x="682.0" y="608" text-anchor="end" font-size="11" fill="#6f7875">5.22 kB</text>
+
+<text x="712" y="558" font-size="12" fill="#6f7875">first 4.83 kB</text>
+<text x="712" y="580" font-size="12" font-weight="700" fill="#202725">latest 5.22 kB</text>
+<text x="712" y="602" font-size="12" fill="#6f7875">Redirect protected routes after f…</text>
+<text x="24" y="642" font-size="15" font-weight="700" fill="#202725">/fridge route size</text>
+<text x="24" y="663" font-size="12" fill="#6f7875">3 points · total +0.38 kB</text>
+<text x="24" y="682" font-size="12" fill="#6f7875">latest 2026-04-30 · +0.16 kB</text>
+
+    <line x1="270" y1="676" x2="680" y2="676" stroke="#ecf0ee" stroke-width="1" />
+    <path d="M 270.0 671.2 L 475.0 652.4 L 680.0 638.8" fill="none" stroke="#57bf8e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="270.0" cy="671.2" r="4" fill="#57bf8e" />
+<circle cx="475.0" cy="652.4" r="4" fill="#57bf8e" />
+<circle cx="680.0" cy="638.8" r="5" fill="#202725" />
+    <text x="268.0" y="696" text-anchor="start" font-size="11" fill="#6f7875">9.06 kB</text>
+<text x="475.0" y="696" text-anchor="middle" font-size="11" fill="#6f7875">9.28 kB</text>
+<text x="682.0" y="696" text-anchor="end" font-size="11" fill="#6f7875">9.44 kB</text>
+
+<text x="712" y="646" font-size="12" fill="#6f7875">first 9.06 kB</text>
+<text x="712" y="668" font-size="12" font-weight="700" fill="#202725">latest 9.44 kB</text>
+<text x="712" y="690" font-size="12" fill="#6f7875">Redirect protected routes after f…</text>
+<text x="24" y="730" font-size="15" font-weight="700" fill="#202725">/fridge/edit route size</text>
+<text x="24" y="751" font-size="12" fill="#6f7875">3 points · total +0.39 kB</text>
+<text x="24" y="770" font-size="12" fill="#6f7875">latest 2026-04-30 · +0.16 kB</text>
+
+    <line x1="270" y1="764" x2="680" y2="764" stroke="#ecf0ee" stroke-width="1" />
+    <path d="M 270.0 759.2 L 475.0 740.1 L 680.0 726.8" fill="none" stroke="#57bf8e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="270.0" cy="759.2" r="4" fill="#57bf8e" />
+<circle cx="475.0" cy="740.1" r="4" fill="#57bf8e" />
+<circle cx="680.0" cy="726.8" r="5" fill="#202725" />
+    <text x="268.0" y="784" text-anchor="start" font-size="11" fill="#6f7875">7.51 kB</text>
+<text x="475.0" y="784" text-anchor="middle" font-size="11" fill="#6f7875">7.74 kB</text>
+<text x="682.0" y="784" text-anchor="end" font-size="11" fill="#6f7875">7.9 kB</text>
+
+<text x="712" y="734" font-size="12" fill="#6f7875">first 7.51 kB</text>
+<text x="712" y="756" font-size="12" font-weight="700" fill="#202725">latest 7.9 kB</text>
+<text x="712" y="778" font-size="12" fill="#6f7875">Redirect protected routes after f…</text>
+<text x="24" y="818" font-size="15" font-weight="700" fill="#202725">/meal/edit route size</text>
+<text x="24" y="839" font-size="12" fill="#6f7875">3 points · total +0.37 kB</text>
+<text x="24" y="858" font-size="12" fill="#6f7875">latest 2026-04-30 · +0.14 kB</text>
+
+    <line x1="270" y1="852" x2="680" y2="852" stroke="#ecf0ee" stroke-width="1" />
+    <path d="M 270.0 847.2 L 475.0 827.1 L 680.0 814.8" fill="none" stroke="#57bf8e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="270.0" cy="847.2" r="4" fill="#57bf8e" />
+<circle cx="475.0" cy="827.1" r="4" fill="#57bf8e" />
+<circle cx="680.0" cy="814.8" r="5" fill="#202725" />
+    <text x="268.0" y="872" text-anchor="start" font-size="11" fill="#6f7875">5.98 kB</text>
+<text x="475.0" y="872" text-anchor="middle" font-size="11" fill="#6f7875">6.21 kB</text>
+<text x="682.0" y="872" text-anchor="end" font-size="11" fill="#6f7875">6.35 kB</text>
+
+<text x="712" y="822" font-size="12" fill="#6f7875">first 5.98 kB</text>
+<text x="712" y="844" font-size="12" font-weight="700" fill="#202725">latest 6.35 kB</text>
+<text x="712" y="866" font-size="12" fill="#6f7875">Redirect protected routes after f…</text>
+<text x="24" y="906" font-size="15" font-weight="700" fill="#202725">/meal/overview route size</text>
+<text x="24" y="927" font-size="12" fill="#6f7875">3 points · total +0.39 kB</text>
+<text x="24" y="946" font-size="12" fill="#6f7875">latest 2026-04-30 · +0.16 kB</text>
+
+    <line x1="270" y1="940" x2="680" y2="940" stroke="#ecf0ee" stroke-width="1" />
+    <path d="M 270.0 935.2 L 475.0 916.1 L 680.0 902.8" fill="none" stroke="#57bf8e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="270.0" cy="935.2" r="4" fill="#57bf8e" />
+<circle cx="475.0" cy="916.1" r="4" fill="#57bf8e" />
+<circle cx="680.0" cy="902.8" r="5" fill="#202725" />
+    <text x="268.0" y="960" text-anchor="start" font-size="11" fill="#6f7875">4.37 kB</text>
+<text x="475.0" y="960" text-anchor="middle" font-size="11" fill="#6f7875">4.6 kB</text>
+<text x="682.0" y="960" text-anchor="end" font-size="11" fill="#6f7875">4.76 kB</text>
+
+<text x="712" y="910" font-size="12" fill="#6f7875">first 4.37 kB</text>
+<text x="712" y="932" font-size="12" font-weight="700" fill="#202725">latest 4.76 kB</text>
+<text x="712" y="954" font-size="12" fill="#6f7875">Redirect protected routes after f…</text>
+<text x="24" y="994" font-size="15" font-weight="700" fill="#202725">/recipe route size</text>
+<text x="24" y="1015" font-size="12" fill="#6f7875">3 points · total +0.30 kB</text>
+<text x="24" y="1034" font-size="12" fill="#6f7875">latest 2026-04-30 · +0.10 kB</text>
+
+    <line x1="270" y1="1028" x2="680" y2="1028" stroke="#ecf0ee" stroke-width="1" />
+    <path d="M 270.0 1023.2 L 475.0 1001.6 L 680.0 990.8" fill="none" stroke="#57bf8e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="270.0" cy="1023.2" r="4" fill="#57bf8e" />
+<circle cx="475.0" cy="1001.6" r="4" fill="#57bf8e" />
+<circle cx="680.0" cy="990.8" r="5" fill="#202725" />
+    <text x="268.0" y="1048" text-anchor="start" font-size="11" fill="#6f7875">11.6 kB</text>
+<text x="475.0" y="1048" text-anchor="middle" font-size="11" fill="#6f7875">11.8 kB</text>
+<text x="682.0" y="1048" text-anchor="end" font-size="11" fill="#6f7875">11.9 kB</text>
+
+<text x="712" y="998" font-size="12" fill="#6f7875">first 11.6 kB</text>
+<text x="712" y="1020" font-size="12" font-weight="700" fill="#202725">latest 11.9 kB</text>
+<text x="712" y="1042" font-size="12" fill="#6f7875">Redirect protected routes after f…</text>
 </svg>

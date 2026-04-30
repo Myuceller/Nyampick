@@ -8,6 +8,7 @@ export interface ChildProfile {
   name: string;
   monthsOld: number;
   isPrimary: boolean;
+  photoUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -18,6 +19,7 @@ function toChildProfile(row: {
   name: string;
   months_old: number;
   is_primary: boolean;
+  photo_url?: string | null;
   created_at: string;
   updated_at: string;
 }): ChildProfile {
@@ -27,6 +29,7 @@ function toChildProfile(row: {
     name: row.name,
     monthsOld: row.months_old,
     isPrimary: row.is_primary,
+    photoUrl: row.photo_url ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -51,8 +54,17 @@ async function seedDefaultChild(userId: string): Promise<ChildProfile> {
   const { data, error } = await supabase
     .from("child_profiles")
     .insert(payload)
-    .select("id,user_id,name,months_old,is_primary,created_at,updated_at")
+    .select(CHILD_SELECT_WITH_PHOTO)
     .single();
+  if (error && isMissingColumnError(error)) {
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("child_profiles")
+      .select(CHILD_SELECT_BASE)
+      .eq("id", payload.id)
+      .single();
+    if (fallbackError) throw fallbackError;
+    return toChildProfile(fallbackData);
+  }
   if (error) throw error;
   return toChildProfile(data);
 }
@@ -61,15 +73,33 @@ function isUniqueViolation(error: { code?: string } | null | undefined): boolean
   return error?.code === "23505";
 }
 
+function isMissingColumnError(error: { code?: string; message?: string } | null | undefined) {
+  return error?.code === "42703" || error?.message?.includes("column");
+}
+
+const CHILD_SELECT_WITH_PHOTO =
+  "id,user_id,name,months_old,is_primary,photo_url,created_at,updated_at";
+const CHILD_SELECT_BASE = "id,user_id,name,months_old,is_primary,created_at,updated_at";
+
 export async function listChildrenFromDb(userId: string): Promise<ChildProfile[]> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("child_profiles")
-    .select("id,user_id,name,months_old,is_primary,created_at,updated_at")
+    .select(CHILD_SELECT_WITH_PHOTO)
     .eq("user_id", userId)
     .order("is_primary", { ascending: false })
     .order("created_at", { ascending: true });
 
+  if (error && isMissingColumnError(error)) {
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("child_profiles")
+      .select(CHILD_SELECT_BASE)
+      .eq("user_id", userId)
+      .order("is_primary", { ascending: false })
+      .order("created_at", { ascending: true });
+    if (fallbackError) throw fallbackError;
+    return (fallbackData ?? []).map(toChildProfile);
+  }
   if (error) throw error;
   return (data ?? []).map(toChildProfile);
 }
@@ -163,8 +193,20 @@ export async function addChildToDb(input: {
       months_old: input.monthsOld,
       is_primary: shouldBePrimary,
     })
-    .select("id,user_id,name,months_old,is_primary,created_at,updated_at")
+    .select(CHILD_SELECT_WITH_PHOTO)
     .single();
+  if (error && isMissingColumnError(error)) {
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("child_profiles")
+      .select(CHILD_SELECT_BASE)
+      .eq("user_id", input.userId)
+      .eq("name", input.name)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    if (fallbackError) throw fallbackError;
+    return toChildProfile(fallbackData);
+  }
   if (error) throw error;
   return toChildProfile(data);
 }
@@ -172,7 +214,7 @@ export async function addChildToDb(input: {
 export async function updateChildInDb(
   userId: string,
   childId: string,
-  patch: { name?: string; monthsOld?: number; isPrimary?: boolean }
+  patch: { name?: string; monthsOld?: number; isPrimary?: boolean; photoUrl?: string | null }
 ): Promise<ChildProfile | null> {
   const supabase = getSupabaseAdmin();
   if (patch.isPrimary) {
@@ -182,18 +224,33 @@ export async function updateChildInDb(
       .eq("user_id", userId);
   }
 
-  const updatePatch: Record<string, string | number | boolean> = {};
+  const updatePatch: Record<string, string | number | boolean | null> = {};
   if (patch.name !== undefined) updatePatch.name = patch.name;
   if (patch.monthsOld !== undefined) updatePatch.months_old = patch.monthsOld;
   if (patch.isPrimary !== undefined) updatePatch.is_primary = patch.isPrimary;
+  if (patch.photoUrl !== undefined) updatePatch.photo_url = patch.photoUrl;
 
   const { data, error } = await supabase
     .from("child_profiles")
     .update(updatePatch)
     .eq("user_id", userId)
     .eq("id", childId)
-    .select("id,user_id,name,months_old,is_primary,created_at,updated_at")
+    .select(CHILD_SELECT_WITH_PHOTO)
     .maybeSingle();
+  if (error && isMissingColumnError(error) && patch.photoUrl !== undefined) {
+    throw new Error("photo_url column is missing. Run docs/supabase-meals.sql migration.");
+  }
+  if (error && isMissingColumnError(error)) {
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("child_profiles")
+      .select(CHILD_SELECT_BASE)
+      .eq("user_id", userId)
+      .eq("id", childId)
+      .maybeSingle();
+    if (fallbackError) throw fallbackError;
+    if (!fallbackData) return null;
+    return toChildProfile(fallbackData);
+  }
   if (error) throw error;
   if (!data) return null;
   return toChildProfile(data);

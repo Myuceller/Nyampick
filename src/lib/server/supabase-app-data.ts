@@ -43,6 +43,29 @@ export interface UserProfile {
   babyName: string;
   babyMonthsOld: number;
   email?: string;
+  profileImageUrl?: string;
+}
+
+function isMissingColumnError(error: { code?: string; message?: string } | null | undefined) {
+  return error?.code === "42703" || error?.message?.includes("column");
+}
+
+function mapProfileRow(data: {
+  id: string;
+  name: string;
+  baby_name: string;
+  baby_months_old: number;
+  email?: string | null;
+  profile_image_url?: string | null;
+}): UserProfile {
+  return {
+    id: data.id,
+    name: data.name,
+    babyName: data.baby_name,
+    babyMonthsOld: data.baby_months_old,
+    email: data.email ?? undefined,
+    profileImageUrl: data.profile_image_url ?? undefined,
+  };
 }
 
 export class DuplicateEmailAccountError extends Error {
@@ -563,24 +586,31 @@ export async function getProfileFromDb(
 ): Promise<UserProfile> {
   await ensureAppSeedData(userId, userEmail, userNameHint);
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
+  const query = supabase
     .from("user_profile")
-    .select("id,name,baby_name,baby_months_old,email")
+    .select("id,name,baby_name,baby_months_old,email,profile_image_url")
     .eq("id", userId)
     .single();
+
+  const { data, error } = await query;
+  if (error && isMissingColumnError(error)) {
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("user_profile")
+      .select("id,name,baby_name,baby_months_old,email")
+      .eq("id", userId)
+      .single();
+    if (fallbackError) throw fallbackError;
+    return mapProfileRow(fallbackData);
+  }
   if (error) throw error;
-  return {
-    id: data.id,
-    name: data.name,
-    babyName: data.baby_name,
-    babyMonthsOld: data.baby_months_old,
-    email: data.email ?? undefined,
-  };
+  return mapProfileRow(data);
 }
 
 export async function updateProfileInDb(
   userId: string,
-  patch: Partial<Pick<UserProfile, "name" | "babyName" | "babyMonthsOld" | "email">>
+  patch: Partial<Pick<UserProfile, "name" | "babyName" | "babyMonthsOld" | "email">> & {
+    profileImageUrl?: string | null;
+  }
 ): Promise<UserProfile> {
   const supabase = getSupabaseAdmin();
   const updatePatch: Record<string, string | number | null | undefined> = {
@@ -588,6 +618,7 @@ export async function updateProfileInDb(
     baby_name: patch.babyName,
     baby_months_old: patch.babyMonthsOld,
     email: patch.email,
+    profile_image_url: patch.profileImageUrl,
   };
   Object.keys(updatePatch).forEach((key) => {
     if (updatePatch[key] === undefined) delete updatePatch[key];
@@ -597,9 +628,14 @@ export async function updateProfileInDb(
     .from("user_profile")
     .update(updatePatch)
     .eq("id", userId)
-    .select("id,name,baby_name,baby_months_old,email")
+    .select("id,name,baby_name,baby_months_old,email,profile_image_url")
     .maybeSingle();
-  if (error) throw error;
+  if (error) {
+    if (isMissingColumnError(error) && patch.profileImageUrl !== undefined) {
+      throw new Error("profile_image_url column is missing. Run docs/supabase-meals.sql migration.");
+    }
+    throw error;
+  }
 
   if (!data) {
     await ensureAppSeedData(userId, patch.email ?? undefined, patch.name ?? undefined);
@@ -607,25 +643,13 @@ export async function updateProfileInDb(
       .from("user_profile")
       .update(updatePatch)
       .eq("id", userId)
-      .select("id,name,baby_name,baby_months_old,email")
+      .select("id,name,baby_name,baby_months_old,email,profile_image_url")
       .single();
     if (insertedError) throw insertedError;
-    return {
-      id: inserted.id,
-      name: inserted.name,
-      babyName: inserted.baby_name,
-      babyMonthsOld: inserted.baby_months_old,
-      email: inserted.email ?? undefined,
-    };
+    return mapProfileRow(inserted);
   }
 
-  return {
-    id: data.id,
-    name: data.name,
-    babyName: data.baby_name,
-    babyMonthsOld: data.baby_months_old,
-    email: data.email ?? undefined,
-  };
+  return mapProfileRow(data);
 }
 
 function collectRecentMealNames(
@@ -742,6 +766,7 @@ export async function getHomeSummaryFromDb(userId: string) {
           id: primaryChild.id,
           name: primaryChild.name,
           monthsOld: primaryChild.monthsOld,
+          photoUrl: primaryChild.photoUrl,
         }
       : null,
   };

@@ -234,20 +234,21 @@ Base URL: `/api`
 ### GET `/api/profile`
 - Output `200`
 ```json
-{ "profile": { "id": "me", "name": "하율맘", "babyName": "하율", "babyMonthsOld": 11, "email": "nyampick@example.com" } }
+{ "profile": { "id": "me", "name": "하율맘", "babyName": "하율", "babyMonthsOld": 11, "email": "nyampick@example.com", "profileImageUrl": "data:image/jpeg;base64,..." } }
 ```
 
 ### PATCH `/api/profile`
 - Input
 ```json
-{ "name": "새 이름", "babyName": "하율", "babyMonthsOld": 12, "email": "a@b.com" }
+{ "name": "새 이름", "babyName": "하율", "babyMonthsOld": 12, "email": "a@b.com", "profileImageUrl": "data:image/jpeg;base64,..." }
 ```
 - Output `200`
 ```json
-{ "profile": { "id": "me", "name": "새 이름", "babyName": "하율", "babyMonthsOld": 12, "email": "a@b.com" } }
+{ "profile": { "id": "me", "name": "새 이름", "babyName": "하율", "babyMonthsOld": 12, "email": "a@b.com", "profileImageUrl": "data:image/jpeg;base64,..." } }
 ```
 - Error
   - `400`: `{ "message": "babyMonthsOld must be a non-negative integer" }`
+  - `400`: `{ "message": "invalid profileImageUrl" }`
 
 ## 8) Family
 
@@ -263,12 +264,24 @@ Base URL: `/api`
       "id": "...",
       "name": "구글동구",
       "email": "parent@example.com",
+      "profileImageUrl": "data:image/jpeg;base64,...",
       "role": "owner",
       "roleLabel": "주 양육자"
     }
   ],
   "childCount": 2
 }
+```
+
+### DELETE `/api/family`
+- 주 양육자가 가족 구성원의 연결을 끊습니다.
+- Input
+```json
+{ "guestUserId": "..." }
+```
+- Output `200`
+```json
+{ "ok": true }
 ```
 
 ### POST `/api/children/invite-code`

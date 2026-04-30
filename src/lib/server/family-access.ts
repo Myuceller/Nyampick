@@ -26,6 +26,7 @@ interface OwnerProfileRow {
   id: string;
   name: string;
   email: string | null;
+  profile_image_url?: string | null;
 }
 
 interface ChildProfileRow {
@@ -37,6 +38,7 @@ export interface FamilyMemberSummary {
   id: string;
   name: string;
   email?: string;
+  profileImageUrl?: string;
   role: "owner" | "member";
   roleLabel: string;
   linkedAt?: string;
@@ -50,6 +52,10 @@ function normalizeRelationshipLabel(value?: string): string {
   const label = value?.trim();
   if (!label) return "가족 구성원";
   return label.slice(0, 20);
+}
+
+function isMissingColumnError(error: { code?: string; message?: string } | null | undefined) {
+  return error?.code === "42703" || error?.message?.includes("column");
 }
 
 async function getPrimaryChildIdForOwner(ownerUserId: string): Promise<string | null> {
@@ -268,11 +274,24 @@ export async function listFamilyMembersForUser(userId: string): Promise<{
   const supabase = getSupabaseAdmin();
   const scope = await getFamilyDataScope({ userId });
 
-  const { data: owner } = await supabase
+  const { data: ownerWithPhoto, error: ownerWithPhotoError } = await supabase
     .from("user_profile")
-    .select("id,name,email")
+    .select("id,name,email,profile_image_url")
     .eq("id", scope.ownerUserId)
     .maybeSingle();
+  if (ownerWithPhotoError && !isMissingColumnError(ownerWithPhotoError)) {
+    throw ownerWithPhotoError;
+  }
+  const { data: ownerFallback, error: ownerFallbackError } =
+    ownerWithPhotoError && isMissingColumnError(ownerWithPhotoError)
+      ? await supabase
+          .from("user_profile")
+          .select("id,name,email")
+          .eq("id", scope.ownerUserId)
+          .maybeSingle()
+      : { data: null, error: null };
+  if (ownerFallbackError) throw ownerFallbackError;
+  const owner = ownerWithPhoto ?? ownerFallback;
 
   const { data: links, error: linksError } = await supabase
     .from("family_access_links")
@@ -286,14 +305,25 @@ export async function listFamilyMembersForUser(userId: string): Promise<{
     .map((link) => (link as AccessLinkRow).guest_user_id)
     .filter((id) => id !== scope.ownerUserId);
 
-  const { data: guestProfiles, error: profilesError } =
+  const { data: guestProfilesWithPhoto, error: profilesWithPhotoError } =
     guestIds.length > 0
+      ? await supabase
+          .from("user_profile")
+          .select("id,name,email,profile_image_url")
+          .in("id", guestIds)
+      : { data: [], error: null };
+  if (profilesWithPhotoError && !isMissingColumnError(profilesWithPhotoError)) {
+    throw profilesWithPhotoError;
+  }
+  const { data: guestProfilesFallback, error: profilesFallbackError } =
+    guestIds.length > 0 && profilesWithPhotoError && isMissingColumnError(profilesWithPhotoError)
       ? await supabase
           .from("user_profile")
           .select("id,name,email")
           .in("id", guestIds)
       : { data: [], error: null };
-  if (profilesError) throw profilesError;
+  if (profilesFallbackError) throw profilesFallbackError;
+  const guestProfiles = guestProfilesWithPhoto ?? guestProfilesFallback;
 
   const profileById = new Map(
     (guestProfiles ?? []).map((profile) => [
@@ -308,6 +338,7 @@ export async function listFamilyMembersForUser(userId: string): Promise<{
       id: scope.ownerUserId,
       name: typedOwner?.name || "보호자",
       email: typedOwner?.email ?? undefined,
+      profileImageUrl: typedOwner?.profile_image_url ?? undefined,
       role: "owner",
       roleLabel: "주 양육자",
     },
@@ -318,6 +349,7 @@ export async function listFamilyMembersForUser(userId: string): Promise<{
         id: link.guest_user_id,
         name: profile?.name || profile?.email || "가족 구성원",
         email: profile?.email ?? undefined,
+        profileImageUrl: profile?.profile_image_url ?? undefined,
         role: "member" as const,
         roleLabel: normalizeRelationshipLabel(link.relationship_label ?? undefined),
         linkedAt: link.linked_at,
@@ -339,6 +371,23 @@ export async function unlinkFamilyAccess(guestUserId: string): Promise<boolean> 
     .from("family_access_links")
     .update({ revoked_at: nowIso })
     .eq("guest_user_id", guestUserId)
+    .is("revoked_at", null)
+    .select("id");
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
+}
+
+export async function unlinkFamilyMember(input: {
+  ownerUserId: string;
+  guestUserId: string;
+}): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  const nowIso = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("family_access_links")
+    .update({ revoked_at: nowIso })
+    .eq("owner_user_id", input.ownerUserId)
+    .eq("guest_user_id", input.guestUserId)
     .is("revoked_at", null)
     .select("id");
   if (error) throw error;

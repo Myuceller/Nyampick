@@ -4,6 +4,7 @@ export interface ProfileDto {
   babyName: string;
   babyMonthsOld: number;
   email?: string;
+  profileImageUrl?: string;
 }
 
 export interface ProfileResponseDto {

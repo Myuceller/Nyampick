@@ -9,6 +9,7 @@ export interface FamilyMember {
   id: string;
   name: string;
   email?: string;
+  profileImageUrl?: string;
   role: "owner" | "member";
   roleLabel: string;
   linkedAt?: string;
@@ -37,6 +38,7 @@ export function useFamilyPage() {
   const [relationshipLabel, setRelationshipLabel] = useState(RELATIONSHIP_OPTIONS[0]);
   const [isJoining, setIsJoining] = useState(false);
   const [isUnlinking, setIsUnlinking] = useState(false);
+  const [unlinkingMemberId, setUnlinkingMemberId] = useState<string | null>(null);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
 
   const loadFamily = async () => {
@@ -131,6 +133,26 @@ export function useFamilyPage() {
     }
   };
 
+  const unlinkFamilyMember = async (guestUserId: string) => {
+    if (unlinkingMemberId) return;
+    setUnlinkingMemberId(guestUserId);
+    try {
+      const res = await authedFetch("/api/family", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ guestUserId }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { message?: string };
+      if (!res.ok) throw new Error(json.message ?? "가족 연결 해제에 실패했습니다.");
+      toast.success("가족 연결을 끊었습니다.");
+      await loadFamily();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "가족 연결 해제에 실패했습니다.");
+    } finally {
+      setUnlinkingMemberId(null);
+    }
+  };
+
   return {
     childCount,
     copyInviteCode,
@@ -140,6 +162,7 @@ export function useFamilyPage() {
     isJoinOpen,
     isJoining,
     isUnlinking,
+    unlinkingMemberId,
     joinCode,
     joinFamily,
     linkedMode,
@@ -152,6 +175,7 @@ export function useFamilyPage() {
     relationshipLabel,
     setRelationshipLabel,
     unlinkFamily,
+    unlinkFamilyMember,
     viewerRole,
   };
 }

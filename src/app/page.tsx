@@ -19,6 +19,7 @@ export default function Page() {
     calendarMode,
     childMonthsOld,
     childName,
+    childPhotoUrl,
     currentDayMeals,
     dateKey,
     mealData,
@@ -55,13 +56,20 @@ export default function Page() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative h-11 w-11 overflow-hidden rounded-[12px]">
-                <Image
-                  src="/icons/icon-source-baby.png"
-                  alt=""
-                  fill
-                  sizes="44px"
-                  className="object-contain"
-                />
+                {childPhotoUrl ? (
+                  <div
+                    className="h-full w-full bg-cover bg-center"
+                    style={{ backgroundImage: `url(${childPhotoUrl})` }}
+                  />
+                ) : (
+                  <Image
+                    src="/icons/icon-source-baby.png"
+                    alt=""
+                    fill
+                    sizes="44px"
+                    className="object-contain"
+                  />
+                )}
               </div>
               <div>
                 <p className="text-[16px] font-semibold leading-tight text-[#26302d]">

@@ -3,6 +3,7 @@ export interface ChildSummaryDto {
   name: string;
   monthsOld: number;
   isPrimary: boolean;
+  photoUrl?: string;
 }
 
 export interface LinkedInfoDto {

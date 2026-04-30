@@ -14,6 +14,33 @@ function getInitial(value: string, fallback: string) {
   return trimmed.length > 0 ? trimmed.slice(0, 1) : fallback;
 }
 
+function PhotoCircle({
+  fallback,
+  imageUrl,
+  className,
+}: {
+  fallback: string;
+  imageUrl?: string;
+  className: string;
+}) {
+  return (
+    <span
+      className={`flex items-center justify-center overflow-hidden bg-[#d9f3e9] font-bold text-[#111816] ${className}`}
+      style={
+        imageUrl
+          ? {
+              backgroundImage: `url(${imageUrl})`,
+              backgroundPosition: "center",
+              backgroundSize: "cover",
+            }
+          : undefined
+      }
+    >
+      {imageUrl ? null : fallback}
+    </span>
+  );
+}
+
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="text-[16px] font-medium text-[#10b98f]">{children}</h2>;
 }
@@ -124,6 +151,10 @@ export function MyPage() {
   const babyName = vm.babyName.trim() || "아기";
   const additionalChildCount = Math.max(0, vm.childCount - 1);
   const familyCount = Math.max(1, vm.familyMemberCount);
+  const familyAvatars =
+    vm.familyAvatars.length > 0
+      ? vm.familyAvatars.slice(0, 3)
+      : [{ id: "fallback-guardian", name: guardianName, profileImageUrl: vm.profileImageUrl }];
 
   return (
     <main className="flex-1 bg-white pb-12 pt-6">
@@ -151,10 +182,14 @@ export function MyPage() {
 
             <section className="mt-8">
               <SectionTitle>보호자</SectionTitle>
-              <p className="mt-5 text-[24px] font-extrabold tracking-[-0.02em] text-[#202725]">
+              <button
+                type="button"
+                onClick={vm.openGuardianProfilePage}
+                className="mt-5 block w-full text-left text-[24px] font-extrabold tracking-[-0.02em] text-[#202725]"
+              >
                 {guardianName}
                 <span className="font-medium text-[#8a9490]">님</span>
-              </p>
+              </button>
             </section>
 
             <div className="mt-7 h-px bg-[#dfe3e1]" />
@@ -167,13 +202,20 @@ export function MyPage() {
                 className="mt-5 flex w-full items-center gap-4 text-left"
               >
                 <div className="relative h-[65px] w-[65px] shrink-0 overflow-hidden rounded-[20px] shadow-[0_8px_20px_rgba(0,0,0,0.10)]">
-                  <Image
-                    src="/icons/icon-source-baby.png"
-                    alt=""
-                    fill
-                    sizes="65px"
-                    className="object-contain"
-                  />
+                  {vm.babyPhotoUrl ? (
+                    <div
+                      className="h-full w-full bg-cover bg-center"
+                      style={{ backgroundImage: `url(${vm.babyPhotoUrl})` }}
+                    />
+                  ) : (
+                    <Image
+                      src="/icons/icon-source-baby.png"
+                      alt=""
+                      fill
+                      sizes="65px"
+                      className="object-contain"
+                    />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -230,12 +272,14 @@ export function MyPage() {
                 </p>
               </div>
               <div className="flex shrink-0 -space-x-1">
-                <span className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-[#d9f3e9] text-[18px] font-bold text-[#111816]">
-                  {getInitial(guardianName, "엄")}
-                </span>
-                <span className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-[#d9f3e9] text-[18px] font-bold text-[#111816]">
-                  {getInitial(babyName, "아")}
-                </span>
+                {familyAvatars.map((member) => (
+                  <PhotoCircle
+                    key={member.id}
+                    fallback={getInitial(member.name, "가")}
+                    imageUrl={member.profileImageUrl}
+                    className="h-[42px] w-[42px] rounded-full text-[18px] ring-2 ring-white"
+                  />
+                ))}
               </div>
             </button>
           </section>
