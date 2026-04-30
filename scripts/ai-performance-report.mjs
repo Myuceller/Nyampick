@@ -49,6 +49,44 @@ function groupByFeature(entries) {
   return [...map.entries()].map(([feature, rows]) => ({ feature, rows }));
 }
 
+function trendPath(points) {
+  return points
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`)
+    .join(" ");
+}
+
+function buildLineTrend(rows, options) {
+  const nums = rows
+    .map((row, index) => ({ row, index, value: options.value(row) }))
+    .filter((point) => typeof point.value === "number" && Number.isFinite(point.value));
+
+  if (nums.length === 0) return "";
+
+  const maxValue = Math.max(...nums.map((point) => point.value), options.maxHint ?? 0.01);
+  const minValue = Math.min(...nums.map((point) => point.value), options.minHint ?? 0);
+  const span = Math.max(0.01, maxValue - minValue);
+  const pointGap = nums.length > 1 ? options.width / (nums.length - 1) : 0;
+  const points = nums.map((point, index) => ({
+    ...point,
+    x: nums.length > 1 ? options.x + pointGap * index : options.x + options.width / 2,
+    y: options.y + options.height - ((point.value - minValue) / span) * options.height,
+  }));
+
+  return `${points.length > 1 ? `<path d="${trendPath(points)}" fill="none" stroke="${options.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />` : ""}
+  ${points
+    .map(
+      (point, index) =>
+        `<circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${index === points.length - 1 ? 5 : 4}" fill="${index === points.length - 1 ? "#202725" : options.color}" />`
+    )
+    .join("\n")}
+  ${points
+    .map((point, index) => {
+      const anchor = index === 0 ? "start" : index === points.length - 1 ? "end" : "middle";
+      return `<text x="${point.x.toFixed(1)}" y="${options.y + options.height + 22}" text-anchor="${anchor}" font-size="11" fill="#6f7875">${escapeXml(point.row.caseId ?? `#${point.index + 1}`)}</text>`;
+    })
+    .join("\n")}`;
+}
+
 function summarize(rows) {
   const total = rows.length;
   const successRows = rows.filter((row) => row.ok !== false);
@@ -139,37 +177,58 @@ ${latestRows}
 }
 
 function buildSvg(entries) {
-  const groups = groupByFeature(entries);
   const width = 920;
-  const height = groups.length > 0 ? 160 + groups.length * 96 : 260;
-  const left = 240;
-  const barWidth = 420;
+  const height = entries.length > 0 ? 620 : 260;
+  const chartX = 92;
+  const chartWidth = 640;
+  const chartHeight = 92;
+  const summary = summarize(entries);
 
   const body =
-    groups.length === 0
+    entries.length === 0
       ? `<text x="32" y="132" font-size="15" fill="#6f7875">No AI performance entries recorded yet.</text>
   <text x="32" y="158" font-size="13" fill="#6f7875">Add rows to docs/ai-performance-history.json and run npm run ai:report.</text>`
-      : groups
-          .map(({ feature, rows }, index) => {
-            const y = 116 + index * 96;
-            const summary = summarize(rows);
-            const latencySeconds = (summary.averageLatencyMs ?? 0) / 1000;
-            const latencyRatio = Math.min(1, latencySeconds / 5);
-            const tokenRatio = Math.min(1, (summary.averageTokens ?? 0) / 3000);
-            const fallbackRatio = summary.fallbackRate ?? 0;
-            return `<text x="32" y="${y}" font-size="15" font-weight="700" fill="#202725">${escapeXml(feature)}</text>
-  <text x="32" y="${y + 22}" font-size="12" fill="#6f7875">${rows.length} runs · avg ${escapeXml(formatMs(summary.averageLatencyMs))} · p95 ${escapeXml(formatMs(summary.p95LatencyMs))}</text>
-  <rect x="${left}" y="${y - 12}" width="${barWidth}" height="12" rx="3" fill="#ecf0ee" />
-  <rect x="${left}" y="${y - 12}" width="${(barWidth * latencyRatio).toFixed(1)}" height="12" rx="3" fill="#57bf8e" />
-  <text x="${left + barWidth + 18}" y="${y - 2}" font-size="12" fill="#202725">latency ${escapeXml(formatMs(summary.averageLatencyMs))}</text>
-  <rect x="${left}" y="${y + 14}" width="${barWidth}" height="12" rx="3" fill="#ecf0ee" />
-  <rect x="${left}" y="${y + 14}" width="${(barWidth * tokenRatio).toFixed(1)}" height="12" rx="3" fill="#8ccfb0" />
-  <text x="${left + barWidth + 18}" y="${y + 24}" font-size="12" fill="#202725">tokens ${summary.averageTokens == null ? "TBD" : Math.round(summary.averageTokens)}</text>
-  <rect x="${left}" y="${y + 40}" width="${barWidth}" height="12" rx="3" fill="#ecf0ee" />
-  <rect x="${left}" y="${y + 40}" width="${(barWidth * fallbackRatio).toFixed(1)}" height="12" rx="3" fill="#f2b84b" />
-  <text x="${left + barWidth + 18}" y="${y + 50}" font-size="12" fill="#202725">fallback ${escapeXml(formatRate(summary.fallbackRate))}</text>`;
-          })
-          .join("\n");
+      : `<text x="32" y="112" font-size="15" font-weight="700" fill="#202725">Summary</text>
+  <text x="32" y="136" font-size="12" fill="#6f7875">${entries.length} runs · avg latency ${escapeXml(formatMs(summary.averageLatencyMs))} · p95 ${escapeXml(formatMs(summary.p95LatencyMs))} · avg tokens ${summary.averageTokens == null ? "TBD" : Math.round(summary.averageTokens)}</text>
+
+  <text x="32" y="184" font-size="15" font-weight="700" fill="#202725">Latency Trend</text>
+  <line x1="${chartX}" y1="284" x2="${chartX + chartWidth}" y2="284" stroke="#ecf0ee" />
+  ${buildLineTrend(entries, {
+    x: chartX,
+    y: 194,
+    width: chartWidth,
+    height: chartHeight,
+    color: "#57bf8e",
+    value: (row) => row.latencyMs,
+    minHint: 0,
+  })}
+  <text x="760" y="224" font-size="12" fill="#6f7875">lower is better</text>
+  <text x="760" y="246" font-size="12" fill="#202725">slowest ${escapeXml(formatMs(Math.max(...entries.map((row) => row.latencyMs ?? 0))))}</text>
+
+  <text x="32" y="354" font-size="15" font-weight="700" fill="#202725">Token Trend</text>
+  <line x1="${chartX}" y1="454" x2="${chartX + chartWidth}" y2="454" stroke="#ecf0ee" />
+  ${buildLineTrend(entries, {
+    x: chartX,
+    y: 364,
+    width: chartWidth,
+    height: chartHeight,
+    color: "#75b7d9",
+    value: (row) => row.totalTokens,
+    minHint: 0,
+  })}
+  <text x="760" y="394" font-size="12" fill="#6f7875">lower is cheaper</text>
+  <text x="760" y="416" font-size="12" fill="#202725">max ${Math.max(...entries.map((row) => row.totalTokens ?? 0))} tokens</text>
+
+  <text x="32" y="522" font-size="15" font-weight="700" fill="#202725">Latest Runs</text>
+  ${entries
+    .slice(-5)
+    .map((row, index) => {
+      const x = 32 + index * 170;
+      return `<text x="${x}" y="550" font-size="12" font-weight="700" fill="#202725">${escapeXml(row.caseId ?? `#${index + 1}`)}</text>
+  <text x="${x}" y="572" font-size="12" fill="#6f7875">${escapeXml(formatMs(row.latencyMs))}</text>
+  <text x="${x}" y="594" font-size="12" fill="#6f7875">${row.totalTokens ?? "TBD"} tokens</text>`;
+    })
+    .join("\n")}`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="title desc">
   <title id="title">AI Performance Report</title>

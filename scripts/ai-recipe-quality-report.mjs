@@ -156,6 +156,41 @@ function summarize(rows) {
   };
 }
 
+function trendPath(points) {
+  return points
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`)
+    .join(" ");
+}
+
+function buildRateTrend(rows, options) {
+  const nums = rows
+    .map((row, index) => ({ row, index, value: options.value(row) }))
+    .filter((point) => typeof point.value === "number" && Number.isFinite(point.value));
+
+  if (nums.length === 0) return "";
+
+  const pointGap = nums.length > 1 ? options.width / (nums.length - 1) : 0;
+  const points = nums.map((point, index) => ({
+    ...point,
+    x: nums.length > 1 ? options.x + pointGap * index : options.x + options.width / 2,
+    y: options.y + options.height - Math.max(0, Math.min(1, point.value)) * options.height,
+  }));
+
+  return `${points.length > 1 ? `<path d="${trendPath(points)}" fill="none" stroke="${options.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />` : ""}
+  ${points
+    .map(
+      (point, index) =>
+        `<circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${index === points.length - 1 ? 5 : 4}" fill="${index === points.length - 1 ? "#202725" : options.color}" />`
+    )
+    .join("\n")}
+  ${points
+    .map((point, index) => {
+      const anchor = index === 0 ? "start" : index === points.length - 1 ? "end" : "middle";
+      return `<text x="${point.x.toFixed(1)}" y="${options.y + options.height + 22}" text-anchor="${anchor}" font-size="11" fill="#6f7875">${escapeXml(point.row.caseId ?? `#${point.index + 1}`)}</text>`;
+    })
+    .join("\n")}`;
+}
+
 function buildMarkdown(cases, evaluatedRows) {
   const generatedAt = new Date().toISOString();
   const summary = summarize(evaluatedRows);
@@ -226,7 +261,7 @@ ${resultRows}
 function buildSvg(evaluatedRows) {
   const summary = summarize(evaluatedRows);
   const width = 920;
-  const height = 320;
+  const height = evaluatedRows.length > 0 ? 650 : 320;
   const metrics = [
     ["Quality score", summary.qualityScore, "#57bf8e"],
     ["Valid recommendations", summary.validRecommendationRate, "#8ccfb0"],
@@ -246,6 +281,34 @@ function buildSvg(evaluatedRows) {
     })
     .join("\n");
 
+  const trend =
+    evaluatedRows.length === 0
+      ? ""
+      : `<text x="32" y="330" font-size="15" font-weight="700" fill="#202725">Quality Trend</text>
+  <line x1="92" y1="430" x2="732" y2="430" stroke="#ecf0ee" />
+  ${buildRateTrend(evaluatedRows, {
+    x: 92,
+    y: 340,
+    width: 640,
+    height: 92,
+    color: "#57bf8e",
+    value: (row) => row.qualityScore,
+  })}
+  <text x="760" y="370" font-size="12" fill="#6f7875">higher is better</text>
+  <text x="760" y="392" font-size="12" fill="#202725">pass rate ${escapeXml(formatRate(summary.passRate))}</text>
+
+  <text x="32" y="504" font-size="15" font-weight="700" fill="#202725">Case Results</text>
+  ${evaluatedRows
+    .slice(-5)
+    .map((row, index) => {
+      const x = 32 + index * 170;
+      const color = row.pass ? "#13966f" : "#b35b00";
+      return `<text x="${x}" y="532" font-size="12" font-weight="700" fill="#202725">${escapeXml(row.caseId ?? `#${index + 1}`)}</text>
+  <text x="${x}" y="554" font-size="12" fill="#6f7875">quality ${escapeXml(formatRate(row.qualityScore))}</text>
+  <text x="${x}" y="576" font-size="12" fill="${color}">${row.pass ? "pass" : "fail"} · awkward ${row.awkwardPairViolations ?? 0}</text>`;
+    })
+    .join("\n")}`;
+
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="title desc">
   <title id="title">AI Recipe Quality Report</title>
   <desc id="desc">Recipe recommendation quality metrics from fixed evaluation cases and recorded AI responses.</desc>
@@ -253,7 +316,8 @@ function buildSvg(evaluatedRows) {
   <text x="32" y="42" font-size="24" font-weight="800" fill="#202725">AI Recipe Quality Report</text>
   <text x="32" y="68" font-size="13" fill="#6f7875">Valid recommendations, ingredient utilization, source validity, and awkward pair checks</text>
   ${rows}
-  <text x="32" y="286" font-size="12" fill="#6f7875">${evaluatedRows.length} recorded runs · source docs/ai-recipe-quality-history.json</text>
+  ${trend}
+  <text x="32" y="${height - 34}" font-size="12" fill="#6f7875">${evaluatedRows.length} recorded runs · source docs/ai-recipe-quality-history.json</text>
 </svg>
 `;
 }
