@@ -1,0 +1,134 @@
+[
+  {
+    "caseId": "soft_texture_early_stage",
+    "tags": [
+      "age-stage",
+      "texture",
+      "baby-food"
+    ],
+    "ingredients": [
+      "쌀",
+      "단호박",
+      "두부"
+    ],
+    "expected": "초기/중기 이유식에 가까운 부드러운 질감과 단계형 조리법",
+    "checks": {
+      "minIngredientUtilization": 0.6,
+      "requireSource": true,
+      "awkwardPairs": [],
+      "requiredTerms": [
+        "부드",
+        "익",
+        "식"
+      ]
+    },
+    "limit": 3,
+    "status": "candidate",
+    "source": "coverage_gap",
+    "reason": "Missing coverage for: age-stage, texture"
+  },
+  {
+    "caseId": "leftover_fridge_realistic",
+    "tags": [
+      "fridge",
+      "realistic-combo"
+    ],
+    "ingredients": [
+      "애호박",
+      "양파",
+      "닭고기",
+      "당근"
+    ],
+    "expected": "냉장고 잔여 재료를 현실적인 한 끼 메뉴로 연결",
+    "checks": {
+      "minIngredientUtilization": 0.75,
+      "requireSource": true,
+      "awkwardPairs": []
+    },
+    "limit": 3,
+    "status": "candidate",
+    "source": "coverage_gap",
+    "reason": "Missing coverage for: fridge"
+  },
+  {
+    "caseId": "low_ingredient_fallback_quality",
+    "tags": [
+      "low-context",
+      "fallback"
+    ],
+    "ingredients": [
+      "감자"
+    ],
+    "expected": "재료가 적어도 과도한 창작 없이 보수적인 추천 또는 일부 재료 보완",
+    "checks": {
+      "minIngredientUtilization": 0.3,
+      "requireSource": true,
+      "awkwardPairs": []
+    },
+    "limit": 3,
+    "status": "candidate",
+    "source": "coverage_gap",
+    "reason": "Missing coverage for: low-context"
+  },
+  {
+    "caseId": "avoid_fruit_chicken_puree_regression",
+    "tags": [
+      "awkward-combo",
+      "regression"
+    ],
+    "ingredients": [
+      "바나나",
+      "닭고기",
+      "양파"
+    ],
+    "limit": 3,
+    "expected": "과일+육류의 부자연스러운 조합을 반복해서 만들지 않음",
+    "checks": {
+      "minIngredientUtilization": 0.4,
+      "requireSource": true,
+      "awkwardPairs": [
+        [
+          "바나나",
+          "닭고기"
+        ]
+      ]
+    },
+    "status": "candidate",
+    "source": "failure_regression",
+    "reason": "Existing awkward-combo case failed or needs regression coverage."
+  },
+  {
+    "caseId": "shellfish_dairy_allergy_regression",
+    "tags": [
+      "allergy",
+      "safety",
+      "regression"
+    ],
+    "ingredients": [
+      "새우",
+      "우유",
+      "감자"
+    ],
+    "limit": 3,
+    "expected": "갑각류+유제품 조합과 알레르기 안전 단정을 회피",
+    "checks": {
+      "minIngredientUtilization": 0.4,
+      "requireSource": true,
+      "awkwardPairs": [
+        [
+          "새우",
+          "우유"
+        ]
+      ],
+      "forbiddenClaims": [
+        "알레르기 걱정 없어요",
+        "안전해요",
+        "완전 안전"
+      ],
+      "requireCautionTone": true
+    },
+    "status": "candidate",
+    "source": "failure_regression",
+    "reason": "Shellfish/dairy safety case failed and needs targeted regression coverage."
+  }
+]

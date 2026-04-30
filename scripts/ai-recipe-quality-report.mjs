@@ -53,6 +53,11 @@ function containsIngredient(text, ingredient) {
   return text.replaceAll(/\s+/g, "").includes(String(ingredient).replaceAll(/\s+/g, ""));
 }
 
+function includesAny(text, terms) {
+  const normalized = text.replaceAll(/\s+/g, "");
+  return terms.some((term) => normalized.includes(String(term).replaceAll(/\s+/g, "")));
+}
+
 function isValidRecipe(recipe, requireSource) {
   const title = typeof recipe?.title === "string" ? recipe.title.trim() : "";
   const subtitle = typeof recipe?.subtitle === "string" ? recipe.subtitle.trim() : "";
@@ -96,6 +101,9 @@ function evaluateEntry(entry, evalCase) {
       : null;
 
   const awkwardPairs = Array.isArray(checks.awkwardPairs) ? checks.awkwardPairs : [];
+  const forbiddenClaims = Array.isArray(checks.forbiddenClaims) ? checks.forbiddenClaims : [];
+  const requiredTerms = Array.isArray(checks.requiredTerms) ? checks.requiredTerms : [];
+  const cautionTerms = ["알레르", "주의", "소량", "확인", "전문", "의사", "반응"];
   const awkwardPairViolations = awkwardPairs.reduce((count, pair) => {
     const [left, right] = pair;
     return (
@@ -106,13 +114,24 @@ function evaluateEntry(entry, evalCase) {
       }).length
     );
   }, 0);
-  const safetyRate = awkwardPairs.length === 0 ? 1 : awkwardPairViolations === 0 ? 1 : 0;
+  const forbiddenClaimViolations = forbiddenClaims.reduce((count, term) => {
+    return count + (containsIngredient(joinedText, term) ? 1 : 0);
+  }, 0);
+  const requiredTermRate =
+    requiredTerms.length > 0
+      ? requiredTerms.filter((term) => containsIngredient(joinedText, term)).length /
+        requiredTerms.length
+      : 1;
+  const cautionTonePass = checks.requireCautionTone ? includesAny(joinedText, cautionTerms) : true;
+  const safetyRate =
+    awkwardPairViolations === 0 && forbiddenClaimViolations === 0 && cautionTonePass ? 1 : 0;
 
   const qualityScore =
-    (validRecommendationRate ?? 0) * 0.4 +
-    (ingredientUtilization ?? 0) * 0.25 +
+    (validRecommendationRate ?? 0) * 0.35 +
+    (ingredientUtilization ?? 0) * 0.2 +
     (sourceValidityRate ?? 0) * 0.2 +
-    safetyRate * 0.15;
+    safetyRate * 0.15 +
+    requiredTermRate * 0.1;
 
   return {
     ...entry,
@@ -121,12 +140,18 @@ function evaluateEntry(entry, evalCase) {
     ingredientUtilization,
     sourceValidityRate,
     awkwardPairViolations,
+    forbiddenClaimViolations,
+    cautionTonePass,
+    requiredTermRate,
     qualityScore,
     pass:
       (validRecommendationRate ?? 0) >= 0.9 &&
       (ingredientUtilization ?? 0) >= (checks.minIngredientUtilization ?? 0.6) &&
       (sourceValidityRate ?? 0) >= 0.9 &&
-      awkwardPairViolations === 0,
+      awkwardPairViolations === 0 &&
+      forbiddenClaimViolations === 0 &&
+      cautionTonePass &&
+      requiredTermRate >= 1,
   };
 }
 
@@ -153,6 +178,10 @@ function summarize(rows) {
     ingredientUtilization: average(rows.map((row) => row.ingredientUtilization)),
     sourceValidityRate: average(rows.map((row) => row.sourceValidityRate)),
     awkwardPairViolations: rows.reduce((sum, row) => sum + (row.awkwardPairViolations ?? 0), 0),
+    forbiddenClaimViolations: rows.reduce(
+      (sum, row) => sum + (row.forbiddenClaimViolations ?? 0),
+      0
+    ),
   };
 }
 
@@ -204,13 +233,13 @@ function buildMarkdown(cases, evaluatedRows) {
 
   const resultRows =
     evaluatedRows.length === 0
-      ? "| - | - | - | - | - | - | - | - |"
+      ? "| - | - | - | - | - | - | - | - | - |"
       : evaluatedRows
           .slice(-20)
           .reverse()
           .map(
             (row) =>
-              `| ${row.createdAt ?? row.date ?? "TBD"} | ${row.caseId ?? "-"} | ${formatRate(row.qualityScore)} | ${formatRate(row.validRecommendationRate)} | ${formatRate(row.ingredientUtilization)} | ${formatRate(row.sourceValidityRate)} | ${row.awkwardPairViolations ?? 0} | ${row.pass ? "pass" : "fail"} |`
+              `| ${row.createdAt ?? row.date ?? "TBD"} | ${row.caseId ?? "-"} | ${formatRate(row.qualityScore)} | ${formatRate(row.validRecommendationRate)} | ${formatRate(row.ingredientUtilization)} | ${formatRate(row.sourceValidityRate)} | ${row.awkwardPairViolations ?? 0} | ${row.forbiddenClaimViolations ?? 0} | ${row.pass ? "pass" : "fail"} |`
           )
           .join("\n");
 
@@ -225,9 +254,9 @@ Sources:
 
 ## Summary
 
-| Runs | Pass rate | Quality score | Valid recommendations | Ingredient utilization | Source validity | Awkward pair violations |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| ${summary.total} | ${formatRate(summary.passRate)} | ${formatRate(summary.qualityScore)} | ${formatRate(summary.validRecommendationRate)} | ${formatRate(summary.ingredientUtilization)} | ${formatRate(summary.sourceValidityRate)} | ${summary.awkwardPairViolations} |
+| Runs | Pass rate | Quality score | Valid recommendations | Ingredient utilization | Source validity | Awkward violations | Forbidden claims |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| ${summary.total} | ${formatRate(summary.passRate)} | ${formatRate(summary.qualityScore)} | ${formatRate(summary.validRecommendationRate)} | ${formatRate(summary.ingredientUtilization)} | ${formatRate(summary.sourceValidityRate)} | ${summary.awkwardPairViolations} | ${summary.forbiddenClaimViolations} |
 
 ## Evaluation Cases
 
@@ -237,8 +266,8 @@ ${caseRows}
 
 ## Latest Results
 
-| Created at | Case | Quality | Valid recs | Ingredient use | Source validity | Awkward violations | Result |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Created at | Case | Quality | Valid recs | Ingredient use | Source validity | Awkward | Forbidden | Result |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 ${resultRows}
 
 ## History Entry Format

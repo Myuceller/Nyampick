@@ -1,6 +1,6 @@
 # AI Recipe Quality Report
 
-Generated at: 2026-04-30T14:46:10.090Z
+Generated at: 2026-04-30T15:22:24.620Z
 
 Sources:
 
@@ -9,9 +9,9 @@ Sources:
 
 ## Summary
 
-| Runs | Pass rate | Quality score | Valid recommendations | Ingredient utilization | Source validity | Awkward pair violations |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 5 | 40% | 89% | 80% | 100% | 100% | 3 |
+| Runs | Pass rate | Quality score | Valid recommendations | Ingredient utilization | Source validity | Awkward violations | Forbidden claims |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 5 | 40% | 90% | 80% | 100% | 100% | 3 | 0 |
 
 ## Evaluation Cases
 
@@ -25,13 +25,13 @@ Sources:
 
 ## Latest Results
 
-| Created at | Case | Quality | Valid recs | Ingredient use | Source validity | Awkward violations | Result |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| 2026-04-30T10:58:26.285Z | R5 | 85% | 100% | 100% | 100% | 3 | fail |
-| 2026-04-30T10:58:15.857Z | R4 | 73% | 33% | 100% | 100% | 0 | fail |
-| 2026-04-30T10:58:01.624Z | R3 | 100% | 100% | 100% | 100% | 0 | pass |
-| 2026-04-30T10:57:51.325Z | R2 | 87% | 67% | 100% | 100% | 0 | fail |
-| 2026-04-30T10:57:45.340Z | R1 | 100% | 100% | 100% | 100% | 0 | pass |
+| Created at | Case | Quality | Valid recs | Ingredient use | Source validity | Awkward | Forbidden | Result |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 2026-04-30T10:58:26.285Z | R5 | 85% | 100% | 100% | 100% | 3 | 0 | fail |
+| 2026-04-30T10:58:15.857Z | R4 | 77% | 33% | 100% | 100% | 0 | 0 | fail |
+| 2026-04-30T10:58:01.624Z | R3 | 100% | 100% | 100% | 100% | 0 | 0 | pass |
+| 2026-04-30T10:57:51.325Z | R2 | 88% | 67% | 100% | 100% | 0 | 0 | fail |
+| 2026-04-30T10:57:45.340Z | R1 | 100% | 100% | 100% | 100% | 0 | 0 | pass |
 
 ## History Entry Format
 

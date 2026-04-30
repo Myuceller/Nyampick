@@ -13,6 +13,7 @@ AI 성능 리포트: [AI Performance Report](ai-performance-report.md)
 AI 성능 그래프: [AI Performance Chart](ai-performance-chart.svg)
 AI 레시피 품질 리포트: [AI Recipe Quality Report](ai-recipe-quality-report.md)  
 AI 레시피 품질 그래프: [AI Recipe Quality Chart](ai-recipe-quality-chart.svg)
+AI 평가 케이스 후보: [AI Recipe Evaluation Case Candidates](ai-recipe-eval-case-candidates.md)
 
 ## 측정 원칙
 
@@ -180,6 +181,7 @@ done
 - prompt/schema 변경 전후의 token 평균을 비교한다.
 - `docs/ai-performance-history.json`에 측정 로그를 누적하고 `npm run ai:report`로 리포트와 SVG를 갱신한다.
 - `docs/ai-recipe-quality-history.json`에 추천 응답을 누적하고 `npm run ai:quality`로 품질 리포트와 SVG를 갱신한다.
+- `npm run ai:cases:suggest`로 커버리지 공백과 실패 history 기반 평가 후보를 생성한다. 후보는 바로 golden set에 병합하지 않고 검토 후 승격한다.
 
 ### AI 성능 평가 세트
 
