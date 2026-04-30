@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="560" viewBox="0 0 920 560" role="img" aria-labelledby="title desc">
+  <title id="title">Authenticated Deployed Lighthouse Baseline</title>
+  <desc id="desc">Mobile Lighthouse scores and core timing metrics for authenticated deployed Nyampick routes measured on 2026-04-30 KST.</desc>
+  <rect width="920" height="560" fill="#ffffff" />
+  <text x="32" y="42" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="#202725">Authenticated Deployed Lighthouse</text>
+  <text x="32" y="68" font-family="Arial, sans-serif" font-size="13" fill="#6f7875">2026-04-30 KST · https://nyampick.vercel.app · mobile Lighthouse with logged-in Chrome profile</text>
+
+  <g font-family="Arial, sans-serif">
+    <text x="32" y="112" font-size="16" font-weight="700" fill="#202725">Category Scores</text>
+    <text x="32" y="135" font-size="12" fill="#6f7875">Higher is better. Bars are scaled to 100.</text>
+
+    <text x="32" y="174" font-size="13" font-weight="700" fill="#202725">/</text>
+    <rect x="120" y="158" width="600" height="18" rx="4" fill="#ecf0ee" />
+    <rect x="120" y="158" width="576" height="18" rx="4" fill="#57bf8e" />
+    <text x="732" y="172" font-size="12" fill="#202725">Performance 96</text>
+    <rect x="120" y="184" width="600" height="10" rx="3" fill="#ecf0ee" />
+    <rect x="120" y="184" width="564" height="10" rx="3" fill="#8ccfb0" />
+    <text x="732" y="193" font-size="11" fill="#6f7875">A11y 94 · BP 100 · SEO 100</text>
+
+    <text x="32" y="232" font-size="13" font-weight="700" fill="#202725">/fridge</text>
+    <rect x="120" y="216" width="600" height="18" rx="4" fill="#ecf0ee" />
+    <rect x="120" y="216" width="582" height="18" rx="4" fill="#57bf8e" />
+    <text x="732" y="230" font-size="12" fill="#202725">Performance 97</text>
+    <rect x="120" y="242" width="600" height="10" rx="3" fill="#ecf0ee" />
+    <rect x="120" y="242" width="576" height="10" rx="3" fill="#8ccfb0" />
+    <text x="732" y="251" font-size="11" fill="#6f7875">A11y 96 · BP 100 · SEO 63</text>
+
+    <text x="32" y="290" font-size="13" font-weight="700" fill="#202725">/recipe</text>
+    <rect x="120" y="274" width="600" height="18" rx="4" fill="#ecf0ee" />
+    <rect x="120" y="274" width="528" height="18" rx="4" fill="#f2b84b" />
+    <text x="732" y="288" font-size="12" fill="#202725">Performance 88</text>
+    <rect x="120" y="300" width="600" height="10" rx="3" fill="#ecf0ee" />
+    <rect x="120" y="300" width="564" height="10" rx="3" fill="#f5ca77" />
+    <text x="732" y="309" font-size="11" fill="#6f7875">A11y 94 · BP 100 · SEO 63</text>
+
+    <line x1="32" y1="344" x2="888" y2="344" stroke="#ecf0ee" />
+    <text x="32" y="382" font-size="16" font-weight="700" fill="#202725">Timing Metrics</text>
+    <text x="32" y="405" font-size="12" fill="#6f7875">FCP, LCP, TTI, and Speed Index are seconds. TBT is milliseconds.</text>
+
+    <text x="32" y="444" font-size="13" font-weight="700" fill="#202725">/</text>
+    <circle cx="122" cy="439" r="5" fill="#57bf8e" />
+    <text x="138" y="444" font-size="12" fill="#202725">FCP 0.77s · LCP 2.1s · TBT 11ms · SI 4.4s · TTI 2.1s · TTFB 10ms</text>
+
+    <text x="32" y="482" font-size="13" font-weight="700" fill="#202725">/fridge</text>
+    <circle cx="122" cy="477" r="5" fill="#57bf8e" />
+    <text x="138" y="482" font-size="12" fill="#202725">FCP 0.79s · LCP 1.9s · TBT 20ms · SI 4.1s · TTI 2.0s · TTFB 9ms</text>
+
+    <text x="32" y="520" font-size="13" font-weight="700" fill="#202725">/recipe</text>
+    <circle cx="122" cy="515" r="5" fill="#f2b84b" />
+    <text x="138" y="520" font-size="12" fill="#202725">FCP 0.98s · LCP 2.2s · TBT 111ms · SI 35.9s · TTI 2.2s · TTFB 9ms</text>
+    <text x="590" y="520" font-size="12" font-weight="700" fill="#b35b00">Speed Index outlier</text>
+  </g>
+</svg>

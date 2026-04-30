@@ -7,7 +7,8 @@
 관련 작업 흐름: [Codex Workflow](codex-workflow.md)
 
 그래프 원본: [Performance History](performance-history.json)  
-생성 그래프: [Performance Chart](performance-chart.svg)
+생성 그래프: [Performance Chart](performance-chart.svg)  
+배포 로그인 Lighthouse 그래프: [Authenticated Lighthouse Chart](lighthouse-deployed-auth-chart.svg)
 
 ## 측정 원칙
 
