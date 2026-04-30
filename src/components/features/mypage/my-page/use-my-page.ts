@@ -22,7 +22,7 @@ export function useMyPage() {
   const [babyMonthsOld, setBabyMonthsOld] = useState("0");
   const [babyPhotoUrl, setBabyPhotoUrl] = useState("");
   const [childCount, setChildCount] = useState(0);
-  const [familyMemberCount, setFamilyMemberCount] = useState(1);
+  const [familyMemberCount, setFamilyMemberCount] = useState(0);
   const [familyAvatars, setFamilyAvatars] = useState<FamilyAvatarSummary[]>([]);
   const [error, setError] = useState<string>("");
 
@@ -64,7 +64,7 @@ export function useMyPage() {
           const json = (await familyRes.json()) as {
             members?: FamilyAvatarSummary[];
           };
-          setFamilyMemberCount(Math.max(1, json.members?.length ?? 1));
+          setFamilyMemberCount(json.members?.length ?? 0);
           setFamilyAvatars(json.members ?? []);
         }
       } catch (e) {

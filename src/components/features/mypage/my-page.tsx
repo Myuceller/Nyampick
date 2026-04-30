@@ -150,11 +150,8 @@ export function MyPage() {
   const guardianName = vm.profileName.trim() || "보호자";
   const babyName = vm.babyName.trim() || "아기";
   const additionalChildCount = Math.max(0, vm.childCount - 1);
-  const familyCount = Math.max(1, vm.familyMemberCount);
-  const familyAvatars =
-    vm.familyAvatars.length > 0
-      ? vm.familyAvatars.slice(0, 3)
-      : [{ id: "fallback-guardian", name: guardianName, profileImageUrl: vm.profileImageUrl }];
+  const familyCount = vm.familyMemberCount;
+  const familyAvatars = vm.familyAvatars.slice(0, 3);
 
   return (
     <main className="flex-1 bg-white pb-12 pt-6">
@@ -268,7 +265,7 @@ export function MyPage() {
                   가족 연동
                 </p>
                 <p className="mt-2 text-[16px] font-semibold text-[#7c8782]">
-                  {familyCount}명이 함께 하고 있어요
+                  연동 가족 {familyCount}명
                 </p>
               </div>
               <div className="flex shrink-0 -space-x-1">

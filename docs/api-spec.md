@@ -23,7 +23,7 @@ Base URL: `/api`
       "snack": []
     },
     "fridgeItemCount": 3,
-    "familyMemberCount": 2
+    "familyMemberCount": 0
   }
 }
 ```
@@ -269,19 +269,13 @@ Base URL: `/api`
   "ownerUserId": "...",
   "viewerRole": "owner",
   "linkedMode": false,
-  "members": [
-    {
-      "id": "...",
-      "name": "구글동구",
-      "email": "parent@example.com",
-      "profileImageUrl": "data:image/jpeg;base64,...",
-      "role": "owner",
-      "roleLabel": "주 양육자"
-    }
-  ],
+  "members": [],
   "childCount": 2
 }
 ```
+- Note
+  - `members`는 현재 로그인한 사용자를 제외한 실제 연동 가족만 포함합니다.
+  - 주 양육자는 초대한 구성원만 보고, 참여자는 주 양육자와 다른 참여자를 봅니다.
 
 ### DELETE `/api/family`
 - 주 양육자가 가족 구성원의 연결을 끊습니다.

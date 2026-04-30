@@ -301,9 +301,14 @@ export async function listFamilyMembersForUser(userId: string): Promise<{
     .order("linked_at", { ascending: true });
   if (linksError) throw linksError;
 
-  const guestIds = (links ?? [])
+  const activeMemberLinks = (links ?? [])
+    .map((link) => link as AccessLinkRow)
+    .filter((link) => link.guest_user_id !== scope.ownerUserId)
+    .filter((link) => link.guest_user_id !== userId);
+
+  const guestIds = activeMemberLinks
     .map((link) => (link as AccessLinkRow).guest_user_id)
-    .filter((id) => id !== scope.ownerUserId);
+    .filter((id, index, ids) => ids.indexOf(id) === index);
 
   const { data: guestProfilesWithPhoto, error: profilesWithPhotoError } =
     guestIds.length > 0
@@ -334,16 +339,19 @@ export async function listFamilyMembersForUser(userId: string): Promise<{
   const typedOwner = owner as OwnerProfileRow | null;
 
   const members: FamilyMemberSummary[] = [
-    {
-      id: scope.ownerUserId,
-      name: typedOwner?.name || "보호자",
-      email: typedOwner?.email ?? undefined,
-      profileImageUrl: typedOwner?.profile_image_url ?? undefined,
-      role: "owner",
-      roleLabel: "주 양육자",
-    },
-    ...(links ?? []).map((linkRaw) => {
-      const link = linkRaw as AccessLinkRow;
+    ...(scope.isLinked && scope.ownerUserId !== userId
+      ? [
+          {
+            id: scope.ownerUserId,
+            name: typedOwner?.name || "보호자",
+            email: typedOwner?.email ?? undefined,
+            profileImageUrl: typedOwner?.profile_image_url ?? undefined,
+            role: "owner" as const,
+            roleLabel: "주 양육자",
+          },
+        ]
+      : []),
+    ...activeMemberLinks.map((link) => {
       const profile = profileById.get(link.guest_user_id);
       return {
         id: link.guest_user_id,

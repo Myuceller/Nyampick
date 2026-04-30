@@ -47,6 +47,7 @@ export default function FamilyPage() {
   const [openActionMemberId, setOpenActionMemberId] = useState<string | null>(null);
   const visibleCode = vm.inviteCode || "코드 만들기";
   const canCreateCode = vm.viewerRole === "owner" && !vm.linkedMode;
+  const canManageMembers = vm.viewerRole === "owner" && !vm.linkedMode;
 
   return (
     <>
@@ -136,7 +137,7 @@ export default function FamilyPage() {
                     {member.roleLabel}
                   </p>
                 </div>
-                {member.role === "member" ? (
+                {canManageMembers && member.role === "member" ? (
                   <>
                     <button
                       type="button"
