@@ -6,23 +6,23 @@
   <text x="32" y="68" font-size="13" fill="#6f7875">Valid recommendations, ingredient utilization, source validity, and awkward pair checks</text>
   <text x="32" y="112" font-size="13" font-weight="700" fill="#202725">Quality score</text>
   <rect x="220" y="99" width="520" height="16" rx="4" fill="#ecf0ee" />
-  <rect x="220" y="99" width="0" height="16" rx="4" fill="#57bf8e" />
-  <text x="758" y="112" font-size="12" fill="#202725">TBD</text>
+  <rect x="220" y="99" width="462.8" height="16" rx="4" fill="#57bf8e" />
+  <text x="758" y="112" font-size="12" fill="#202725">89%</text>
 <text x="32" y="148" font-size="13" font-weight="700" fill="#202725">Valid recommendations</text>
   <rect x="220" y="135" width="520" height="16" rx="4" fill="#ecf0ee" />
-  <rect x="220" y="135" width="0" height="16" rx="4" fill="#8ccfb0" />
-  <text x="758" y="148" font-size="12" fill="#202725">TBD</text>
+  <rect x="220" y="135" width="416.0" height="16" rx="4" fill="#8ccfb0" />
+  <text x="758" y="148" font-size="12" fill="#202725">80%</text>
 <text x="32" y="184" font-size="13" font-weight="700" fill="#202725">Ingredient utilization</text>
   <rect x="220" y="171" width="520" height="16" rx="4" fill="#ecf0ee" />
-  <rect x="220" y="171" width="0" height="16" rx="4" fill="#75b7d9" />
-  <text x="758" y="184" font-size="12" fill="#202725">TBD</text>
+  <rect x="220" y="171" width="520.0" height="16" rx="4" fill="#75b7d9" />
+  <text x="758" y="184" font-size="12" fill="#202725">100%</text>
 <text x="32" y="220" font-size="13" font-weight="700" fill="#202725">Source validity</text>
   <rect x="220" y="207" width="520" height="16" rx="4" fill="#ecf0ee" />
-  <rect x="220" y="207" width="0" height="16" rx="4" fill="#9c8ee5" />
-  <text x="758" y="220" font-size="12" fill="#202725">TBD</text>
+  <rect x="220" y="207" width="520.0" height="16" rx="4" fill="#9c8ee5" />
+  <text x="758" y="220" font-size="12" fill="#202725">100%</text>
 <text x="32" y="256" font-size="13" font-weight="700" fill="#202725">Pass rate</text>
   <rect x="220" y="243" width="520" height="16" rx="4" fill="#ecf0ee" />
-  <rect x="220" y="243" width="0" height="16" rx="4" fill="#f2b84b" />
-  <text x="758" y="256" font-size="12" fill="#202725">TBD</text>
-  <text x="32" y="286" font-size="12" fill="#6f7875">0 recorded runs · source docs/ai-recipe-quality-history.json</text>
+  <rect x="220" y="243" width="208.0" height="16" rx="4" fill="#f2b84b" />
+  <text x="758" y="256" font-size="12" fill="#202725">40%</text>
+  <text x="32" y="286" font-size="12" fill="#6f7875">5 recorded runs · source docs/ai-recipe-quality-history.json</text>
 </svg>

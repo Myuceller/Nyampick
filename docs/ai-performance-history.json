@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "createdAt": "2026-04-30T10:57:45.340Z",
+    "feature": "recipe_recommendation",
+    "caseId": "R1",
+    "ok": true,
+    "latencyMs": 12948,
+    "inputTokens": 337,
+    "outputTokens": 505,
+    "totalTokens": 842,
+    "recommendationCount": 3,
+    "parseSuccess": true,
+    "fallbackUsed": false,
+    "validRecommendationRate": 1
+  },
+  {
+    "createdAt": "2026-04-30T10:57:51.325Z",
+    "feature": "recipe_recommendation",
+    "caseId": "R2",
+    "ok": true,
+    "latencyMs": 5982,
+    "inputTokens": 338,
+    "outputTokens": 496,
+    "totalTokens": 834,
+    "recommendationCount": 3,
+    "parseSuccess": true,
+    "fallbackUsed": false,
+    "validRecommendationRate": 1
+  },
+  {
+    "createdAt": "2026-04-30T10:58:01.624Z",
+    "feature": "recipe_recommendation",
+    "caseId": "R3",
+    "ok": true,
+    "latencyMs": 10298,
+    "inputTokens": 343,
+    "outputTokens": 565,
+    "totalTokens": 908,
+    "recommendationCount": 3,
+    "parseSuccess": true,
+    "fallbackUsed": false,
+    "validRecommendationRate": 1
+  },
+  {
+    "createdAt": "2026-04-30T10:58:15.857Z",
+    "feature": "recipe_recommendation",
+    "caseId": "R4",
+    "ok": true,
+    "latencyMs": 14233,
+    "inputTokens": 337,
+    "outputTokens": 449,
+    "totalTokens": 786,
+    "recommendationCount": 3,
+    "parseSuccess": true,
+    "fallbackUsed": false,
+    "validRecommendationRate": 1
+  },
+  {
+    "createdAt": "2026-04-30T10:58:26.285Z",
+    "feature": "recipe_recommendation",
+    "caseId": "R5",
+    "ok": true,
+    "latencyMs": 10428,
+    "inputTokens": 337,
+    "outputTokens": 555,
+    "totalTokens": 892,
+    "recommendationCount": 3,
+    "parseSuccess": true,
+    "fallbackUsed": false,
+    "validRecommendationRate": 1
+  }
+]

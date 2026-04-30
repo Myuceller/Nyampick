@@ -1,6 +1,6 @@
 # AI Recipe Quality Report
 
-Generated at: 2026-04-30T10:51:00.652Z
+Generated at: 2026-04-30T10:58:31.230Z
 
 Sources:
 
@@ -11,7 +11,7 @@ Sources:
 
 | Runs | Pass rate | Quality score | Valid recommendations | Ingredient utilization | Source validity | Awkward pair violations |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | TBD | TBD | TBD | TBD | TBD | 0 |
+| 5 | 40% | 89% | 80% | 100% | 100% | 3 |
 
 ## Evaluation Cases
 
@@ -27,7 +27,11 @@ Sources:
 
 | Created at | Case | Quality | Valid recs | Ingredient use | Source validity | Awkward violations | Result |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| - | - | - | - | - | - | - | - |
+| 2026-04-30T10:58:26.285Z | R5 | 85% | 100% | 100% | 100% | 3 | fail |
+| 2026-04-30T10:58:15.857Z | R4 | 73% | 33% | 100% | 100% | 0 | fail |
+| 2026-04-30T10:58:01.624Z | R3 | 100% | 100% | 100% | 100% | 0 | pass |
+| 2026-04-30T10:57:51.325Z | R2 | 87% | 67% | 100% | 100% | 0 | fail |
+| 2026-04-30T10:57:45.340Z | R1 | 100% | 100% | 100% | 100% | 0 | pass |
 
 ## History Entry Format
 
