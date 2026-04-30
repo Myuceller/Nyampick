@@ -54,6 +54,7 @@ const awkwardIngredientPairs: [string, string][] = [
 ];
 
 const allergyIngredients = ["계란", "달걀", "두부", "우유", "치즈", "새우"];
+const neutralSupplementalIngredients = ["쌀", "물", "육수"];
 
 function stripCodeFence(text: string) {
   return text.replace(/^```(?:json)?\s*/i, "").replace(/```$/i, "").trim();
@@ -88,6 +89,13 @@ function hasAwkwardPair(recipe: AiRecipeRecommendation) {
   });
 }
 
+function inputHasAwkwardPair(input: GenerateRecipeInput) {
+  const selected = input.ingredients.join(" ");
+  return awkwardIngredientPairs.some(([left, right]) => {
+    return includesTerm(selected, left) && includesTerm(selected, right);
+  });
+}
+
 function hasAllergyIngredient(recipe: AiRecipeRecommendation) {
   const text = recipeText(recipe);
   return allergyIngredients.some((ingredient) => includesTerm(text, ingredient));
@@ -98,6 +106,57 @@ function hasAllergyCaution(recipe: AiRecipeRecommendation) {
   return ["알레르", "주의", "소량", "반응", "확인", "전문가", "의사"].some((term) =>
     includesTerm(text, term)
   );
+}
+
+function replaceAllTerms(text: string, terms: string[], replacement: string) {
+  return terms.reduce((current, term) => current.replaceAll(term, replacement), text);
+}
+
+function getAwkwardTermsToRemove(recipe: AiRecipeRecommendation) {
+  const text = recipeText(recipe);
+  const terms = new Set<string>();
+  for (const [left, right] of awkwardIngredientPairs) {
+    if (!includesTerm(text, left) || !includesTerm(text, right)) continue;
+    if (left === "바나나") {
+      terms.add(left);
+    } else if (right === "우유" || right === "치즈") {
+      terms.add(right);
+    } else {
+      terms.add(right);
+    }
+  }
+  return [...terms];
+}
+
+function normalizeRecipeQuality(recipe: AiRecipeRecommendation): AiRecipeRecommendation {
+  const awkwardTerms = getAwkwardTermsToRemove(recipe);
+  const replacement = "물";
+  const ingredients = recipe.ingredients
+    .filter((ingredient) => !awkwardTerms.some((term) => includesTerm(ingredient, term)))
+    .map((ingredient) => replaceAllTerms(ingredient, awkwardTerms, replacement))
+    .filter((ingredient, index, items) => ingredient.trim().length > 0 && items.indexOf(ingredient) === index);
+
+  for (const ingredient of neutralSupplementalIngredients) {
+    if (ingredients.length >= 3) break;
+    if (!ingredients.includes(ingredient)) ingredients.push(ingredient);
+  }
+
+  const normalized: AiRecipeRecommendation = {
+    ...recipe,
+    title: replaceAllTerms(recipe.title, awkwardTerms, "").replaceAll(/\s+/g, " ").trim(),
+    subtitle: replaceAllTerms(recipe.subtitle, awkwardTerms, "").replaceAll(/\s+/g, " ").trim(),
+    ingredients,
+    steps: recipe.steps.map((step) => replaceAllTerms(step, awkwardTerms, replacement)),
+  };
+
+  if (hasAllergyIngredient(normalized) && !hasAllergyCaution(normalized)) {
+    normalized.steps = [
+      ...normalized.steps,
+      "알레르기 반응을 소량부터 확인한다.",
+    ].slice(0, 5);
+  }
+
+  return normalized;
 }
 
 function titleLength(value: string) {
@@ -115,7 +174,10 @@ export function isProductionReadyRecipe(recipe: AiRecipeRecommendation, input: G
   if (!recipe.sourceName || !recipe.sourceUrl) return false;
   if (hasAwkwardPair(recipe)) return false;
   if (hasAllergyIngredient(recipe) && !hasAllergyCaution(recipe)) return false;
-  return countInputIngredients(recipe, input) >= Math.min(2, input.ingredients.length);
+  const minimumInputMatches = inputHasAwkwardPair(input)
+    ? 1
+    : Math.min(2, input.ingredients.length);
+  return countInputIngredients(recipe, input) >= minimumInputMatches;
 }
 
 export function selectProductionReadyRecommendations(
@@ -188,7 +250,7 @@ function parseRecommendations(
         typeof item.source_url === "string" ? item.source_url.trim() : "";
       const hasValidSource = sourceName.length > 0 && isValidHttpUrl(sourceUrl);
 
-      return {
+      return normalizeRecipeQuality({
         title,
         subtitle,
         taste,
@@ -196,7 +258,7 @@ function parseRecommendations(
         steps,
         sourceName: hasValidSource ? sourceName : undefined,
         sourceUrl: hasValidSource ? sourceUrl : undefined,
-      };
+      });
     })
     .filter(
       (item) =>
@@ -223,6 +285,8 @@ async function generateOnce(
         "유아식으로 부적절하거나 맛 조합이 어색한 조합은 제외한다.",
         "서로 충돌하는 재료 조합은 같은 레시피에 넣지 않는다.",
         "금지 조합: 바나나+소고기, 바나나+닭고기, 바나나+양파, 새우+우유, 새우+치즈.",
+        "선택 재료 안에 금지 조합이 있으면 한 레시피에 모두 쓰지 말고, 안전한 재료끼리 나누어 추천한다.",
+        "입력 재료를 모두 한 레시피에 넣는 것보다 유아식 안전성과 자연스러운 조합을 우선한다.",
         "계란/달걀/두부/우유/치즈/새우가 들어가면 steps에 '알레르기 반응 확인' 또는 '소량부터 확인' 문구를 넣는다.",
         '반환 형식: {"recipes":[{"title":"...","subtitle":"...","taste":"좋아해요|보통이에요|싫어해요","ingredients":["..."],"steps":["..."],"source_name":"...","source_url":"https://..."}]}',
         "title은 18자 이내의 한국어 레시피명으로 작성한다.",
@@ -239,6 +303,8 @@ async function generateOnce(
         "자유로운 기괴 조합은 금지하고, 한국에서 일반적으로 먹는 유아식 조합만 사용한다.",
         "서로 충돌하는 재료 조합은 같은 레시피에 넣지 않는다.",
         "금지 조합: 바나나+소고기, 바나나+닭고기, 바나나+양파, 새우+우유, 새우+치즈.",
+        "선택 재료 안에 금지 조합이 있으면 한 레시피에 모두 쓰지 말고, 안전한 재료끼리 나누어 추천한다.",
+        "입력 재료를 모두 한 레시피에 넣는 것보다 유아식 안전성과 자연스러운 조합을 우선한다.",
         "계란/달걀/두부/우유/치즈/새우가 들어가면 steps에 '알레르기 반응 확인' 또는 '소량부터 확인' 문구를 넣는다.",
         "입력 재료로 만들기 어려우면 일부만 사용해도 된다.",
         '반환 형식: {"recipes":[{"title":"...","subtitle":"...","taste":"좋아해요|보통이에요|싫어해요","ingredients":["..."],"steps":["..."],"source_name":"...","source_url":"https://..."}]}',

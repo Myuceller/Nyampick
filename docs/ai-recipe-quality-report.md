@@ -1,17 +1,19 @@
 # AI Recipe Quality Report
 
-Generated at: 2026-04-30T15:22:24.620Z
+Generated at: 2026-04-30T16:59:58.256Z
 
 Sources:
 
 - `docs/ai-recipe-eval-cases.json`
 - `docs/ai-recipe-quality-history.json`
 
+Summary is calculated from the latest run for each case.
+
 ## Summary
 
 | Runs | Pass rate | Quality score | Valid recommendations | Ingredient utilization | Source validity | Awkward violations | Forbidden claims |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 5 | 40% | 90% | 80% | 100% | 100% | 3 | 0 |
+| 5 | 100% | 99% | 100% | 93% | 100% | 0 | 0 |
 
 ## Evaluation Cases
 
@@ -27,6 +29,11 @@ Sources:
 
 | Created at | Case | Quality | Valid recs | Ingredient use | Source validity | Awkward | Forbidden | Result |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 2026-04-30T16:58:20.144Z | R5 | 100% | 100% | 100% | 100% | 0 | 0 | pass |
+| 2026-04-30T16:58:11.552Z | R4 | 100% | 100% | 100% | 100% | 0 | 0 | pass |
+| 2026-04-30T16:58:04.267Z | R3 | 100% | 100% | 100% | 100% | 0 | 0 | pass |
+| 2026-04-30T16:57:55.891Z | R2 | 93% | 100% | 67% | 100% | 0 | 0 | pass |
+| 2026-04-30T16:57:48.271Z | R1 | 100% | 100% | 100% | 100% | 0 | 0 | pass |
 | 2026-04-30T10:58:26.285Z | R5 | 85% | 100% | 100% | 100% | 3 | 0 | fail |
 | 2026-04-30T10:58:15.857Z | R4 | 77% | 33% | 100% | 100% | 0 | 0 | fail |
 | 2026-04-30T10:58:01.624Z | R3 | 100% | 100% | 100% | 100% | 0 | 0 | pass |

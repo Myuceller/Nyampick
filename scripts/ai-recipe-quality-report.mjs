@@ -185,6 +185,14 @@ function summarize(rows) {
   };
 }
 
+function latestRowsByCase(rows) {
+  const latest = new Map();
+  for (const row of rows) {
+    latest.set(row.caseId ?? "unknown", row);
+  }
+  return [...latest.values()];
+}
+
 function trendPath(points) {
   return points
     .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`)
@@ -222,7 +230,8 @@ function buildRateTrend(rows, options) {
 
 function buildMarkdown(cases, evaluatedRows) {
   const generatedAt = new Date().toISOString();
-  const summary = summarize(evaluatedRows);
+  const latestRows = latestRowsByCase(evaluatedRows);
+  const summary = summarize(latestRows);
 
   const caseRows = cases
     .map(
@@ -251,6 +260,8 @@ Sources:
 
 - \`docs/ai-recipe-eval-cases.json\`
 - \`docs/ai-recipe-quality-history.json\`
+
+Summary is calculated from the latest run for each case.
 
 ## Summary
 
@@ -288,7 +299,8 @@ ${resultRows}
 }
 
 function buildSvg(evaluatedRows) {
-  const summary = summarize(evaluatedRows);
+  const latestRows = latestRowsByCase(evaluatedRows);
+  const summary = summarize(latestRows);
   const width = 920;
   const height = evaluatedRows.length > 0 ? 650 : 320;
   const metrics = [

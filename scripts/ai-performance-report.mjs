@@ -49,6 +49,15 @@ function groupByFeature(entries) {
   return [...map.entries()].map(([feature, rows]) => ({ feature, rows }));
 }
 
+function latestRowsByCase(entries) {
+  const latest = new Map();
+  for (const entry of entries) {
+    const key = `${entry.feature ?? "unknown"}|${entry.caseId ?? "unknown"}`;
+    latest.set(key, entry);
+  }
+  return [...latest.values()];
+}
+
 function trendPath(points) {
   return points
     .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`)
@@ -122,7 +131,8 @@ async function readHistory() {
 }
 
 function buildMarkdown(entries) {
-  const groups = groupByFeature(entries);
+  const latestEntries = latestRowsByCase(entries);
+  const groups = groupByFeature(latestEntries);
   const generatedAt = new Date().toISOString();
 
   if (groups.length === 0) {
@@ -162,6 +172,8 @@ Generated at: ${generatedAt}
 
 Source: \`docs/ai-performance-history.json\`
 
+Summary is calculated from the latest run for each feature/case pair.
+
 ## Summary
 
 | Feature | Runs | Avg latency | p95 latency | Avg tokens | Parse success | Fallback rate | Failure rate | Valid recommendation |
@@ -182,14 +194,15 @@ function buildSvg(entries) {
   const chartX = 92;
   const chartWidth = 640;
   const chartHeight = 92;
-  const summary = summarize(entries);
+  const latestEntries = latestRowsByCase(entries);
+  const summary = summarize(latestEntries);
 
   const body =
     entries.length === 0
       ? `<text x="32" y="132" font-size="15" fill="#6f7875">No AI performance entries recorded yet.</text>
   <text x="32" y="158" font-size="13" fill="#6f7875">Add rows to docs/ai-performance-history.json and run npm run ai:report.</text>`
       : `<text x="32" y="112" font-size="15" font-weight="700" fill="#202725">Summary</text>
-  <text x="32" y="136" font-size="12" fill="#6f7875">${entries.length} runs · avg latency ${escapeXml(formatMs(summary.averageLatencyMs))} · p95 ${escapeXml(formatMs(summary.p95LatencyMs))} · avg tokens ${summary.averageTokens == null ? "TBD" : Math.round(summary.averageTokens)}</text>
+  <text x="32" y="136" font-size="12" fill="#6f7875">${latestEntries.length} latest cases · avg latency ${escapeXml(formatMs(summary.averageLatencyMs))} · p95 ${escapeXml(formatMs(summary.p95LatencyMs))} · avg tokens ${summary.averageTokens == null ? "TBD" : Math.round(summary.averageTokens)}</text>
 
   <text x="32" y="184" font-size="15" font-weight="700" fill="#202725">Latency Trend</text>
   <line x1="${chartX}" y1="284" x2="${chartX + chartWidth}" y2="284" stroke="#ecf0ee" />
