@@ -8,7 +8,9 @@
 
 그래프 원본: [Performance History](performance-history.json)  
 생성 그래프: [Performance Chart](performance-chart.svg)  
-배포 로그인 Lighthouse 그래프: [Authenticated Lighthouse Chart](lighthouse-deployed-auth-chart.svg)
+배포 로그인 Lighthouse 그래프: [Authenticated Lighthouse Chart](lighthouse-deployed-auth-chart.svg)  
+AI 성능 리포트: [AI Performance Report](ai-performance-report.md)  
+AI 성능 그래프: [AI Performance Chart](ai-performance-chart.svg)
 
 ## 측정 원칙
 
@@ -174,6 +176,7 @@ done
 - API route에서 요청 시작/종료 시간을 로그로 남긴다.
 - OpenAI 응답의 usage 값을 구조화해서 기록한다.
 - prompt/schema 변경 전후의 token 평균을 비교한다.
+- `docs/ai-performance-history.json`에 측정 로그를 누적하고 `npm run ai:report`로 리포트와 SVG를 갱신한다.
 
 ### AI 성능 평가 세트
 
@@ -216,7 +219,7 @@ AI 최적화는 단순히 빠르게 만드는 것이 아니라, 같은 입력에
 
 | 기능 | latency | token usage | 품질 판정 | 비고 |
 | --- | --- | --- | --- | --- |
-| 레시피 추천 | 가능 | 가능 | 가능 | `/api/recipes/recommendations`가 `usage` 반환 |
+| 레시피 추천 | 가능 | 가능 | 가능 | `/api/recipes/recommendations`가 `usage`, `metrics` 반환 |
 | 영수증 OCR | 가능 | 추가 필요 | 가능 | `extractReceiptItemsWithOpenAI`가 현재 usage를 반환하지 않음 |
 
 ### AI 최적화 후보

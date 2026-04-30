@@ -31,5 +31,16 @@ export interface RecommendationItemDto {
 
 export interface RecommendationsResponseDto {
   recommendations?: RecommendationItemDto[];
+  usage?: {
+    inputTokens?: number;
+    outputTokens?: number;
+    totalTokens?: number;
+  };
+  metrics?: {
+    latencyMs?: number;
+    fallbackUsed?: boolean;
+    parseSuccess?: boolean;
+    recommendationCount?: number;
+  };
   message?: string;
 }

@@ -26,6 +26,7 @@ export interface AiUsageSummary {
 export interface AiRecipeGenerationResult {
   recommendations: AiRecipeRecommendation[];
   usage: AiUsageSummary;
+  fallbackUsed: boolean;
 }
 
 type JsonScalar = string | number | boolean | null;
@@ -218,6 +219,7 @@ export async function generateRecipeRecommendationsWithOpenAI(
     return {
       recommendations: strict.recommendations.slice(0, input.limit),
       usage: strict.usage,
+      fallbackUsed: false,
     };
   }
 
@@ -233,5 +235,6 @@ export async function generateRecipeRecommendationsWithOpenAI(
       outputTokens: strict.usage.outputTokens + fallback.usage.outputTokens,
       totalTokens: strict.usage.totalTokens + fallback.usage.totalTokens,
     },
+    fallbackUsed: true,
   };
 }

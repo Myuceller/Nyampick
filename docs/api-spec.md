@@ -202,32 +202,42 @@ Base URL: `/api`
 
 ## 6) Recipe Recommendations
 
-### GET `/api/recipes/recommendations?limit=5`
-- Query
-  - `limit`: `1 ~ 20` (기본 5)
+### POST `/api/recipes/recommendations`
+- Input
+```json
+{ "ingredients": ["계란", "두부", "애호박"], "limit": 3 }
+```
 - Output `200`
 ```json
 {
   "recommendations": [
     {
-      "id": "rec-1",
-      "title": "닭안심 채소죽",
-      "description": "부드러운 단백질과 채소를 함께 넣은 균형식",
-      "ingredients": ["닭안심", "당근", "감자", "쌀"],
-      "mealType": "dinner",
-      "reasons": ["냉장고 재료 3개를 활용할 수 있어요.", "최근 식단 기준 protein 보강에 맞춘 추천이에요."],
-      "nutrition": { "carbs": 48, "protein": 30, "fat": 22, "calories": 360 },
-      "fridgeMatchCount": 3
+      "title": "두부 애호박찜",
+      "subtitle": "부드럽게 먹기 좋은 단백질 반찬",
+      "taste": "좋아해요",
+      "ingredients": ["두부", "애호박", "계란"],
+      "steps": ["재료를 작게 썬다", "부드럽게 익힌다", "한 김 식혀 담는다"],
+      "source_name": "공개 레시피 출처",
+      "source_url": "https://example.com/recipe"
     }
   ],
-  "strategy": {
-    "basedOn": ["fridge-items", "recent-meals", "nutrition-balance"],
-    "description": "냉장고 재료 우선 + 최근 식단 중복 완화 + 부족 영양소 보완 기준으로 정렬"
+  "usage": {
+    "inputTokens": 420,
+    "outputTokens": 610,
+    "totalTokens": 1030
+  },
+  "metrics": {
+    "latencyMs": 2140,
+    "fallbackUsed": false,
+    "parseSuccess": true,
+    "recommendationCount": 3
   }
 }
 ```
 - Error
-  - `400`: `{ "message": "limit must be between 1 and 20" }`
+  - `400`: `{ "message": "ingredients must be an array" }`
+  - `401`: `{ "message": "unauthorized" }`
+  - `429`: `{ "message": "요청이 많아 잠시 제한되었습니다. 잠시 후 다시 시도해주세요." }`
 
 ## 7) Profile (My Page)
 

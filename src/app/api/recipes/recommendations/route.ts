@@ -68,10 +68,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    const startedAt = Date.now();
     const result = await generateRecipeRecommendationsWithOpenAI({
       ingredients,
       limit,
     });
+    const latencyMs = Date.now() - startedAt;
 
     const budgetResult = consumeUserDailyTokenBudget({
       userId: user.id,
@@ -98,6 +100,12 @@ export async function POST(request: Request) {
     return NextResponse.json({
       recommendations: result.recommendations,
       usage: result.usage,
+      metrics: {
+        latencyMs,
+        fallbackUsed: result.fallbackUsed,
+        parseSuccess: true,
+        recommendationCount: result.recommendations.length,
+      },
     });
   } catch (error) {
     registerAiFailure({ userId: user.id, action: "recipes" });
