@@ -239,6 +239,62 @@ Base URL: `/api`
   - `401`: `{ "message": "unauthorized" }`
   - `429`: `{ "message": "요청이 많아 잠시 제한되었습니다. 잠시 후 다시 시도해주세요." }`
 
+## 6-1) Recipe Evaluation
+
+### GET `/api/recipe-eval?count=10&seed=baseline`
+- 재료 메타데이터 기반으로 평가 케이스를 자동 생성합니다.
+- Output `200`
+```json
+{
+  "cases": [
+    {
+      "caseId": "generated_01",
+      "ingredients": ["계란", "두부", "애호박"],
+      "allergyIngredients": ["계란", "두부"],
+      "unsafeIngredients": [],
+      "expected": "알레르기 가능 재료를 안전하게 다루는지 평가",
+      "checks": {
+        "minIngredientUtilization": 0.6,
+        "requireSource": true,
+        "awkwardPairs": [],
+        "requireBabyFriendlyTone": true,
+        "requireCookingSteps": true,
+        "avoidAllergyPush": true
+      }
+    }
+  ]
+}
+```
+
+### POST `/api/recipe-eval`
+- Input
+```json
+{ "testCase": { "...": "GET 응답의 case" }, "recipeText": "AI가 생성한 레시피 본문" }
+```
+- Output `200`
+```json
+{
+  "result": {
+    "passed": true,
+    "score": 85,
+    "details": {
+      "ingredientUtilization": 0.67,
+      "usedIngredients": ["계란", "두부"],
+      "missingIngredients": ["애호박"],
+      "awkwardPairs": [],
+      "hasSource": true,
+      "hasAllergyCaution": true,
+      "hasBabyFriendlyTone": true,
+      "hasCookingSteps": true
+    },
+    "reasons": []
+  }
+}
+```
+- Error
+  - `400`: `{ "message": "testCase is required" }`
+  - `400`: `{ "message": "recipeText is required" }`
+
 ## 7) Profile (My Page)
 
 ### GET `/api/profile`

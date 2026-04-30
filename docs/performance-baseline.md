@@ -182,6 +182,7 @@ done
 - `docs/ai-performance-history.json`에 측정 로그를 누적하고 `npm run ai:report`로 리포트와 SVG를 갱신한다.
 - `docs/ai-recipe-quality-history.json`에 추천 응답을 누적하고 `npm run ai:quality`로 품질 리포트와 SVG를 갱신한다.
 - `npm run ai:cases:suggest`로 커버리지 공백과 실패 history 기반 평가 후보를 생성한다. 후보는 바로 golden set에 병합하지 않고 검토 후 승격한다.
+- `/api/recipe-eval`은 재료 메타데이터 기반 동적 케이스 생성과 recipe text 룰 평가를 제공한다. 고정 golden set은 회귀 비교용으로 유지하고, 동적 평가는 상용화 리스크 탐색에 사용한다.
 
 ### AI 성능 평가 세트
 
