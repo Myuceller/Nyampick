@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/server/api-auth";
-import { createChildInviteCode } from "@/lib/server/family-access";
+import { createFamilyInviteCode } from "@/lib/server/family-access";
 import { getFamilyDataScope } from "@/lib/server/family-access";
-import { resolveChildIdForUser } from "@/lib/server/supabase-children";
 
 export async function POST(request: Request) {
   const user = await getUserFromRequest(request);
@@ -11,13 +10,8 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json().catch(() => ({}))) as {
-    childId?: string;
     expiresInDays?: number;
   };
-
-  if (typeof body.childId !== "string" || body.childId.length === 0) {
-    return NextResponse.json({ message: "childId is required" }, { status: 400 });
-  }
 
   if (
     body.expiresInDays !== undefined &&
@@ -37,10 +31,8 @@ export async function POST(request: Request) {
         { status: 403 }
       );
     }
-    const childId = await resolveChildIdForUser(scope.ownerUserId, body.childId);
-    const { code, expiresAt } = await createChildInviteCode({
+    const { code, expiresAt } = await createFamilyInviteCode({
       ownerUserId: scope.ownerUserId,
-      childId,
       expiresInDays: body.expiresInDays,
     });
     return NextResponse.json({ code, expiresAt }, { status: 201 });

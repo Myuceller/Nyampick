@@ -8,7 +8,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }
 
-  const body = (await request.json().catch(() => ({}))) as { code?: string };
+  const body = (await request.json().catch(() => ({}))) as {
+    code?: string;
+    relationshipLabel?: string;
+  };
   if (typeof body.code !== "string" || body.code.trim().length === 0) {
     return NextResponse.json({ message: "code is required" }, { status: 400 });
   }
@@ -17,6 +20,7 @@ export async function POST(request: Request) {
     const linked = await joinFamilyByInviteCode({
       guestUserId: user.id,
       code: body.code,
+      relationshipLabel: body.relationshipLabel,
     });
     return NextResponse.json({ linked });
   } catch (error) {
@@ -30,4 +34,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ message }, { status });
   }
 }
-

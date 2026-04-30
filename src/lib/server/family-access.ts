@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 interface InviteCodeRow {
   id: string;
   owner_user_id: string;
-  child_id: string;
+  child_id: string | null;
   code: string;
   expires_at: string;
   revoked_at: string | null;
@@ -15,8 +15,9 @@ interface AccessLinkRow {
   id: string;
   guest_user_id: string;
   owner_user_id: string;
-  child_id: string;
+  child_id: string | null;
   code_id: string;
+  relationship_label?: string | null;
   linked_at: string;
   revoked_at: string | null;
 }
@@ -32,13 +33,41 @@ interface ChildProfileRow {
   name: string;
 }
 
+export interface FamilyMemberSummary {
+  id: string;
+  name: string;
+  email?: string;
+  role: "owner" | "member";
+  roleLabel: string;
+  linkedAt?: string;
+}
+
 function makeInviteCode(): string {
   return randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase();
 }
 
-export async function createChildInviteCode(input: {
+function normalizeRelationshipLabel(value?: string): string {
+  const label = value?.trim();
+  if (!label) return "가족 구성원";
+  return label.slice(0, 20);
+}
+
+async function getPrimaryChildIdForOwner(ownerUserId: string): Promise<string | null> {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("child_profiles")
+    .select("id")
+    .eq("user_id", ownerUserId)
+    .order("is_primary", { ascending: false })
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as { id?: string } | null)?.id ?? null;
+}
+
+export async function createFamilyInviteCode(input: {
   ownerUserId: string;
-  childId: string;
   expiresInDays?: number;
 }): Promise<{ code: string; expiresAt: string }> {
   const supabase = getSupabaseAdmin();
@@ -49,7 +78,7 @@ export async function createChildInviteCode(input: {
     .from("child_invite_codes")
     .select("id,owner_user_id,child_id,code,expires_at,revoked_at,created_at")
     .eq("owner_user_id", input.ownerUserId)
-    .eq("child_id", input.childId)
+    .is("child_id", null)
     .is("revoked_at", null)
     .gt("expires_at", nowIso)
     .order("expires_at", { ascending: false })
@@ -63,16 +92,42 @@ export async function createChildInviteCode(input: {
     };
   }
 
+  const { data: legacyExisting, error: legacyExistingError } = await supabase
+    .from("child_invite_codes")
+    .select("id,owner_user_id,child_id,code,expires_at,revoked_at,created_at")
+    .eq("owner_user_id", input.ownerUserId)
+    .is("revoked_at", null)
+    .gt("expires_at", nowIso)
+    .order("expires_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (legacyExistingError) throw legacyExistingError;
+  if (legacyExisting) {
+    return {
+      code: (legacyExisting as InviteCodeRow).code,
+      expiresAt: (legacyExisting as InviteCodeRow).expires_at,
+    };
+  }
+
   const code = makeInviteCode();
   const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString();
-  const { error } = await supabase.from("child_invite_codes").insert({
+  const payload = {
     id: randomUUID(),
     owner_user_id: input.ownerUserId,
-    child_id: input.childId,
+    child_id: null,
     code,
     expires_at: expiresAt,
-  });
-  if (error) throw error;
+  };
+  const { error } = await supabase.from("child_invite_codes").insert(payload);
+  if (error) {
+    const fallbackChildId = await getPrimaryChildIdForOwner(input.ownerUserId);
+    if (!fallbackChildId) throw error;
+    const { error: fallbackError } = await supabase.from("child_invite_codes").insert({
+      ...payload,
+      child_id: fallbackChildId,
+    });
+    if (fallbackError) throw fallbackError;
+  }
 
   return { code, expiresAt };
 }
@@ -80,7 +135,8 @@ export async function createChildInviteCode(input: {
 export async function joinFamilyByInviteCode(input: {
   guestUserId: string;
   code: string;
-}): Promise<{ ownerUserId: string; childId: string }> {
+  relationshipLabel?: string;
+}): Promise<{ ownerUserId: string }> {
   const supabase = getSupabaseAdmin();
   const normalized = input.code.trim().toUpperCase();
 
@@ -108,6 +164,7 @@ export async function joinFamilyByInviteCode(input: {
       owner_user_id: typedCodeRow.owner_user_id,
       child_id: typedCodeRow.child_id,
       code_id: typedCodeRow.id,
+      relationship_label: normalizeRelationshipLabel(input.relationshipLabel),
       linked_at: new Date().toISOString(),
       revoked_at: null,
     },
@@ -117,7 +174,6 @@ export async function joinFamilyByInviteCode(input: {
 
   return {
     ownerUserId: typedCodeRow.owner_user_id,
-    childId: typedCodeRow.child_id,
   };
 }
 
@@ -132,7 +188,7 @@ export async function getFamilyDataScope(input: {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("family_access_links")
-    .select("id,guest_user_id,owner_user_id,child_id,code_id,linked_at,revoked_at")
+    .select("id,guest_user_id,owner_user_id,child_id,code_id,relationship_label,linked_at,revoked_at")
     .eq("guest_user_id", input.userId)
     .is("revoked_at", null)
     .order("linked_at", { ascending: false })
@@ -144,7 +200,7 @@ export async function getFamilyDataScope(input: {
     const linked = data as AccessLinkRow;
     return {
       ownerUserId: linked.owner_user_id,
-      childId: linked.child_id,
+      childId: input.requestedChildId ?? undefined,
       isLinked: true,
     };
   }
@@ -158,7 +214,6 @@ export async function getFamilyDataScope(input: {
 
 export async function getFamilyLinkStatus(guestUserId: string): Promise<{
   ownerUserId: string;
-  childId: string;
   linkedAt: string;
   ownerName?: string;
   ownerEmail?: string;
@@ -167,7 +222,7 @@ export async function getFamilyLinkStatus(guestUserId: string): Promise<{
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("family_access_links")
-    .select("id,guest_user_id,owner_user_id,child_id,code_id,linked_at,revoked_at")
+    .select("id,guest_user_id,owner_user_id,child_id,code_id,relationship_label,linked_at,revoked_at")
     .eq("guest_user_id", guestUserId)
     .is("revoked_at", null)
     .order("linked_at", { ascending: false })
@@ -184,11 +239,13 @@ export async function getFamilyLinkStatus(guestUserId: string): Promise<{
       .select("id,name,email")
       .eq("id", link.owner_user_id)
       .maybeSingle(),
-    supabase
-      .from("child_profiles")
-      .select("id,name")
-      .eq("id", link.child_id)
-      .maybeSingle(),
+    link.child_id
+      ? supabase
+          .from("child_profiles")
+          .select("id,name")
+          .eq("id", link.child_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   const typedOwner = owner as OwnerProfileRow | null;
@@ -196,11 +253,82 @@ export async function getFamilyLinkStatus(guestUserId: string): Promise<{
 
   return {
     ownerUserId: link.owner_user_id,
-    childId: link.child_id,
     linkedAt: link.linked_at,
     ownerName: typedOwner?.name ?? undefined,
     ownerEmail: typedOwner?.email ?? undefined,
     childName: typedChild?.name ?? undefined,
+  };
+}
+
+export async function listFamilyMembersForUser(userId: string): Promise<{
+  ownerUserId: string;
+  viewerRole: "owner" | "member";
+  members: FamilyMemberSummary[];
+}> {
+  const supabase = getSupabaseAdmin();
+  const scope = await getFamilyDataScope({ userId });
+
+  const { data: owner } = await supabase
+    .from("user_profile")
+    .select("id,name,email")
+    .eq("id", scope.ownerUserId)
+    .maybeSingle();
+
+  const { data: links, error: linksError } = await supabase
+    .from("family_access_links")
+    .select("id,guest_user_id,owner_user_id,child_id,code_id,relationship_label,linked_at,revoked_at")
+    .eq("owner_user_id", scope.ownerUserId)
+    .is("revoked_at", null)
+    .order("linked_at", { ascending: true });
+  if (linksError) throw linksError;
+
+  const guestIds = (links ?? [])
+    .map((link) => (link as AccessLinkRow).guest_user_id)
+    .filter((id) => id !== scope.ownerUserId);
+
+  const { data: guestProfiles, error: profilesError } =
+    guestIds.length > 0
+      ? await supabase
+          .from("user_profile")
+          .select("id,name,email")
+          .in("id", guestIds)
+      : { data: [], error: null };
+  if (profilesError) throw profilesError;
+
+  const profileById = new Map(
+    (guestProfiles ?? []).map((profile) => [
+      (profile as OwnerProfileRow).id,
+      profile as OwnerProfileRow,
+    ])
+  );
+  const typedOwner = owner as OwnerProfileRow | null;
+
+  const members: FamilyMemberSummary[] = [
+    {
+      id: scope.ownerUserId,
+      name: typedOwner?.name || "보호자",
+      email: typedOwner?.email ?? undefined,
+      role: "owner",
+      roleLabel: "주 양육자",
+    },
+    ...(links ?? []).map((linkRaw) => {
+      const link = linkRaw as AccessLinkRow;
+      const profile = profileById.get(link.guest_user_id);
+      return {
+        id: link.guest_user_id,
+        name: profile?.name || profile?.email || "가족 구성원",
+        email: profile?.email ?? undefined,
+        role: "member" as const,
+        roleLabel: normalizeRelationshipLabel(link.relationship_label ?? undefined),
+        linkedAt: link.linked_at,
+      };
+    }),
+  ];
+
+  return {
+    ownerUserId: scope.ownerUserId,
+    viewerRole: scope.isLinked ? "member" : "owner",
+    members,
   };
 }
 

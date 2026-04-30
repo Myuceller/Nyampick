@@ -19,12 +19,10 @@ export async function GET(request: Request) {
     const scope = await getFamilyDataScope({ userId: user.id });
     await ensureDefaultChildFromDb(scope.ownerUserId);
     const children = await listChildrenFromDb(scope.ownerUserId);
-    const activeChild = scope.isLinked
-      ? children.find((child) => child.id === scope.childId) ?? null
-      : children.find((child) => child.isPrimary) ?? children[0] ?? null;
+    const activeChild = children.find((child) => child.isPrimary) ?? children[0] ?? null;
     const link = await getFamilyLinkStatus(user.id);
     return NextResponse.json({
-      children: scope.isLinked ? (activeChild ? [activeChild] : []) : children,
+      children,
       activeChildId: activeChild?.id ?? null,
       linkedMode: scope.isLinked,
       viewer: {

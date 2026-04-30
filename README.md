@@ -77,6 +77,7 @@ npm start          # 빌드 결과 실행
 - `/fridge/edit`: 냉장고 편집
 - `/recipe`: 레시피 추천
 - `/children`: 아기 관리
+- `/family`: 가족 연동
 - `/mypage`: 마이페이지
 
 ## API
@@ -90,6 +91,7 @@ npm start          # 빌드 결과 실행
 - `GET /api/recipes/recommendations`
 - `GET|POST /api/recipes/saved`
 - `GET /api/profile`
+- `GET /api/family`
 - `GET|POST /api/children`
 - `POST /api/children/invite-code`
 - `POST /api/children/join-code`

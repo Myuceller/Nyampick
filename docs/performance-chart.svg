@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="314" viewBox="0 0 920 314" role="img" aria-labelledby="title desc">
+  <title id="title">Performance Change History</title>
+  <desc id="desc">Route size and first load JavaScript changes generated from docs/performance-history.json.</desc>
+  <rect width="920" height="314" fill="#ffffff" />
+  <text x="24" y="34" font-size="24" font-weight="800" fill="#202725">Performance Change History</text>
+  <text x="24" y="58" font-size="13" fill="#6f7875">Generated from docs/performance-history.json</text>
+  <g>
+    <rect x="220" y="48" width="14" height="14" rx="4" fill="#d6ddd9" />
+    <text x="242" y="60" font-size="12" fill="#6f7875">Before</text>
+    <rect x="308" y="48" width="14" height="14" rx="4" fill="#57bf8e" />
+    <text x="330" y="60" font-size="12" fill="#6f7875">After</text>
+  </g>
+  <text x="24" y="98" font-size="15" font-weight="700" fill="#202725">/children route size</text>
+<text x="24" y="118" font-size="12" fill="#6f7875">2026-04-30 · -0.54 kB</text>
+<rect x="220" y="84" width="21.0" height="14" rx="4" fill="#d6ddd9" />
+<rect x="220" y="104" width="19.1" height="14" rx="4" fill="#57bf8e" />
+<text x="796" y="96" font-size="12" fill="#6f7875">before 5.75 kB</text>
+<text x="796" y="116" font-size="12" font-weight="700" fill="#202725">after 5.21 kB</text>
+<text x="24" y="152" font-size="15" font-weight="700" fill="#202725">/mypage route size</text>
+<text x="24" y="172" font-size="12" fill="#6f7875">2026-04-30 · -0.58 kB</text>
+<rect x="220" y="138" width="18.8" height="14" rx="4" fill="#d6ddd9" />
+<rect x="220" y="158" width="16.7" height="14" rx="4" fill="#57bf8e" />
+<text x="796" y="150" font-size="12" fill="#6f7875">before 5.14 kB</text>
+<text x="796" y="170" font-size="12" font-weight="700" fill="#202725">after 4.56 kB</text>
+<text x="24" y="206" font-size="15" font-weight="700" fill="#202725">/family first load js</text>
+<text x="24" y="226" font-size="12" fill="#6f7875">2026-04-30 · new</text>
+
+<rect x="220" y="212" width="560.0" height="14" rx="4" fill="#57bf8e" />
+<text x="796" y="204" font-size="12" fill="#6f7875">before -</text>
+<text x="796" y="224" font-size="12" font-weight="700" fill="#202725">after 153 kB</text>
+</svg>

@@ -163,7 +163,7 @@ export function MyPage() {
               <SectionTitle>아기 관리</SectionTitle>
               <button
                 type="button"
-                onClick={vm.openFamilyPage}
+                onClick={vm.openChildrenPage}
                 className="mt-5 flex w-full items-center gap-4 text-left"
               >
                 <div className="relative h-[65px] w-[65px] shrink-0 overflow-hidden rounded-[20px] shadow-[0_8px_20px_rgba(0,0,0,0.10)]">

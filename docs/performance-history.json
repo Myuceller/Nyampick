@@ -1,0 +1,29 @@
+[
+  {
+    "date": "2026-04-30",
+    "change": "Move family linking to /family and remove child-level invite UI from /children",
+    "metric": "route_size",
+    "route": "/children",
+    "before": 5.75,
+    "after": 5.21,
+    "unit": "kB"
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Remove unused My Page card components",
+    "metric": "route_size",
+    "route": "/mypage",
+    "before": 5.14,
+    "after": 4.56,
+    "unit": "kB"
+  },
+  {
+    "date": "2026-04-30",
+    "change": "Add family linking page",
+    "metric": "first_load_js",
+    "route": "/family",
+    "before": null,
+    "after": 153,
+    "unit": "kB"
+  }
+]

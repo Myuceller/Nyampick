@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "perf:report": "node scripts/performance-report.mjs",
     "lighthouse:landing": "mkdir -p .tmp && lighthouse http://localhost:3000/landing --form-factor=mobile --screenEmulation.mobile --output=json --output-path=.tmp/lighthouse-landing-mobile.json",
     "lighthouse:home": "mkdir -p .tmp && lighthouse http://localhost:3000/ --form-factor=mobile --screenEmulation.mobile --output=json --output-path=.tmp/lighthouse-home-mobile.json",
     "lighthouse:fridge": "mkdir -p .tmp && lighthouse http://localhost:3000/fridge --form-factor=mobile --screenEmulation.mobile --output=json --output-path=.tmp/lighthouse-fridge-mobile.json",

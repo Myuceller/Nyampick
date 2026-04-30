@@ -67,7 +67,7 @@ create table if not exists public.child_profiles (
 create table if not exists public.child_invite_codes (
   id uuid primary key default gen_random_uuid(),
   owner_user_id uuid not null references auth.users(id) on delete cascade,
-  child_id uuid not null references public.child_profiles(id) on delete cascade,
+  child_id uuid references public.child_profiles(id) on delete cascade,
   code text not null unique,
   expires_at timestamptz not null,
   revoked_at timestamptz,
@@ -78,8 +78,9 @@ create table if not exists public.family_access_links (
   id uuid primary key default gen_random_uuid(),
   guest_user_id uuid not null unique references auth.users(id) on delete cascade,
   owner_user_id uuid not null references auth.users(id) on delete cascade,
-  child_id uuid not null references public.child_profiles(id) on delete cascade,
+  child_id uuid references public.child_profiles(id) on delete cascade,
   code_id uuid not null references public.child_invite_codes(id) on delete cascade,
+  relationship_label text not null default '가족 구성원',
   linked_at timestamptz not null default now(),
   revoked_at timestamptz
 );
@@ -89,6 +90,7 @@ alter table public.meal_entries add column if not exists user_id uuid;
 alter table public.meal_entries add column if not exists child_id uuid;
 alter table public.fridge_items add column if not exists user_id uuid;
 alter table public.saved_recipes add column if not exists user_id uuid;
+alter table public.family_access_links add column if not exists relationship_label text not null default '가족 구성원';
 
 -- Indexes
 create index if not exists meal_entries_user_id_idx on public.meal_entries(user_id);
@@ -119,10 +121,10 @@ alter table public.fridge_items alter column user_id set not null;
 alter table public.saved_recipes alter column user_id set not null;
 alter table public.child_profiles alter column user_id set not null;
 alter table public.child_invite_codes alter column owner_user_id set not null;
-alter table public.child_invite_codes alter column child_id set not null;
+alter table public.child_invite_codes alter column child_id drop not null;
 alter table public.family_access_links alter column guest_user_id set not null;
 alter table public.family_access_links alter column owner_user_id set not null;
-alter table public.family_access_links alter column child_id set not null;
+alter table public.family_access_links alter column child_id drop not null;
 alter table public.family_access_links alter column code_id set not null;
 
 -- Enable RLS

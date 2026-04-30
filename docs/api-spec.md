@@ -248,3 +248,47 @@ Base URL: `/api`
 ```
 - Error
   - `400`: `{ "message": "babyMonthsOld must be a non-negative integer" }`
+
+## 8) Family
+
+### GET `/api/family`
+- Output `200`
+```json
+{
+  "ownerUserId": "...",
+  "viewerRole": "owner",
+  "linkedMode": false,
+  "members": [
+    {
+      "id": "...",
+      "name": "구글동구",
+      "email": "parent@example.com",
+      "role": "owner",
+      "roleLabel": "주 양육자"
+    }
+  ],
+  "childCount": 2
+}
+```
+
+### POST `/api/children/invite-code`
+- 가족 단위 초대코드를 생성합니다.
+- Input
+```json
+{ "expiresInDays": 7 }
+```
+- Output `201`
+```json
+{ "code": "3LTQR7", "expiresAt": "2026-05-07T00:00:00.000Z" }
+```
+
+### POST `/api/children/join-code`
+- 가족 단위 초대코드로 참여합니다. 참여 후 해당 가족의 모든 아이를 볼 수 있습니다.
+- Input
+```json
+{ "code": "3LTQR7", "relationshipLabel": "배우자" }
+```
+- Output `200`
+```json
+{ "linked": { "ownerUserId": "..." } }
+```

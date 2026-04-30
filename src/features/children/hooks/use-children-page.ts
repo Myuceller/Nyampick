@@ -12,32 +12,15 @@ interface ChildProfile {
   isPrimary: boolean;
 }
 
-interface LinkedInfo {
-  ownerUserId: string;
-  childId: string;
-  linkedAt: string;
-  ownerName?: string;
-  ownerEmail?: string;
-  childName?: string;
-}
-
 export function useChildrenPage() {
   const router = useRouter();
   const [children, setChildren] = useState<ChildProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingChildId, setDeletingChildId] = useState<string | null>(null);
-  const [codeChildId, setCodeChildId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [newMonthsOld, setNewMonthsOld] = useState("0");
-  const [joinCode, setJoinCode] = useState("");
-  const [isJoining, setIsJoining] = useState(false);
-  const [isUnlinking, setIsUnlinking] = useState(false);
-  const [inviteCodeByChildId, setInviteCodeByChildId] = useState<Record<string, string>>({});
   const [linkedMode, setLinkedMode] = useState(false);
-  const [viewerEmail, setViewerEmail] = useState<string>("");
-  const [viewerId, setViewerId] = useState<string>("");
-  const [linkedInfo, setLinkedInfo] = useState<LinkedInfo | null>(null);
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
   const [editingChildName, setEditingChildName] = useState("");
   const [isUpdatingName, setIsUpdatingName] = useState(false);
@@ -49,19 +32,11 @@ export function useChildrenPage() {
       const json = (await res.json()) as {
         children?: ChildProfile[];
         linkedMode?: boolean;
-        viewer?: {
-          id: string;
-          email: string | null;
-        };
-        linkedInfo?: LinkedInfo | null;
         message?: string;
       };
       if (!res.ok) throw new Error(json.message ?? "아이 정보를 불러오지 못했습니다.");
       setChildren(json.children ?? []);
       setLinkedMode(Boolean(json.linkedMode));
-      setViewerEmail(json.viewer?.email ?? "");
-      setViewerId(json.viewer?.id ?? "");
-      setLinkedInfo(json.linkedInfo ?? null);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "아이 정보를 불러오지 못했습니다.");
     } finally {
@@ -116,7 +91,7 @@ export function useChildrenPage() {
     }
   };
 
-  const deleteChild = async (childId: string, childName: string) => {
+  const deleteChild = async (childId: string) => {
     setDeletingChildId(childId);
     try {
       const res = await authedFetch("/api/children", {
@@ -169,90 +144,16 @@ export function useChildrenPage() {
     }
   };
 
-  const createInviteCode = async (childId: string) => {
-    if (codeChildId) return;
-    setCodeChildId(childId);
-    try {
-      const res = await authedFetch("/api/children/invite-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ childId }),
-      });
-      const json = (await res.json()) as {
-        code?: string;
-        message?: string;
-      };
-      if (!res.ok || !json.code) {
-        throw new Error(json.message ?? "초대코드 생성에 실패했습니다.");
-      }
-      const inviteCode = json.code;
-      setInviteCodeByChildId((prev) => ({ ...prev, [childId]: inviteCode }));
-      await navigator.clipboard.writeText(inviteCode);
-      toast.success("초대코드를 복사했습니다.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "초대코드 생성에 실패했습니다.");
-    } finally {
-      setCodeChildId(null);
-    }
-  };
-
-  const joinByCode = async () => {
-    const code = joinCode.trim().toUpperCase();
-    if (!code) return;
-    setIsJoining(true);
-    try {
-      const res = await authedFetch("/api/children/join-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
-      const json = (await res.json()) as { message?: string };
-      if (!res.ok) throw new Error(json.message ?? "초대코드 연결에 실패했습니다.");
-      setJoinCode("");
-      toast.success("가족 데이터에 연결되었습니다.");
-      await loadChildren();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "초대코드 연결에 실패했습니다.");
-    } finally {
-      setIsJoining(false);
-    }
-  };
-
-  const unlinkFamily = async () => {
-    setIsUnlinking(true);
-    try {
-      const res = await authedFetch("/api/children/unlink", {
-        method: "POST",
-      });
-      const json = (await res.json()) as { message?: string };
-      if (!res.ok) throw new Error(json.message ?? "가족 연결 해제에 실패했습니다.");
-      toast.success("가족 연결이 해제되었습니다.");
-      await loadChildren();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "가족 연결 해제에 실패했습니다.");
-    } finally {
-      setIsUnlinking(false);
-    }
-  };
-
   return {
     addChild,
     cancelEditChildName,
     children,
-    codeChildId,
-    createInviteCode,
     deleteChild,
     deletingChildId,
     editingChildId,
     editingChildName,
-    inviteCodeByChildId,
-    isJoining,
     isSubmitting,
-    isUnlinking,
     isUpdatingName,
-    joinByCode,
-    joinCode,
-    linkedInfo,
     linkedMode,
     loadChildren,
     loading,
@@ -261,13 +162,9 @@ export function useChildrenPage() {
     router,
     saveChildName,
     setEditingChildName,
-    setJoinCode,
     setNewMonthsOld,
     setNewName,
     setPrimaryChild,
     startEditChildName,
-    unlinkFamily,
-    viewerEmail,
-    viewerId,
   };
 }

@@ -49,6 +49,13 @@ function isValidDayMealsPayload(value: object | null | undefined): boolean {
   return true;
 }
 
+async function resolveScopedChildId(input: {
+  ownerUserId: string;
+  requestedChildId?: string;
+}) {
+  return resolveChildIdForUser(input.ownerUserId, input.requestedChildId);
+}
+
 export async function GET(request: Request) {
   const user = await getUserFromRequest(request);
   if (!user) {
@@ -63,9 +70,10 @@ export async function GET(request: Request) {
       userId: user.id,
       requestedChildId: requestedChildId ?? undefined,
     });
-    const childId = scope.isLinked
-      ? scope.childId
-      : await resolveChildIdForUser(scope.ownerUserId, scope.childId);
+    const childId = await resolveScopedChildId({
+      ownerUserId: scope.ownerUserId,
+      requestedChildId: scope.childId,
+    });
 
     if (!date) {
       return NextResponse.json({
@@ -155,9 +163,10 @@ export async function POST(request: Request) {
       userId: user.id,
       requestedChildId: body.childId,
     });
-    const childId = scope.isLinked
-      ? scope.childId
-      : await resolveChildIdForUser(scope.ownerUserId, scope.childId);
+    const childId = await resolveScopedChildId({
+      ownerUserId: scope.ownerUserId,
+      requestedChildId: scope.childId,
+    });
     const updated = await addMealItemsToDb(
       scope.ownerUserId,
       body.date,
@@ -240,9 +249,10 @@ export async function PATCH(request: Request) {
       userId: user.id,
       requestedChildId: body.childId,
     });
-    const childId = scope.isLinked
-      ? scope.childId
-      : await resolveChildIdForUser(scope.ownerUserId, scope.childId);
+    const childId = await resolveScopedChildId({
+      ownerUserId: scope.ownerUserId,
+      requestedChildId: scope.childId,
+    });
     const updated = await updateMealEntryInDb(
       scope.ownerUserId,
       body.date,
@@ -302,9 +312,10 @@ export async function DELETE(request: Request) {
       userId: user.id,
       requestedChildId: body.childId,
     });
-    const childId = scope.isLinked
-      ? scope.childId
-      : await resolveChildIdForUser(scope.ownerUserId, scope.childId);
+    const childId = await resolveScopedChildId({
+      ownerUserId: scope.ownerUserId,
+      requestedChildId: scope.childId,
+    });
     const updated = await removeMealEntryInDb(
       scope.ownerUserId,
       body.date,
@@ -365,9 +376,10 @@ export async function PUT(request: Request) {
       userId: user.id,
       requestedChildId: body.childId,
     });
-    const childId = scope.isLinked
-      ? scope.childId
-      : await resolveChildIdForUser(scope.ownerUserId, scope.childId);
+    const childId = await resolveScopedChildId({
+      ownerUserId: scope.ownerUserId,
+      requestedChildId: scope.childId,
+    });
     const updated = await replaceMealsByDateInDb(
       scope.ownerUserId,
       body.date,

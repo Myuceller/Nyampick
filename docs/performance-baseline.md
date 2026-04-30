@@ -6,6 +6,9 @@
 
 관련 작업 흐름: [Codex Workflow](codex-workflow.md)
 
+그래프 원본: [Performance History](performance-history.json)  
+생성 그래프: [Performance Chart](performance-chart.svg)
+
 ## 측정 원칙
 
 - 개선 전/후를 같은 기기, 같은 네트워크, 같은 계정 상태에서 비교한다.
@@ -28,13 +31,14 @@ npm run build
 | --- | ---: | ---: |
 | `/` | 6.68 kB | 166 kB |
 | `/auth` | 7.49 kB | 155 kB |
-| `/children` | 5.95 kB | 166 kB |
+| `/children` | 5.21 kB | 165 kB |
+| `/family` | 4.83 kB | 153 kB |
 | `/fridge` | 9.06 kB | 173 kB |
 | `/fridge/edit` | 7.51 kB | 166 kB |
 | `/landing` | 186 B | 101 kB |
 | `/meal/edit` | 5.98 kB | 161 kB |
 | `/meal/overview` | 4.37 kB | 159 kB |
-| `/mypage` | 5.08 kB | 158 kB |
+| `/mypage` | 4.56 kB | 157 kB |
 | `/recipe` | 11.6 kB | 175 kB |
 | Shared by all | - | 87.4 kB |
 
@@ -241,6 +245,15 @@ AI 최적화는 단순히 빠르게 만드는 것이 아니라, 같은 입력에
 | 날짜 | 변경 | 지표 | Before | After | 비고 |
 | --- | --- | --- | ---: | ---: | --- |
 | 2026-04-30 | 냉장고 편집 UI 상태를 Zustand store로 분리 | 유지보수성 | - | - | 렌더 횟수는 React Profiler로 추가 측정 필요 |
+| 2026-04-30 | 가족 연동을 `/family`로 분리하고 `/children`의 아이별 초대 코드 제거 | `/children` route size | 5.75 kB | 5.21 kB | 0.54 kB 감소 |
+| 2026-04-30 | 미사용 마이페이지 카드 컴포넌트 제거 | `/mypage` route size | 5.14 kB | 4.56 kB | 0.58 kB 감소 |
+| 2026-04-30 | 가족 연동 화면 추가 | `/family` First Load JS | - | 153 kB | 신규 라우트 |
+
+그래프 갱신:
+
+```bash
+npm run perf:report
+```
 
 ## 개선 요약 후보
 

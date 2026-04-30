@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { ArrowLeft, Link2, MoreHorizontal, X } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, X } from "lucide-react";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { useChildrenPage } from "@/features/children/hooks/use-children-page";
 import { cn } from "@/lib/utils";
@@ -43,13 +43,10 @@ export default function ChildrenPage() {
     addChild,
     cancelEditChildName,
     children,
-    codeChildId,
-    createInviteCode,
     deleteChild,
     deletingChildId,
     editingChildId,
     editingChildName,
-    inviteCodeByChildId,
     isSubmitting,
     isUpdatingName,
     linkedMode,
@@ -185,12 +182,6 @@ export default function ChildrenPage() {
                   </div>
                 ) : null}
 
-                {inviteCodeByChildId[child.id] ? (
-                  <p className="mt-4 break-all rounded-xl bg-[#eef8f2] px-3 py-2 text-[12px] font-semibold text-[#3b6e58]">
-                    초대코드: {inviteCodeByChildId[child.id]}
-                  </p>
-                ) : null}
-
                 {isActionOpen ? (
                   <div className="absolute right-4 top-11 z-10 w-[150px] overflow-hidden rounded-[14px] border border-[#e2e6e4] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
                     {!child.isPrimary ? (
@@ -216,18 +207,6 @@ export default function ChildrenPage() {
                       className="block w-full px-4 py-3 text-left text-[14px] font-semibold text-[#202725] disabled:text-[#a2aaa6]"
                     >
                       이름 변경
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void createInviteCode(child.id);
-                        setActionChildId(null);
-                      }}
-                      disabled={linkedMode || codeChildId === child.id}
-                      className="flex w-full items-center gap-1 px-4 py-3 text-left text-[14px] font-semibold text-[#202725] disabled:text-[#a2aaa6]"
-                    >
-                      <Link2 className="h-4 w-4" />
-                      초대코드
                     </button>
                     <button
                       type="button"
@@ -309,7 +288,7 @@ export default function ChildrenPage() {
         onCancel={() => setPendingDeleteChild(null)}
         onConfirm={() => {
           if (!pendingDeleteChild) return;
-          void deleteChild(pendingDeleteChild.id, pendingDeleteChild.name);
+          void deleteChild(pendingDeleteChild.id);
           setPendingDeleteChild(null);
         }}
         confirmLabel="삭제하기"
