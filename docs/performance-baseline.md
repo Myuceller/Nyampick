@@ -82,6 +82,19 @@ npm run lighthouse:recipe
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `/landing` | 0.8s | 2.6s | 0 | 0ms | 1.8s | 2.6s | 110ms |
 
+배포 환경 Lighthouse 모바일 측정:
+
+측정일: 2026-04-30 KST  
+대상: `https://nyampick.vercel.app`  
+비고: 로그인 세션 없이 측정했으므로 보호 라우트(`/`, `/fridge`, `/recipe`)는 최종 URL이 `/auth` 또는 `/auth?next=...`로 리다이렉트된 기준이다.
+
+| Page | Final URL | Performance | Accessibility | Best Practices | SEO | FCP | LCP | CLS | TBT | Speed Index | TTI | TTFB |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `/landing` | `/landing` | 99 | 96 | 100 | 100 | 1.4s | 1.7s | 0 | 8ms | 2.8s | 2.2s | 10ms |
+| `/` | `/auth` | 97 | 95 | 100 | 100 | 776ms | 2.0s | 0 | 0ms | 4.1s | 2.0s | 11ms |
+| `/fridge` | `/auth?next=%2Ffridge` | 99 | 95 | 100 | 63 | 766ms | 2.0s | 0 | 0ms | 2.1s | 2.0s | 9ms |
+| `/recipe` | `/auth?next=%2Frecipe` | 99 | 95 | 100 | 63 | 769ms | 2.1s | 0 | 18ms | 2.3s | 2.1s | 10ms |
+
 수동 측정 시에는 Chrome DevTools Lighthouse 탭에서 다음 조건을 맞춘다.
 
 | 항목 | 값 |
