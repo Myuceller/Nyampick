@@ -3,9 +3,10 @@ import { Toaster } from "sonner";
 
 import { AuthGate } from "@/components/layout/auth-gate";
 import { PwaRegister } from "@/components/layout/pwa-register";
+import { getAppUrl } from "@/lib/app-url";
 import "./globals.css";
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const appUrl = getAppUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
