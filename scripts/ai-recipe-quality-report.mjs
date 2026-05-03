@@ -231,6 +231,8 @@ function buildRateTrend(rows, options) {
 function buildMarkdown(cases, evaluatedRows) {
   const generatedAt = new Date().toISOString();
   const latestRows = latestRowsByCase(evaluatedRows);
+  const measuredCaseIds = new Set(latestRows.map((row) => row.caseId));
+  const pendingCases = cases.filter((item) => !measuredCaseIds.has(item.caseId));
   const summary = summarize(latestRows);
 
   const caseRows = cases
@@ -252,6 +254,16 @@ function buildMarkdown(cases, evaluatedRows) {
           )
           .join("\n");
 
+  const pendingRows =
+    pendingCases.length === 0
+      ? "| - | - | - |"
+      : pendingCases
+          .map(
+            (item) =>
+              `| ${item.caseId} | ${JSON.stringify(item.ingredients)} | ${item.expected} |`
+          )
+          .join("\n");
+
   return `# AI Recipe Quality Report
 
 Generated at: ${generatedAt}
@@ -261,19 +273,27 @@ Sources:
 - \`docs/ai-recipe-eval-cases.json\`
 - \`docs/ai-recipe-quality-history.json\`
 
-Summary is calculated from the latest run for each case.
+Summary is calculated from the latest measured run for each case.
 
 ## Summary
 
-| Runs | Pass rate | Quality score | Valid recommendations | Ingredient utilization | Source validity | Awkward violations | Forbidden claims |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| ${summary.total} | ${formatRate(summary.passRate)} | ${formatRate(summary.qualityScore)} | ${formatRate(summary.validRecommendationRate)} | ${formatRate(summary.ingredientUtilization)} | ${formatRate(summary.sourceValidityRate)} | ${summary.awkwardPairViolations} | ${summary.forbiddenClaimViolations} |
+| Total cases | Measured cases | Pending cases | Pass rate | Quality score | Valid recommendations | Ingredient utilization | Source validity | Awkward violations | Forbidden claims |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| ${cases.length} | ${summary.total} | ${pendingCases.length} | ${formatRate(summary.passRate)} | ${formatRate(summary.qualityScore)} | ${formatRate(summary.validRecommendationRate)} | ${formatRate(summary.ingredientUtilization)} | ${formatRate(summary.sourceValidityRate)} | ${summary.awkwardPairViolations} | ${summary.forbiddenClaimViolations} |
 
 ## Evaluation Cases
 
 | Case | Ingredients | Expected | Min ingredient use | Require source |
 | --- | --- | --- | ---: | --- |
 ${caseRows}
+
+## Pending Measurements
+
+These cases are defined but do not have a recorded AI run yet.
+
+| Case | Ingredients | Expected |
+| --- | --- | --- |
+${pendingRows}
 
 ## Latest Results
 

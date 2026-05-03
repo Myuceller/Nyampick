@@ -19,7 +19,13 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const lastAuthRequiredToastAtRef = useRef(0);
   const isPublicPath = useMemo(
-    () => pathname?.startsWith("/auth") || pathname?.startsWith("/landing"),
+    () =>
+      pathname?.startsWith("/auth") ||
+      pathname?.startsWith("/landing") ||
+      pathname?.startsWith("/about") ||
+      pathname?.startsWith("/guide") ||
+      pathname?.startsWith("/privacy") ||
+      pathname?.startsWith("/terms"),
     [pathname]
   );
   const currentPath = pathname ?? "/";

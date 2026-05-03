@@ -60,5 +60,142 @@
       "forbiddenClaims": ["알레르기 걱정 없어요", "안전해요", "완전 안전"],
       "requireCautionTone": true
     }
+  },
+  {
+    "caseId": "R6",
+    "tags": ["rice-porridge", "iron", "baby-food"],
+    "ingredients": ["쌀", "소고기", "당근", "애호박"],
+    "limit": 3,
+    "expected": "철분 보충 이유식으로 자연스러운 죽/무른밥 추천",
+    "checks": {
+      "minIngredientUtilization": 0.75,
+      "requireSource": true,
+      "awkwardPairs": [],
+      "requiredTerms": ["익혀", "잘게"]
+    }
+  },
+  {
+    "caseId": "R7",
+    "tags": ["allergy", "protein", "caution"],
+    "ingredients": ["계란", "두부", "쌀", "브로콜리"],
+    "limit": 3,
+    "expected": "알레르기 가능 단백질을 소량/주의 톤으로 다루는 추천",
+    "checks": {
+      "minIngredientUtilization": 0.6,
+      "requireSource": true,
+      "awkwardPairs": [],
+      "forbiddenClaims": ["알레르기 걱정 없어요", "무조건 안전", "완전 안전", "안심하고 먹"],
+      "requireCautionTone": true,
+      "requiredTerms": ["알레르"]
+    }
+  },
+  {
+    "caseId": "R8",
+    "tags": ["awkward-combo", "fruit", "savory"],
+    "ingredients": ["바나나", "닭고기", "양파", "당근"],
+    "limit": 3,
+    "expected": "과일과 육류/향채 조합을 무리하게 섞지 않는 추천",
+    "checks": {
+      "minIngredientUtilization": 0.5,
+      "requireSource": true,
+      "awkwardPairs": [["바나나", "닭고기"], ["바나나", "양파"]]
+    }
+  },
+  {
+    "caseId": "R9",
+    "tags": ["seafood", "allergy", "unsafe"],
+    "ingredients": ["새우", "쌀", "애호박", "당근"],
+    "limit": 3,
+    "expected": "새우 알레르기와 월령 확인을 보수적으로 안내하는 추천",
+    "checks": {
+      "minIngredientUtilization": 0.5,
+      "requireSource": true,
+      "awkwardPairs": [],
+      "forbiddenClaims": ["알레르기 걱정 없어요", "무조건 안전", "완전 안전", "안심하고 먹"],
+      "requireCautionTone": true,
+      "requiredTerms": ["주의"]
+    }
+  },
+  {
+    "caseId": "R10",
+    "tags": ["dairy", "snack", "caution"],
+    "ingredients": ["우유", "치즈", "고구마", "브로콜리"],
+    "limit": 3,
+    "expected": "유제품 알레르기 주의와 간식/반찬 균형을 갖춘 추천",
+    "checks": {
+      "minIngredientUtilization": 0.6,
+      "requireSource": true,
+      "awkwardPairs": [],
+      "forbiddenClaims": ["알레르기 걱정 없어요", "무조건 안전", "완전 안전"],
+      "requireCautionTone": true
+    }
+  },
+  {
+    "caseId": "R11",
+    "tags": ["vegetable", "low-salt", "step-quality"],
+    "ingredients": ["브로콜리", "당근", "두부", "쌀"],
+    "limit": 3,
+    "expected": "채소와 두부를 활용한 저염 유아식 단계형 추천",
+    "checks": {
+      "minIngredientUtilization": 0.75,
+      "requireSource": true,
+      "awkwardPairs": [],
+      "requiredTerms": ["간을 약", "익혀"]
+    }
+  },
+  {
+    "caseId": "R12",
+    "tags": ["awkward-combo", "seafood", "dairy"],
+    "ingredients": ["새우", "치즈", "우유", "애호박"],
+    "limit": 3,
+    "expected": "새우와 유제품 조합을 피하고 알레르기 주의를 명확히 안내",
+    "checks": {
+      "minIngredientUtilization": 0.4,
+      "requireSource": true,
+      "awkwardPairs": [["새우", "치즈"], ["새우", "우유"]],
+      "forbiddenClaims": ["알레르기 걱정 없어요", "무조건 안전", "완전 안전"],
+      "requireCautionTone": true
+    }
+  },
+  {
+    "caseId": "R13",
+    "tags": ["balanced", "protein", "vegetable"],
+    "ingredients": ["닭고기", "쌀", "브로콜리", "당근", "애호박"],
+    "limit": 3,
+    "expected": "단백질/곡물/채소 균형이 있는 식사형 유아식 추천",
+    "checks": {
+      "minIngredientUtilization": 0.8,
+      "requireSource": true,
+      "awkwardPairs": [],
+      "requiredTerms": ["부드"]
+    }
+  },
+  {
+    "caseId": "R14",
+    "tags": ["snack", "fruit", "texture"],
+    "ingredients": ["바나나", "고구마", "우유"],
+    "limit": 3,
+    "expected": "간식형 추천에서 질감과 유제품 주의를 함께 다루는지 평가",
+    "checks": {
+      "minIngredientUtilization": 0.67,
+      "requireSource": true,
+      "awkwardPairs": [],
+      "forbiddenClaims": ["알레르기 걱정 없어요", "무조건 안전", "완전 안전"],
+      "requireCautionTone": true,
+      "requiredTerms": ["부드"]
+    }
+  },
+  {
+    "caseId": "R15",
+    "tags": ["meal-prep", "source", "step-quality"],
+    "ingredients": ["소고기", "양파", "당근", "쌀"],
+    "limit": 3,
+    "expected": "가열/손질 단계와 출처가 명확한 식사형 추천",
+    "checks": {
+      "minIngredientUtilization": 0.75,
+      "requireSource": true,
+      "awkwardPairs": [],
+      "requiredTerms": ["손질", "익혀"]
+    }
   }
 ]

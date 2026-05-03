@@ -170,6 +170,15 @@ export default function LandingPage() {
           </Link>
         </div>
       </section>
+
+      <footer className="border-t border-[#edf1ef] px-5 py-6">
+        <nav className="flex flex-wrap gap-x-4 gap-y-2 text-[13px] font-semibold text-[#65716d]">
+          <Link href="/about">서비스 소개</Link>
+          <Link href="/guide/baby-meal-planner">아이 식단 관리 가이드</Link>
+          <Link href="/privacy">개인정보 처리방침</Link>
+          <Link href="/terms">이용약관</Link>
+        </nav>
+      </footer>
     </main>
   );
 }

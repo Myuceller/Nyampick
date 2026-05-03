@@ -6,7 +6,16 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: ["/landing", "/icons/", "/og-image.svg", "/manifest.webmanifest"],
+      allow: [
+        "/landing",
+        "/about",
+        "/guide/",
+        "/privacy",
+        "/terms",
+        "/icons/",
+        "/og-image.svg",
+        "/manifest.webmanifest",
+      ],
       disallow: ["/api/", "/auth", "/children", "/family", "/fridge", "/meal", "/mypage", "/recipe"],
     },
     sitemap: `${appUrl}/sitemap.xml`,

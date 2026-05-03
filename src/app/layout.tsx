@@ -9,9 +9,44 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
-  title: "냠픽",
-  description: "가정 음식 메뉴와 아이 이유식 추천 서비스",
+  title: {
+    default: "냠픽 | 아이 식단 기록과 냉장고 기반 AI 레시피 추천",
+    template: "%s | 냠픽",
+  },
+  description:
+    "아이 식단 기록, 냉장고 재료 관리, 영수증 스캔, AI 유아식 레시피 추천을 한 번에 관리하는 모바일 식단 도우미입니다.",
+  applicationName: "냠픽",
+  keywords: [
+    "냠픽",
+    "아이 식단",
+    "아기 식단",
+    "이유식",
+    "유아식",
+    "냉장고 관리",
+    "AI 레시피 추천",
+    "식단 기록",
+  ],
   manifest: "/manifest.webmanifest",
+  alternates: {
+    canonical: "/landing",
+  },
+  openGraph: {
+    title: "냠픽 | 아이 식단 기록과 냉장고 기반 AI 레시피 추천",
+    description:
+      "아이 식단 기록, 냉장고 재료 관리, 영수증 스캔, AI 유아식 레시피 추천을 모바일에서 관리하세요.",
+    url: "/landing",
+    siteName: "냠픽",
+    type: "website",
+    locale: "ko_KR",
+    images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "냠픽" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "냠픽 | 아이 식단 기록과 냉장고 기반 AI 레시피 추천",
+    description:
+      "아이 식단 기록, 냉장고 재료 관리, AI 유아식 레시피 추천을 한 번에 관리하세요.",
+    images: ["/og-image.svg"],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
