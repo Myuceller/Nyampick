@@ -4,8 +4,6 @@
 브랜치: `move-changes-20260429`  
 목적: 성능, 안정성, 비용 개선 지표를 꾸준히 기록하고 변경 전후를 검증 가능하게 만든다.
 
-관련 작업 흐름: [Codex Workflow](codex-workflow.md)
-
 그래프 원본: [Performance History](performance-history.json)  
 생성 그래프: [Performance Chart](performance-chart.svg)  
 배포 로그인 Lighthouse 그래프: [Authenticated Lighthouse Chart](lighthouse-deployed-auth-chart.svg)  
@@ -105,7 +103,7 @@ npm run lighthouse:recipe
 
 측정일: 2026-04-30 KST  
 대상: `https://nyampick.vercel.app`  
-비고: 테스트 계정으로 로그인한 Chrome profile을 Lighthouse `--chrome-flags=--user-data-dir=.tmp/lh-prod-profile`에 연결해 측정했다. 보호 라우트 최종 URL이 실제 대상 경로로 유지되는 것을 확인했다.
+비고: 인증된 Chrome profile을 Lighthouse `--chrome-flags=--user-data-dir=.tmp/lh-prod-profile`에 연결해 측정했다. 보호 라우트 최종 URL이 실제 대상 경로로 유지되는 것을 확인했다.
 
 | Page | Final URL | Performance | Accessibility | Best Practices | SEO | FCP | LCP | CLS | TBT | Speed Index | TTI | TTFB |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |

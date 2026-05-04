@@ -357,5 +357,5 @@ await mkdir(path.dirname(candidatesPath), { recursive: true });
 await writeFile(candidatesPath, `${JSON.stringify(candidates, null, 2)}\n`);
 await writeFile(reportPath, buildReport(cases, history, candidates));
 
-console.log(`Wrote ${path.relative(root, candidatesPath)}`);
-console.log(`Wrote ${path.relative(root, reportPath)}`);
+process.stdout.write(`Wrote ${path.relative(root, candidatesPath)}\n`);
+process.stdout.write(`Wrote ${path.relative(root, reportPath)}\n`);

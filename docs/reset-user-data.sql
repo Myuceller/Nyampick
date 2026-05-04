@@ -4,9 +4,9 @@
 
 do $$
 declare
-  target_user_id uuid := '05dacb81-ba8e-4d2c-90f2-2691d0b1656b';
+  target_user_id uuid := '00000000-0000-0000-0000-000000000000';
 begin
-  if target_user_id = '123'::uuid then
+  if target_user_id = '00000000-0000-0000-0000-000000000000'::uuid then
     raise exception 'Please replace target_user_id with a real auth.users.id UUID';
   end if;
 

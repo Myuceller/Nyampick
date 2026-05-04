@@ -392,5 +392,5 @@ await mkdir(path.dirname(reportPath), { recursive: true });
 await writeFile(reportPath, buildMarkdown(cases, evaluatedRows));
 await writeFile(chartPath, buildSvg(evaluatedRows));
 
-console.log(`Wrote ${path.relative(root, reportPath)}`);
-console.log(`Wrote ${path.relative(root, chartPath)}`);
+process.stdout.write(`Wrote ${path.relative(root, reportPath)}\n`);
+process.stdout.write(`Wrote ${path.relative(root, chartPath)}\n`);

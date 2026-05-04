@@ -165,4 +165,4 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${
 
 await mkdir(path.dirname(chartPath), { recursive: true });
 await writeFile(chartPath, svg);
-console.log(`Wrote ${path.relative(root, chartPath)}`);
+process.stdout.write(`Wrote ${path.relative(root, chartPath)}\n`);
