@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="380" viewBox="0 0 980 380" role="img" aria-labelledby="title desc">
+  <title id="title">Auth Lighthouse: Deployed vs Local Current</title>
+  <desc id="desc">Mobile Lighthouse comparison for /auth on deployed nyampick.kr and current local production build.</desc>
+  <rect width="980" height="380" fill="#ffffff" />
+
+  <text x="24" y="36" font-size="24" font-weight="800" fill="#202725">/auth Lighthouse Comparison</text>
+  <text x="24" y="60" font-size="13" fill="#6f7875">2026-05-13 · mobile Lighthouse · deployed site vs current local production build</text>
+
+  <g font-size="12" fill="#6f7875">
+    <rect x="168" y="74" width="14" height="14" rx="4" fill="#57bf8e" />
+    <text x="190" y="86">Deployed: https://www.nyampick.kr/auth</text>
+    <rect x="438" y="74" width="14" height="14" rx="4" fill="#27312e" />
+    <text x="460" y="86">Local current: http://localhost:3000/auth</text>
+  </g>
+
+  <g>
+    <text x="24" y="128" font-size="16" font-weight="700" fill="#202725">Performance Score</text>
+    <rect x="220" y="112" width="650" height="16" rx="5" fill="#57bf8e" />
+    <rect x="220" y="136" width="637" height="16" rx="5" fill="#27312e" />
+    <text x="878" y="125" font-size="12" fill="#202725">100</text>
+    <text x="865" y="149" font-size="12" fill="#202725">98</text>
+  </g>
+
+  <g>
+    <text x="24" y="188" font-size="16" font-weight="700" fill="#202725">LCP</text>
+    <text x="24" y="208" font-size="12" fill="#6f7875">lower is better</text>
+    <rect x="220" y="172" width="390" height="16" rx="5" fill="#57bf8e" />
+    <rect x="220" y="196" width="502" height="16" rx="5" fill="#27312e" />
+    <text x="618" y="185" font-size="12" fill="#202725">1.88s</text>
+    <text x="730" y="209" font-size="12" fill="#202725">2.41s</text>
+  </g>
+
+  <g>
+    <text x="24" y="248" font-size="16" font-weight="700" fill="#202725">Speed Index</text>
+    <text x="24" y="268" font-size="12" fill="#6f7875">lower is better</text>
+    <rect x="220" y="232" width="84" height="16" rx="5" fill="#57bf8e" />
+    <rect x="220" y="256" width="79" height="16" rx="5" fill="#27312e" />
+    <text x="312" y="245" font-size="12" fill="#202725">0.81s</text>
+    <text x="307" y="269" font-size="12" fill="#202725">0.76s</text>
+  </g>
+
+  <g>
+    <text x="24" y="308" font-size="16" font-weight="700" fill="#202725">TTFB / TBT</text>
+    <text x="24" y="328" font-size="12" fill="#6f7875">TBT is 0ms for both</text>
+    <rect x="220" y="292" width="30" height="16" rx="5" fill="#57bf8e" />
+    <rect x="220" y="316" width="235" height="16" rx="5" fill="#27312e" />
+    <text x="258" y="305" font-size="12" fill="#202725">TTFB 9ms / TBT 0ms</text>
+    <text x="463" y="329" font-size="12" fill="#202725">TTFB 71ms / TBT 0ms</text>
+  </g>
+
+  <text x="24" y="362" font-size="12" fill="#6f7875">Current local build keeps TBT and Speed Index low, but /auth LCP is slower than the deployed version in this run.</text>
+</svg>

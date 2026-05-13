@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="680" viewBox="0 0 1120 680" role="img" aria-labelledby="title desc">
+  <title id="title">API latency before and after deployment fix</title>
+  <desc id="desc">Average API response time comparison generated from docs/api-latency-history.md.</desc>
+  <style>
+    .title { font: 700 25px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #111827; }
+    .subtitle { font: 400 13px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+    .axis { font: 400 11px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+    .endpoint { font: 600 11px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
+    .value { font: 700 10px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
+    .legend { font: 600 12px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
+  </style>
+  <rect width="1120" height="680" fill="#ffffff" />
+  <text x="54" y="56" class="title">API Latency: Before vs After Region Fix</text>
+  <text x="54" y="82" class="subtitle">Average response time in milliseconds. Lower is better. After deploy uses hnd1 instead of iad1.</text>
+  <rect x="700" y="70" width="12" height="12" rx="2" fill="#ef4444" /><text x="718" y="81" class="legend">Before deploy</text><rect x="830" y="70" width="12" height="12" rx="2" fill="#2563eb" /><text x="848" y="81" class="legend">After deploy</text><rect x="960" y="70" width="12" height="12" rx="2" fill="#16a34a" /><text x="978" y="81" class="legend">Local</text>
+  <line x1="110" y1="540" x2="1010" y2="540" stroke="#cbd5e1" />
+  <line x1="110" y1="120" x2="110" y2="540" stroke="#cbd5e1" />
+  
+        <line x1="110" y1="540" x2="1010" y2="540" stroke="#e5e7eb" />
+        <text x="96" y="544" text-anchor="end" class="axis">0ms</text>
+        <line x1="110" y1="435" x2="1010" y2="435" stroke="#e5e7eb" />
+        <text x="96" y="439" text-anchor="end" class="axis">750ms</text>
+        <line x1="110" y1="330" x2="1010" y2="330" stroke="#e5e7eb" />
+        <text x="96" y="334" text-anchor="end" class="axis">1500ms</text>
+        <line x1="110" y1="225" x2="1010" y2="225" stroke="#e5e7eb" />
+        <text x="96" y="229" text-anchor="end" class="axis">2250ms</text>
+        <line x1="110" y1="120" x2="1010" y2="120" stroke="#e5e7eb" />
+        <text x="96" y="124" text-anchor="end" class="axis">3000ms</text>
+  
+        
+            <rect x="149" y="124.90000000000003" width="20" height="415.09999999999997" rx="3" fill="#ef4444">
+              <title>Before deploy /api/home/summary: avg 2965ms, p95 4905ms</title>
+            </rect>
+            <text x="159" y="117.90000000000003" text-anchor="middle" class="value">2965</text>
+            <rect x="175" y="396.5" width="20" height="143.5" rx="3" fill="#2563eb">
+              <title>After deploy /api/home/summary: avg 1025ms, p95 2360ms</title>
+            </rect>
+            <text x="185" y="389.5" text-anchor="middle" class="value">1025</text>
+            <rect x="201" y="479.38" width="20" height="60.620000000000005" rx="3" fill="#16a34a">
+              <title>Local /api/home/summary: avg 433ms, p95 904ms</title>
+            </rect>
+            <text x="211" y="472.38" text-anchor="middle" class="value">433</text>
+        <text x="185" y="568" text-anchor="middle" class="endpoint">home/summary</text>
+        
+            <rect x="299" y="307.04" width="20" height="232.95999999999998" rx="3" fill="#ef4444">
+              <title>Before deploy /api/fridge/items: avg 1664ms, p95 2930ms</title>
+            </rect>
+            <text x="309" y="300.04" text-anchor="middle" class="value">1664</text>
+            <rect x="325" y="513.82" width="20" height="26.17999999999995" rx="3" fill="#2563eb">
+              <title>After deploy /api/fridge/items: avg 187ms, p95 190ms</title>
+            </rect>
+            <text x="335" y="506.82000000000005" text-anchor="middle" class="value">187</text>
+            <rect x="351" y="523.48" width="20" height="16.519999999999982" rx="3" fill="#16a34a">
+              <title>Local /api/fridge/items: avg 118ms, p95 160ms</title>
+            </rect>
+            <text x="361" y="516.48" text-anchor="middle" class="value">118</text>
+        <text x="335" y="568" text-anchor="middle" class="endpoint">fridge/items</text>
+        
+            <rect x="449" y="428.84000000000003" width="20" height="111.15999999999997" rx="3" fill="#ef4444">
+              <title>Before deploy /api/recipes/saved: avg 794ms, p95 858ms</title>
+            </rect>
+            <text x="459" y="421.84000000000003" text-anchor="middle" class="value">794</text>
+            <rect x="475" y="490.72" width="20" height="49.27999999999997" rx="3" fill="#2563eb">
+              <title>After deploy /api/recipes/saved: avg 352ms, p95 465ms</title>
+            </rect>
+            <text x="485" y="483.72" text-anchor="middle" class="value">352</text>
+            <rect x="501" y="528.1" width="20" height="11.899999999999977" rx="3" fill="#16a34a">
+              <title>Local /api/recipes/saved: avg 85ms, p95 152ms</title>
+            </rect>
+            <text x="511" y="521.1" text-anchor="middle" class="value">85</text>
+        <text x="485" y="568" text-anchor="middle" class="endpoint">recipes/saved</text>
+        
+            <rect x="599" y="382.36" width="20" height="157.64" rx="3" fill="#ef4444">
+              <title>Before deploy /api/profile: avg 1126ms, p95 1230ms</title>
+            </rect>
+            <text x="609" y="375.36" text-anchor="middle" class="value">1126</text>
+            <rect x="625" y="491.14" width="20" height="48.860000000000014" rx="3" fill="#2563eb">
+              <title>After deploy /api/profile: avg 349ms, p95 507ms</title>
+            </rect>
+            <text x="635" y="484.14" text-anchor="middle" class="value">349</text>
+            <rect x="651" y="518.3" width="20" height="21.700000000000045" rx="3" fill="#16a34a">
+              <title>Local /api/profile: avg 155ms, p95 307ms</title>
+            </rect>
+            <text x="661" y="511.29999999999995" text-anchor="middle" class="value">155</text>
+        <text x="635" y="568" text-anchor="middle" class="endpoint">profile</text>
+        
+            <rect x="749" y="320.20000000000005" width="20" height="219.79999999999995" rx="3" fill="#ef4444">
+              <title>Before deploy /api/children: avg 1570ms, p95 1577ms</title>
+            </rect>
+            <text x="759" y="313.20000000000005" text-anchor="middle" class="value">1570</text>
+            <rect x="775" y="482.32" width="20" height="57.68000000000001" rx="3" fill="#2563eb">
+              <title>After deploy /api/children: avg 412ms, p95 581ms</title>
+            </rect>
+            <text x="785" y="475.32" text-anchor="middle" class="value">412</text>
+            <rect x="801" y="511.72" width="20" height="28.279999999999973" rx="3" fill="#16a34a">
+              <title>Local /api/children: avg 202ms, p95 350ms</title>
+            </rect>
+            <text x="811" y="504.72" text-anchor="middle" class="value">202</text>
+        <text x="785" y="568" text-anchor="middle" class="endpoint">children</text>
+        
+            <rect x="899" y="218.56" width="20" height="321.44" rx="3" fill="#ef4444">
+              <title>Before deploy /api/family: avg 2296ms, p95 2661ms</title>
+            </rect>
+            <text x="909" y="211.56" text-anchor="middle" class="value">2296</text>
+            <rect x="925" y="461.46" width="20" height="78.54000000000002" rx="3" fill="#2563eb">
+              <title>After deploy /api/family: avg 561ms, p95 732ms</title>
+            </rect>
+            <text x="935" y="454.46" text-anchor="middle" class="value">561</text>
+            <rect x="951" y="504.02" width="20" height="35.98000000000002" rx="3" fill="#16a34a">
+              <title>Local /api/family: avg 257ms, p95 359ms</title>
+            </rect>
+            <text x="961" y="497.02" text-anchor="middle" class="value">257</text>
+        <text x="935" y="568" text-anchor="middle" class="endpoint">family</text>
+</svg>

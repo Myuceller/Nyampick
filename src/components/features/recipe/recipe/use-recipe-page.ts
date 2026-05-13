@@ -1,6 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { authedFetch } from "@/lib/authed-fetch";
+import { authedFetch, authedJson } from "@/lib/authed-fetch";
 import type { ApiMessageResponseDto } from "@/lib/dto/common";
 import type { FridgeItemsResponseDto } from "@/lib/dto/fridge";
 import type {
@@ -131,9 +131,7 @@ export function useRecipePage() {
   const loadSavedRecipes = async () => {
     try {
       setIsLoadingSavedRecipes(true);
-      const res = await authedFetch("/api/recipes/saved", { cache: "no-store" });
-      const json = (await res.json().catch(() => ({}))) as SavedRecipesResponseDto;
-      if (!res.ok) throw new Error(json.message ?? "저장 레시피를 불러오지 못했습니다.");
+      const json = await authedJson<SavedRecipesResponseDto>("/api/recipes/saved");
 
       const mapped = (json.items ?? []).map(mapSavedRecipeDtoToItem);
       setRecipes(mapped);
@@ -260,9 +258,7 @@ export function useRecipePage() {
   const loadFridgeItemsForAi = async () => {
     try {
       setIsLoadingFridge(true);
-      const res = await authedFetch("/api/fridge/items", { cache: "no-store" });
-      const json = (await res.json().catch(() => ({}))) as FridgeItemsResponseDto;
-      if (!res.ok) throw new Error(json.message ?? "냉장고 재료를 불러오지 못했습니다.");
+      const json = await authedJson<FridgeItemsResponseDto>("/api/fridge/items");
       setFridgeItems((json.items ?? []) as FridgeItem[]);
     } catch (error) {
       const message =

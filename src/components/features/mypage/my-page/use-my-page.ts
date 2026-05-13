@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { setCachedHasSession } from "@/lib/auth-session-cache";
-import { authedFetch } from "@/lib/authed-fetch";
+import { authedJson } from "@/lib/authed-fetch";
 import type { ChildrenResponseDto } from "@/lib/dto/children";
 import type { ProfileResponseDto } from "@/lib/dto/profile";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
@@ -39,19 +39,19 @@ export function useMyPage() {
           return;
         }
 
-        const [profileRes, childrenRes, familyRes] = await Promise.all([
-          authedFetch("/api/profile", { cache: "no-store" }),
-          authedFetch("/api/children", { cache: "no-store" }),
-          authedFetch("/api/family", { cache: "no-store" }),
+        const [profileResult, childrenResult, familyResult] = await Promise.allSettled([
+          authedJson<ProfileResponseDto>("/api/profile"),
+          authedJson<ChildrenResponseDto>("/api/children"),
+          authedJson<{ members?: FamilyAvatarSummary[] }>("/api/family"),
         ]);
-        if (profileRes.ok) {
-          const json = (await profileRes.json()) as ProfileResponseDto;
-          setProfileName(json.profile?.name ?? "");
-          setProfileImageUrl(json.profile?.profileImageUrl ?? "");
+
+        if (profileResult.status === "fulfilled") {
+          setProfileName(profileResult.value.profile?.name ?? "");
+          setProfileImageUrl(profileResult.value.profile?.profileImageUrl ?? "");
         }
-        if (childrenRes.ok) {
-          const json = (await childrenRes.json()) as ChildrenResponseDto;
-          const children = json.children ?? [];
+
+        if (childrenResult.status === "fulfilled") {
+          const children = childrenResult.value.children ?? [];
           setChildCount(children.length);
           const primary = children.find((child) => child.isPrimary) ?? children[0];
           if (primary) {
@@ -60,12 +60,10 @@ export function useMyPage() {
             setBabyPhotoUrl(primary.photoUrl ?? "");
           }
         }
-        if (familyRes.ok) {
-          const json = (await familyRes.json()) as {
-            members?: FamilyAvatarSummary[];
-          };
-          setFamilyMemberCount(json.members?.length ?? 0);
-          setFamilyAvatars(json.members ?? []);
+
+        if (familyResult.status === "fulfilled") {
+          setFamilyMemberCount(familyResult.value.members?.length ?? 0);
+          setFamilyAvatars(familyResult.value.members ?? []);
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "내 정보를 불러오지 못했습니다.");

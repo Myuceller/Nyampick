@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { authedFetch } from "@/lib/authed-fetch";
+import { authedJson } from "@/lib/authed-fetch";
 import type { DayMeals } from "@/lib/types";
 import {
   formatDateKey,
@@ -24,25 +24,22 @@ export function useHomePage() {
     const load = async () => {
       let baseData: Record<string, DayMeals> = {};
       try {
-        const summaryRes = await authedFetch("/api/home/summary", { cache: "no-store" });
-        if (summaryRes.ok) {
-          const summaryJson = (await summaryRes.json()) as {
-            summary?: {
-              meals?: Record<string, DayMeals>;
-              primaryChild?: { name: string; monthsOld: number; photoUrl?: string } | null;
-            };
+        const summaryJson = await authedJson<{
+          summary?: {
+            meals?: Record<string, DayMeals>;
+            primaryChild?: { name: string; monthsOld: number; photoUrl?: string } | null;
           };
-          baseData = summaryJson.summary?.meals ?? {};
-          const primary = summaryJson.summary?.primaryChild;
-          if (primary) {
-            setChildName(primary.name);
-            setChildMonthsOld(primary.monthsOld);
-            setChildPhotoUrl(primary.photoUrl ?? "");
-          } else {
-            setChildName("");
-            setChildMonthsOld(null);
-            setChildPhotoUrl("");
-          }
+        }>("/api/home/summary");
+        baseData = summaryJson.summary?.meals ?? {};
+        const primary = summaryJson.summary?.primaryChild;
+        if (primary) {
+          setChildName(primary.name);
+          setChildMonthsOld(primary.monthsOld);
+          setChildPhotoUrl(primary.photoUrl ?? "");
+        } else {
+          setChildName("");
+          setChildMonthsOld(null);
+          setChildPhotoUrl("");
         }
       } catch {
         baseData = {};

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { authedFetch } from "@/lib/authed-fetch";
+import { authedFetch, authedJson } from "@/lib/authed-fetch";
 import {
   FRIDGE_CATEGORY_LABEL,
   FRIDGE_CATEGORY_TEXT_COLOR,
@@ -100,12 +100,10 @@ export function useFridgePage() {
   const loadFridgeItems = async () => {
     try {
       setIsLoading(true);
-      const res = await authedFetch("/api/fridge/items", { cache: "no-store" });
-      const json = (await res.json().catch(() => ({}))) as {
+      const json = await authedJson<{
         items?: FridgeItem[];
         message?: string;
-      };
-      if (!res.ok) throw new Error(json.message ?? "냉장고 데이터를 불러오지 못했습니다.");
+      }>("/api/fridge/items");
       setFridgeItems(json.items ?? []);
     } catch (error) {
       const message =
