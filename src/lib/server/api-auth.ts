@@ -82,7 +82,8 @@ async function resolveCanonicalUserIdByEmail(
     .limit(1);
   if (error) throw error;
 
-  const canonical = data?.[0]?.id ?? user.id;
+  const rows = data as Array<{ id: string }> | null;
+  const canonical = rows?.[0]?.id ?? user.id;
   EMAIL_CANONICAL_CACHE.set(email, {
     userId: canonical,
     expiresAt: Date.now() + AUTH_CACHE_TTL_MS,

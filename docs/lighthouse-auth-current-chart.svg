@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="420" viewBox="0 0 980 420" role="img" aria-labelledby="title desc">
+  <title id="title">Authenticated Lighthouse Mobile - 2026-05-13</title>
+  <desc id="desc">Authenticated Lighthouse performance score, LCP, Speed Index, and TBT for protected routes on www.nyampick.kr.</desc>
+  <rect width="980" height="420" fill="#ffffff" />
+
+  <text x="24" y="36" font-size="24" font-weight="800" fill="#202725">Authenticated Lighthouse Mobile</text>
+  <text x="24" y="60" font-size="13" fill="#6f7875">2026-05-13 · www.nyampick.kr · authenticated Chrome profile</text>
+
+  <g font-size="12" fill="#6f7875">
+    <circle cx="168" cy="78" r="5" fill="#57bf8e" />
+    <text x="180" y="82">LCP</text>
+    <circle cx="246" cy="78" r="5" fill="#27312e" />
+    <text x="258" y="82">Speed Index</text>
+    <circle cx="356" cy="78" r="5" fill="#f1a04f" />
+    <text x="368" y="82">TBT</text>
+  </g>
+
+  <g>
+    <line x1="24" y1="142" x2="956" y2="142" stroke="#edf1ef" />
+    <text x="24" y="104" font-size="16" font-weight="700" fill="#202725">/</text>
+    <text x="24" y="126" font-size="12" fill="#6f7875">score 96</text>
+    <rect x="168" y="90" width="344.0" height="13" rx="4" fill="#57bf8e" />
+    <rect x="168" y="110" width="516.3" height="13" rx="4" fill="#27312e" />
+    <rect x="168" y="130" width="39.0" height="13" rx="4" fill="#f1a04f" />
+    <text x="520" y="101" font-size="12" fill="#202725">LCP 2.12s</text>
+    <text x="693" y="121" font-size="12" fill="#202725">SI 4.77s</text>
+    <text x="215" y="141" font-size="12" fill="#202725">TBT 9ms</text>
+  </g>
+
+  <g>
+    <line x1="24" y1="208" x2="956" y2="208" stroke="#edf1ef" />
+    <text x="24" y="170" font-size="16" font-weight="700" fill="#202725">/fridge</text>
+    <text x="24" y="192" font-size="12" fill="#6f7875">score 97</text>
+    <rect x="168" y="156" width="344.3" height="13" rx="4" fill="#57bf8e" />
+    <rect x="168" y="176" width="460.4" height="13" rx="4" fill="#27312e" />
+    <rect x="168" y="196" width="2" height="13" rx="4" fill="#f1a04f" />
+    <text x="520" y="167" font-size="12" fill="#202725">LCP 2.12s</text>
+    <text x="636" y="187" font-size="12" fill="#202725">SI 4.25s</text>
+    <text x="178" y="207" font-size="12" fill="#202725">TBT 0ms</text>
+  </g>
+
+  <g>
+    <line x1="24" y1="274" x2="956" y2="274" stroke="#edf1ef" />
+    <text x="24" y="236" font-size="16" font-weight="700" fill="#202725">/recipe</text>
+    <text x="24" y="258" font-size="12" fill="#6f7875">score 98</text>
+    <rect x="168" y="222" width="343.2" height="13" rx="4" fill="#57bf8e" />
+    <rect x="168" y="242" width="399.5" height="13" rx="4" fill="#27312e" />
+    <rect x="168" y="262" width="8.7" height="13" rx="4" fill="#f1a04f" />
+    <text x="519" y="233" font-size="12" fill="#202725">LCP 2.11s</text>
+    <text x="576" y="253" font-size="12" fill="#202725">SI 3.69s</text>
+    <text x="185" y="273" font-size="12" fill="#202725">TBT 2ms</text>
+  </g>
+
+  <g>
+    <line x1="24" y1="340" x2="956" y2="340" stroke="#edf1ef" />
+    <text x="24" y="302" font-size="16" font-weight="700" fill="#202725">/mypage</text>
+    <text x="24" y="324" font-size="12" fill="#6f7875">score 95</text>
+    <rect x="168" y="288" width="295.8" height="13" rx="4" fill="#57bf8e" />
+    <rect x="168" y="308" width="623.0" height="13" rx="4" fill="#27312e" />
+    <rect x="168" y="328" width="13.0" height="13" rx="4" fill="#f1a04f" />
+    <text x="472" y="299" font-size="12" fill="#202725">LCP 1.82s</text>
+    <text x="799" y="319" font-size="12" fill="#202725">SI 5.75s</text>
+    <text x="189" y="339" font-size="12" fill="#202725">TBT 3ms</text>
+  </g>
+
+  <text x="24" y="398" font-size="12" fill="#6f7875">Lower bars are better for LCP, Speed Index, and TBT. /mypage currently has the slowest visual completion by Speed Index.</text>
+</svg>

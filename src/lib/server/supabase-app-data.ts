@@ -294,7 +294,6 @@ export async function listFridgeItemsFromDb(
     keyword?: string;
   }
 ): Promise<FridgeItem[]> {
-  await ensureAppSeedData(userId);
   const supabase = getSupabaseAdmin();
   let query = supabase
     .from("fridge_items")
