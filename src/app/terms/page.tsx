@@ -94,12 +94,12 @@ const sections = [
 export default function TermsPage() {
   return (
     <main className="mx-auto min-h-[100dvh] w-full max-w-[480px] bg-[#fdfefd] px-5 pb-12 pt-8 text-[#202725]">
-      <Link href="/landing" className="inline-flex items-center gap-2 text-[14px] font-bold text-[#4d6b5e]">
+      <Link href="/" className="inline-flex items-center gap-2 text-[14px] font-bold text-[#4d6b5e]">
         <ArrowLeft className="h-4 w-4" />
         냠픽으로 돌아가기
       </Link>
 
-      <h1 className="mt-10 text-[30px] font-extrabold">이용약관</h1>
+      <h1 className="mt-10 text-[24px] font-extrabold">이용약관</h1>
       <p className="mt-4 text-[14px] leading-relaxed text-[#65716d]">
         시행일: 2026년 5월 3일
         <br />

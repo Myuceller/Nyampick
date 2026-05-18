@@ -72,7 +72,7 @@ export default function FridgePage() {
                           {item.name}
                         </span>
                         {item.quantity ? (
-                          <span className="text-[31px] font-semibold text-[#2f8d68]">
+                          <span className="text-[24px] font-semibold text-[#2f8d68]">
                             {item.quantity}
                           </span>
                         ) : null}
@@ -300,7 +300,7 @@ export default function FridgePage() {
               <>
                 <div className="mb-5 flex items-center justify-between">
                   <span className="w-6" />
-                  <h3 className="text-[35px] font-bold text-[#1f2725]">영수증 스캔</h3>
+                  <h3 className="text-[20px] font-bold text-[#1f2725]">영수증 스캔</h3>
                   <button
                     type="button"
                     onClick={vm.closeReceiptPopup}
@@ -315,7 +315,7 @@ export default function FridgePage() {
                   <div className="mb-5 flex h-28 w-28 items-center justify-center rounded-[18px] bg-[#e8eeeb]">
                     <Camera className="h-10 w-10 text-[#3b7b5e]" />
                   </div>
-                  <p className="text-[40px] font-bold text-[#1f2725]">영수증 사진을 찍어주세요</p>
+                  <p className="text-[22px] font-bold text-[#1f2725]">영수증 사진을 찍어주세요</p>
                   <p className="mt-1 text-[16px] text-[#8a9491]">장 본 내역을 자동으로 인식해요</p>
                 </div>
 
@@ -357,7 +357,7 @@ export default function FridgePage() {
                   <div className="mb-6 flex h-28 w-28 items-center justify-center rounded-[18px] bg-[#e8eeeb]">
                     <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#98aba2] border-t-[#57bf8e]" />
                   </div>
-                  <p className="text-[35px] font-bold text-[#1f2725]">{vm.receiptStageLabel}</p>
+                  <p className="text-[22px] font-bold text-[#1f2725]">{vm.receiptStageLabel}</p>
                   <p className="mt-1 text-[16px] text-[#8a9491]">{vm.receiptStageDescription}</p>
                   <div className="mt-6 w-full max-w-[260px]">
                     <div className="h-2.5 overflow-hidden rounded-full bg-[#dce8e2]">
@@ -380,7 +380,7 @@ export default function FridgePage() {
               <>
                 <div className="mb-5 flex items-center justify-between">
                   <span className="w-6" />
-                  <h3 className="text-[31px] font-semibold text-[#1f2725] underline decoration-[1px] underline-offset-4">
+                  <h3 className="text-[20px] font-semibold text-[#1f2725] underline decoration-[1px] underline-offset-4">
                     스캔 결과 확인
                   </h3>
                   <button

@@ -42,17 +42,23 @@ const guideItems = [
   },
 ];
 
+const relatedGuides = [
+  { href: "/guide/baby-meal-plan", label: "아기 식단표 짜는 법" },
+  { href: "/guide/baby-food-cube-storage", label: "이유식 큐브 보관과 정리 방법" },
+  { href: "/guide/fridge-ingredient-management", label: "냉장고 재료로 유아식 준비하는 법" },
+];
+
 export default function BabyMealPlannerGuidePage() {
   return (
     <main className="mx-auto min-h-[100dvh] w-full max-w-[480px] bg-[#fdfefd] px-5 pb-12 pt-8 text-[#202725]">
-      <Link href="/landing" className="inline-flex items-center gap-2 text-[14px] font-bold text-[#4d6b5e]">
+      <Link href="/" className="inline-flex items-center gap-2 text-[14px] font-bold text-[#4d6b5e]">
         <ArrowLeft className="h-4 w-4" />
         냠픽으로 돌아가기
       </Link>
 
       <section className="pt-10">
         <p className="text-[14px] font-extrabold text-[#2f9569]">Guide</p>
-        <h1 className="mt-3 text-[33px] font-extrabold leading-[1.22]">
+        <h1 className="mt-3 text-[28px] font-extrabold leading-[1.25]">
           아이 식단 관리를
           <br />
           더 쉽게 시작하는 방법
@@ -83,6 +89,17 @@ export default function BabyMealPlannerGuidePage() {
           식단 기록, 냉장고 재료 관리, 영수증 스캔, AI 레시피 추천을 같은 데이터 흐름에서
           관리해 아이 식사 준비 과정을 줄입니다.
         </p>
+      </section>
+
+      <section className="mt-10 border-t border-[#edf1ef] pt-8">
+        <h2 className="text-[20px] font-extrabold">더 자세히 보기</h2>
+        <div className="mt-4 space-y-2 text-[15px] font-semibold text-[#4d6b5e]">
+          {relatedGuides.map((guide) => (
+            <Link key={guide.href} className="block" href={guide.href}>
+              {guide.label}
+            </Link>
+          ))}
+        </div>
       </section>
 
       <Link

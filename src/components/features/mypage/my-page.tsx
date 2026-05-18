@@ -165,7 +165,7 @@ export function MyPage() {
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
-          <h1 className="text-[25px] font-extrabold tracking-[-0.02em] text-[#202725]">
+          <h1 className="text-[24px] font-extrabold tracking-[-0.02em] text-[#202725]">
             마이페이지
           </h1>
         </div>
@@ -182,7 +182,7 @@ export function MyPage() {
               <button
                 type="button"
                 onClick={vm.openGuardianProfilePage}
-                className="mt-5 block w-full text-left text-[24px] font-extrabold tracking-[-0.02em] text-[#202725]"
+                className="mt-5 block w-full text-left text-[20px] font-extrabold tracking-[-0.02em] text-[#202725]"
               >
                 {guardianName}
                 <span className="font-medium text-[#8a9490]">님</span>
@@ -293,8 +293,11 @@ export function MyPage() {
               >
                 개발팀에게 문의하기
               </MenuButton>
-              <MenuButton onClick={() => toast.message("개인정보 처리방침은 준비 중입니다.")}>
+              <MenuButton onClick={vm.openPrivacyPage}>
                 개인정보 처리방침
+              </MenuButton>
+              <MenuButton onClick={vm.openTermsPage}>
+                이용약관
               </MenuButton>
               <div className="flex items-center justify-between py-3">
                 <span className="text-[16px] font-medium text-[#202725]">버전정보</span>

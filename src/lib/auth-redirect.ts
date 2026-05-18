@@ -1,4 +1,4 @@
-const DEFAULT_AUTH_NEXT_PATH = "/";
+const DEFAULT_AUTH_NEXT_PATH = "/meal";
 
 export function sanitizeAuthNextPath(value: string | null | undefined) {
   if (!value) return DEFAULT_AUTH_NEXT_PATH;

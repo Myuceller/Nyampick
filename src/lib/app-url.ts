@@ -1,4 +1,11 @@
 export function getAppUrl() {
+  const canonicalUrl = process.env.NEXT_PUBLIC_CANONICAL_URL?.trim();
+  if (canonicalUrl) return canonicalUrl.replace(/\/$/, "");
+
+  if (process.env.NODE_ENV === "production") {
+    return "https://www.nyampick.kr";
+  }
+
   const explicitUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
   if (explicitUrl) return explicitUrl.replace(/\/$/, "");
 

@@ -39,7 +39,7 @@ export function RecipeDetailOverlay({
           </button>
         </div>
 
-        <h2 className="text-[42px] font-black leading-tight text-[#232927]">{recipe.title}</h2>
+        <h2 className="text-[24px] font-extrabold leading-tight text-[#232927]">{recipe.title}</h2>
         {recipe.subtitle ? <p className="mt-2 text-[15px] font-medium text-[#7d8783]">{recipe.subtitle}</p> : null}
 
         <section className="mt-8">

@@ -20,6 +20,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const lastAuthRequiredToastAtRef = useRef(0);
   const isPublicPath = useMemo(
     () =>
+      pathname === "/" ||
       pathname?.startsWith("/auth") ||
       pathname?.startsWith("/landing") ||
       pathname?.startsWith("/about") ||

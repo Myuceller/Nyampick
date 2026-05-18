@@ -123,7 +123,7 @@ export function AiSheet({
             <div className="flex h-36 w-36 items-center justify-center rounded-full bg-[#e6dbef]">
               <LoaderCircle className="h-16 w-16 animate-spin text-[#8f24e8]" />
             </div>
-            <h4 className="mt-10 text-[36px] font-black text-[#202624]">{aiStageLabel}</h4>
+            <h4 className="mt-8 text-[22px] font-extrabold text-[#202624]">{aiStageLabel}</h4>
             <p className="mt-2 text-[15px] font-medium text-[#7d8682]">{aiStageDescription}</p>
             <div className="mt-6 w-full max-w-[260px]">
               <div className="h-2.5 overflow-hidden rounded-full bg-[#dfd4f5]">

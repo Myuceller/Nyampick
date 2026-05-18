@@ -1,6 +1,6 @@
 # API Latency History
 
-배포/로컬 API 응답 시간 그래프의 원본 데이터다. 새 측정값을 표에 추가한 뒤 `npm run perf:api-chart`를 실행하면 `docs/api-latency-chart.svg`가 다시 생성된다.
+배포/로컬 API 응답 시간의 원본 데이터다. 새 측정값은 표에 행으로 추가한다.
 
 | Date | Scenario | Origin | Endpoint | Avg ms | P95 ms | Notes |
 | --- | --- | --- | --- | ---: | ---: | --- |

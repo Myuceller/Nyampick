@@ -8,13 +8,13 @@ export const metadata: Metadata = {
   description:
     "아이 식단 기록, 냉장고 재료 관리, 영수증 스캔, AI 레시피 추천을 한 번에 관리하는 모바일 식단 도우미입니다.",
   alternates: {
-    canonical: "/landing",
+    canonical: "/",
   },
   openGraph: {
     title: "냠픽 - 아이 식단과 냉장고 관리",
     description:
       "아기 식단 기록부터 냉장고 재료 관리까지 모바일에서 간편하게 정리하세요.",
-    url: "/landing",
+    url: "/",
     type: "website",
     images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "냠픽" }],
   },
@@ -49,6 +49,13 @@ const previewMeals = [
   { label: "아침", value: "소고기 미역죽" },
   { label: "점심", value: "닭고기 채소죽" },
   { label: "저녁", value: "단호박 두부죽" },
+];
+
+const guides = [
+  { href: "/guide/baby-meal-planner", title: "아이 식단 관리 가이드" },
+  { href: "/guide/baby-meal-plan", title: "아기 식단표 짜는 법" },
+  { href: "/guide/baby-food-cube-storage", title: "이유식 큐브 보관 방법" },
+  { href: "/guide/fridge-ingredient-management", title: "냉장고 재료로 유아식 준비하는 법" },
 ];
 
 export default function LandingPage() {
@@ -168,6 +175,21 @@ export default function LandingPage() {
           >
             무료로 시작하기
           </Link>
+        </div>
+      </section>
+
+      <section className="border-t border-[#edf1ef] px-5 py-8">
+        <h2 className="text-[22px] font-extrabold">아이 식단 가이드</h2>
+        <div className="mt-5 space-y-2">
+          {guides.map((guide) => (
+            <Link
+              key={guide.href}
+              href={guide.href}
+              className="block rounded-[14px] bg-[#f6f7f7] px-4 py-3 text-[15px] font-semibold text-[#33413d]"
+            >
+              {guide.title}
+            </Link>
+          ))}
         </div>
       </section>
 

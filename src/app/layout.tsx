@@ -29,13 +29,13 @@ export const metadata: Metadata = {
   ],
   manifest: "/manifest.webmanifest",
   alternates: {
-    canonical: "/landing",
+    canonical: "/",
   },
   openGraph: {
     title: "냠픽 | 아이 식단 기록과 냉장고 기반 AI 레시피 추천",
     description:
       "아이 식단 기록, 냉장고 재료 관리, 영수증 스캔, AI 유아식 레시피 추천을 모바일에서 관리하세요.",
-    url: "/landing",
+    url: "/",
     siteName: "냠픽",
     type: "website",
     locale: "ko_KR",

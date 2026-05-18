@@ -10,13 +10,14 @@ import { cn } from "@/lib/utils";
 export type TabId = "meal" | "fridge" | "recipe" | "mypage";
 
 const tabs: { id: TabId; label: string; icon: typeof CalendarDays; href: string }[] = [
-  { id: "meal", label: "식단", icon: CalendarDays, href: "/" },
+  { id: "meal", label: "식단", icon: CalendarDays, href: "/meal" },
   { id: "fridge", label: "냉장고", icon: Package2, href: "/fridge" },
   { id: "recipe", label: "레시피", icon: ChefHat, href: "/recipe" },
   { id: "mypage", label: "마이페이지", icon: User, href: "/mypage" },
 ];
 
 function tabFromPath(pathname: string): TabId {
+  if (pathname.startsWith("/meal")) return "meal";
   if (pathname.startsWith("/fridge")) return "fridge";
   if (pathname.startsWith("/recipe")) return "recipe";
   if (pathname.startsWith("/mypage")) return "mypage";

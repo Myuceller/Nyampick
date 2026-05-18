@@ -9,25 +9,14 @@
 | 항목 | 파일 |
 | --- | --- |
 | 번들 사이즈 이력 원본 | [Performance History](performance-history.json) |
-| 번들 사이즈 그래프 | [Performance Chart](performance-chart.svg) |
 | Lighthouse 이력 원본 | [Lighthouse Performance History](lighthouse-performance-history.md) |
-| Lighthouse 점/선 그래프 | [Lighthouse Performance Trend](lighthouse-performance-trend.svg) |
 | API 응답 시간 이력 원본 | [API Latency History](api-latency-history.md) |
-| API 응답 시간 비교 그래프 | [API Latency Chart](api-latency-chart.svg) |
-| 최신 배포 로그인 Lighthouse 막대그래프 | [Current Authenticated Lighthouse Chart](lighthouse-auth-current-chart.svg) |
-| Auth 배포/로컬 비교 그래프 | [Auth Deployed vs Local Lighthouse Chart](lighthouse-auth-deployed-vs-local-chart.svg) |
 | AI 성능 리포트 | [AI Performance Report](ai-performance-report.md) |
 | AI 레시피 품질 리포트 | [AI Recipe Quality Report](ai-recipe-quality-report.md) |
 
 ## 업데이트 방법
 
-Lighthouse 성능 변화를 추가할 때는 [lighthouse-performance-history.md](lighthouse-performance-history.md)에 행을 추가한 뒤 그래프를 재생성한다.
-
-```bash
-npm run perf:lighthouse
-```
-
-번들 사이즈 그래프는 기존처럼 [performance-history.json](performance-history.json)을 수정한 뒤 실행한다.
+번들 사이즈 변화는 [performance-history.json](performance-history.json)에 기록하고 리포트를 갱신한다.
 
 ```bash
 npm run perf:report

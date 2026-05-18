@@ -40,14 +40,14 @@ const features = [
 export default function AboutPage() {
   return (
     <main className="mx-auto min-h-[100dvh] w-full max-w-[480px] bg-[#fdfefd] px-5 pb-12 pt-8 text-[#202725]">
-      <Link href="/landing" className="inline-flex items-center gap-2 text-[14px] font-bold text-[#4d6b5e]">
+      <Link href="/" className="inline-flex items-center gap-2 text-[14px] font-bold text-[#4d6b5e]">
         <ArrowLeft className="h-4 w-4" />
         냠픽으로 돌아가기
       </Link>
 
       <section className="pt-10">
         <p className="text-[14px] font-extrabold text-[#2f9569]">Nyampick</p>
-        <h1 className="mt-3 text-[34px] font-extrabold leading-[1.2]">
+        <h1 className="mt-3 text-[28px] font-extrabold leading-[1.25]">
           아이 식단과 냉장고를
           <br />
           한 흐름으로 관리해요

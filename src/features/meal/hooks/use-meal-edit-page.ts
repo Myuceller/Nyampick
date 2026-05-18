@@ -185,7 +185,7 @@ export function useMealEditPage() {
     });
   };
 
-  const goHome = () => router.push("/");
+  const goHome = () => router.push("/meal");
 
   const saveAndGoHome = async () => {
     if (!date) {

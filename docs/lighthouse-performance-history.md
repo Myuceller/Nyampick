@@ -1,6 +1,6 @@
 # Lighthouse Performance History
 
-이 파일은 Lighthouse 성능 변화 그래프의 원본 데이터다. 새 측정값을 표에 추가한 뒤 `npm run perf:lighthouse`를 실행하면 `docs/lighthouse-performance-trend.svg`가 다시 생성된다.
+이 파일은 Lighthouse 성능 변화의 원본 데이터다. 새 측정값은 표에 행으로 추가한다.
 
 숫자는 Lighthouse JSON에서 가져온 원값을 사람이 읽기 쉬운 단위로 기록한다.
 

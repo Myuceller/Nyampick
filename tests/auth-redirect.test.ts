@@ -32,15 +32,15 @@ function withWindowHref(href: string, run: () => void) {
 test("sanitizeAuthNextPath allows only internal non-auth paths", () => {
   assert.equal(sanitizeAuthNextPath("/fridge?tab=expired"), "/fridge?tab=expired");
   assert.equal(sanitizeAuthNextPath("/"), "/");
-  assert.equal(sanitizeAuthNextPath(null), "/");
-  assert.equal(sanitizeAuthNextPath("https://example.com/fridge"), "/");
-  assert.equal(sanitizeAuthNextPath("//example.com/fridge"), "/");
-  assert.equal(sanitizeAuthNextPath("/auth?next=/fridge"), "/");
+  assert.equal(sanitizeAuthNextPath(null), "/meal");
+  assert.equal(sanitizeAuthNextPath("https://example.com/fridge"), "/meal");
+  assert.equal(sanitizeAuthNextPath("//example.com/fridge"), "/meal");
+  assert.equal(sanitizeAuthNextPath("/auth?next=/fridge"), "/meal");
 });
 
 test("buildAuthRedirectPath adds next only when the target is not the default home path", () => {
   assert.equal(buildAuthRedirectPath("/fridge?tab=expired"), "/auth?next=%2Ffridge%3Ftab%3Dexpired");
-  assert.equal(buildAuthRedirectPath("/"), "/auth");
+  assert.equal(buildAuthRedirectPath("/meal"), "/auth");
   assert.equal(buildAuthRedirectPath("https://example.com/fridge"), "/auth");
 });
 
@@ -51,7 +51,7 @@ test("getAuthNextPath reads and sanitizes next from the current URL", () => {
   });
 
   withWindowHref("https://nyampick.test/auth?next=https%3A%2F%2Fevil.test", () => {
-    assert.equal(getAuthNextPath(), "/");
+    assert.equal(getAuthNextPath(), "/meal");
     assert.equal(hasAuthNextPath(), false);
   });
 });

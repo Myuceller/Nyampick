@@ -49,10 +49,10 @@ OPENAI_MODEL=gpt-4.1-mini
 OPENAI_VISION_MODEL=gpt-4.1-mini
 ```
 
-배포 환경에서는 `NEXT_PUBLIC_APP_URL`을 실제 배포 주소로 설정해야 합니다.
+배포 환경에서는 SEO 기준 도메인을 `NEXT_PUBLIC_CANONICAL_URL`로 설정합니다.
 
 ```env
-NEXT_PUBLIC_APP_URL=https://nyampick.vercel.app
+NEXT_PUBLIC_CANONICAL_URL=https://www.nyampick.kr
 ```
 
 ## 스크립트

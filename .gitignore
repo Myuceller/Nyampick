@@ -41,3 +41,6 @@ next-env.d.ts
 
 # local design playgrounds
 baby-meal-planner-ui/
+
+# generated docs artifacts
+docs/*.svg

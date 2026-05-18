@@ -98,5 +98,7 @@ export function useMyPage() {
     openGuardianProfilePage: () => router.push("/mypage/profile"),
     openChildrenPage: () => router.push("/children"),
     openFamilyPage: () => router.push("/family"),
+    openPrivacyPage: () => router.push("/privacy"),
+    openTermsPage: () => router.push("/terms"),
   };
 }
