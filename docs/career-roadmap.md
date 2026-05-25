@@ -122,6 +122,7 @@
 
 - GitHub Actions에서 `npm ci`, `npm run lint`, `npm run test:unit`, `npm run build` 실행
 - `main`, `dev`, PR 대상 적용
+- `main` branch protection으로 PR과 CI 통과를 merge 조건으로 설정
 - README나 면접 문서에 CI 구조 설명 추가
 
 이력서 문장 후보:
@@ -281,4 +282,3 @@
 - 새 기능보다 문제 정의, 측정, 개선 결과가 먼저다.
 - 수치가 있으면 반드시 남긴다.
 - 비용과 실패 처리를 고려한 AI 사용 경험을 만든다.
-
