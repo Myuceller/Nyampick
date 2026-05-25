@@ -31,6 +31,22 @@ export interface AiRecipeGenerationResult {
   fallbackUsed: boolean;
 }
 
+export type RecipeRejectReason =
+  | "title_too_long"
+  | "subtitle_too_long"
+  | "too_few_ingredients"
+  | "too_few_steps"
+  | "missing_source"
+  | "awkward_pair"
+  | "missing_allergy_caution"
+  | "not_enough_input_match";
+
+export interface RecipeQualityResult {
+  ready: boolean;
+  reasons: RecipeRejectReason[];
+  recipe: AiRecipeRecommendation;
+}
+
 type JsonScalar = string | number | boolean | null;
 type JsonValue = JsonScalar | JsonObject | JsonValue[];
 interface JsonObject {
@@ -171,22 +187,42 @@ function countInputIngredients(recipe: AiRecipeRecommendation, input: GenerateRe
   return input.ingredients.filter((ingredient) => includesTerm(text, ingredient)).length;
 }
 
-export function isProductionReadyRecipe(recipe: AiRecipeRecommendation, input: GenerateRecipeInput) {
+export function evaluateRecipeQuality(
+  recipe: AiRecipeRecommendation,
+  input: GenerateRecipeInput
+): RecipeQualityResult {
   const normalizedRecipe = normalizeRecipeRecommendation(recipe);
   const normalizedInput = {
     ...input,
     ingredients: normalizeIngredientList(input.ingredients),
   };
+  const reasons: RecipeRejectReason[] = [];
 
-  if (titleLength(normalizedRecipe.title) > 18 || titleLength(normalizedRecipe.subtitle) > 28) return false;
-  if (normalizedRecipe.ingredients.length < 3 || normalizedRecipe.steps.length < 3) return false;
-  if (!normalizedRecipe.sourceName || !normalizedRecipe.sourceUrl) return false;
-  if (hasAwkwardPair(normalizedRecipe)) return false;
-  if (hasAllergyIngredient(normalizedRecipe) && !hasAllergyCaution(normalizedRecipe)) return false;
+  if (titleLength(normalizedRecipe.title) > 18) reasons.push("title_too_long");
+  if (titleLength(normalizedRecipe.subtitle) > 28) reasons.push("subtitle_too_long");
+  if (normalizedRecipe.ingredients.length < 3) reasons.push("too_few_ingredients");
+  if (normalizedRecipe.steps.length < 3) reasons.push("too_few_steps");
+  if (!normalizedRecipe.sourceName || !normalizedRecipe.sourceUrl) reasons.push("missing_source");
+  if (hasAwkwardPair(normalizedRecipe)) reasons.push("awkward_pair");
+  if (hasAllergyIngredient(normalizedRecipe) && !hasAllergyCaution(normalizedRecipe)) {
+    reasons.push("missing_allergy_caution");
+  }
   const minimumInputMatches = inputHasAwkwardPair(normalizedInput)
     ? 1
     : Math.min(2, normalizedInput.ingredients.length);
-  return countInputIngredients(normalizedRecipe, normalizedInput) >= minimumInputMatches;
+  if (countInputIngredients(normalizedRecipe, normalizedInput) < minimumInputMatches) {
+    reasons.push("not_enough_input_match");
+  }
+
+  return {
+    ready: reasons.length === 0,
+    reasons,
+    recipe: normalizedRecipe,
+  };
+}
+
+export function isProductionReadyRecipe(recipe: AiRecipeRecommendation, input: GenerateRecipeInput) {
+  return evaluateRecipeQuality(recipe, input).ready;
 }
 
 export function selectProductionReadyRecommendations(
@@ -195,7 +231,7 @@ export function selectProductionReadyRecommendations(
 ) {
   const ready = recommendations
     .map(normalizeRecipeRecommendation)
-    .filter((recipe) => isProductionReadyRecipe(recipe, input));
+    .filter((recipe) => evaluateRecipeQuality(recipe, input).ready);
   return ready.slice(0, input.limit);
 }
 
@@ -203,7 +239,7 @@ function hasEnoughReadyRecommendations(
   recommendations: AiRecipeRecommendation[],
   input: GenerateRecipeInput
 ) {
-  return recommendations.filter((recipe) => isProductionReadyRecipe(recipe, input)).length >= input.limit;
+  return recommendations.filter((recipe) => evaluateRecipeQuality(recipe, input).ready).length >= input.limit;
 }
 
 function parseRecommendations(

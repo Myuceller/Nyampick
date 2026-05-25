@@ -81,6 +81,7 @@ AI 추천을 바로 사용자에게 보여주지 않고, 아래 흐름을 통과
 - `isProductionReadyRecipe`가 검사 전에 추천과 입력 재료를 정규화한다.
 - `selectProductionReadyRecommendations`가 정규화된 추천만 반환한다.
 - OpenAI 호출 전 입력 재료를 정규화해 프롬프트에 넣는다.
+- `evaluateRecipeQuality`가 통과 여부와 탈락 사유를 함께 반환한다.
 
 ## 현재 품질 gate 기준
 
@@ -94,6 +95,25 @@ AI 추천을 바로 사용자에게 보여주지 않고, 아래 흐름을 통과
 - 금지 조합 없음
 - 알레르기 재료가 있으면 주의 문구 존재
 - 사용자가 선택한 재료와 충분히 관련 있음
+
+## 실패 사유 reason code
+
+AI 추천이 탈락하면 boolean만 남기지 않고 reason code를 남긴다.
+
+현재 reason code:
+
+| reason | 의미 |
+| --- | --- |
+| `title_too_long` | 제목이 18자를 초과함 |
+| `subtitle_too_long` | 부제가 28자를 초과함 |
+| `too_few_ingredients` | 재료가 3개 미만임 |
+| `too_few_steps` | 조리 단계가 3개 미만임 |
+| `missing_source` | 출처명 또는 출처 URL이 없음 |
+| `awkward_pair` | 금지 조합이 포함됨 |
+| `missing_allergy_caution` | 알레르기 재료가 있지만 주의 문구가 없음 |
+| `not_enough_input_match` | 사용자 입력 재료와 충분히 관련 없음 |
+
+이 구조를 두면 추천 실패가 단순 실패로 끝나지 않고, 어떤 기준에서 자주 실패하는지 집계할 수 있다.
 
 ## 테스트
 
@@ -129,16 +149,16 @@ AI 추천을 바로 사용자에게 보여주지 않고, 아래 흐름을 통과
 
 ## 다음 단계
 
-1. 실패 사유를 boolean이 아니라 reason code로 반환한다.
-   - 예: `missing_source`, `awkward_pair`, `missing_allergy_caution`
-2. AI 응답 schema를 Zod 또는 Structured Outputs로 검증한다.
-3. 재료 정규화 사전을 확장한다.
-4. 추천 결과 캐싱 key에 정규화된 재료 목록을 사용한다.
-5. 실패 사례를 eval case로 축적한다.
+1. AI 응답 schema를 Zod 또는 Structured Outputs로 검증한다.
+2. 재료 정규화 사전을 확장한다.
+3. 추천 결과 캐싱 key에 정규화된 재료 목록을 사용한다.
+4. 실패 사례를 eval case로 축적한다.
+5. 사용자 피드백을 가볍게 수집한다.
+   - 예: `마음에 들어요`, `재료가 이상해요`, `아이에게 안 맞아요`, `너무 복잡해요`
+   - 피드백은 바로 AI를 자동 수정하는 데 쓰지 않고, reason code와 함께 개선 후보를 찾는 근거로 쌓는다.
 
 ## 이력서 문장 후보
 
 > AI 레시피 추천의 입력/출력 정규화 레이어를 추가해 영수증 OCR과 사용자 선택 재료의 표기 차이를 대표 재료명으로 통일하고, 정규화된 결과만 quality gate를 통과하도록 개선했습니다.
 
 > OpenAI 추천 결과를 바로 노출하지 않고 재료명 표준화, 조리 단계 정리, 금지 조합/알레르기/출처 검증을 거쳐 production-ready 추천만 사용자에게 제공하는 AI 오케스트레이션 구조를 구현했습니다.
-

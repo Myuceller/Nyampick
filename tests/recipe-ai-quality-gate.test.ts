@@ -6,6 +6,7 @@ import {
 } from "../src/lib/ai/ingredient-normalize.ts";
 import { normalizeRecipeRecommendation } from "../src/lib/ai/recipe-normalize.ts";
 import {
+  evaluateRecipeQuality,
   isProductionReadyRecipe,
   selectProductionReadyRecommendations,
   type AiRecipeRecommendation,
@@ -75,6 +76,56 @@ test("isProductionReadyRecipe rejects awkward ingredient pairs", () => {
     isProductionReadyRecipe(recipe, { ingredients: ["새우", "우유", "쌀"], limit: 1 }),
     false
   );
+});
+
+test("evaluateRecipeQuality returns reject reasons", () => {
+  const result = evaluateRecipeQuality(
+    {
+      ...readyRecipe,
+      title: "너무 길어서 화면에 맞지 않는 바나나 닭고기죽",
+      sourceName: undefined,
+      sourceUrl: undefined,
+      ingredients: ["바나나", "닭안심", "쌀"],
+      steps: [
+        "바나나를 으깬다.",
+        "닭고기와 쌀을 넣고 끓인다.",
+        "충분히 식혀 제공한다.",
+      ],
+    },
+    { ingredients: ["애호박", "두부", "쌀"], limit: 1 }
+  );
+
+  assert.equal(result.ready, false);
+  assert.deepEqual(result.reasons, [
+    "title_too_long",
+    "missing_source",
+    "awkward_pair",
+    "not_enough_input_match",
+  ]);
+});
+
+test("evaluateRecipeQuality returns normalized ready recipe", () => {
+  const result = evaluateRecipeQuality(
+    {
+      ...readyRecipe,
+      ingredients: ["친환경 애호박 1개", "두부 1/2모", "쌀 100g"],
+      steps: [
+        "1. 두부와 애호박을 잘게 다진다.",
+        "2) 쌀과 함께 부드럽게 끓인다.",
+        "- 알레르기 반응을 소량부터 확인한다.",
+      ],
+    },
+    { ingredients: ["애호박", "두부", "쌀"], limit: 1 }
+  );
+
+  assert.equal(result.ready, true);
+  assert.deepEqual(result.reasons, []);
+  assert.deepEqual(result.recipe.ingredients, ["애호박", "두부", "쌀"]);
+  assert.deepEqual(result.recipe.steps, [
+    "두부와 애호박을 잘게 다진다.",
+    "쌀과 함께 부드럽게 끓인다.",
+    "알레르기 반응을 소량부터 확인한다.",
+  ]);
 });
 
 test("selectProductionReadyRecommendations keeps only ready recommendations", () => {
