@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import { normalizeIngredientList } from "../ai/ingredient-normalize.ts";
+import { normalizeRecipeRecommendation } from "../ai/recipe-normalize.ts";
 
 export type AiTaste = "좋아해요" | "보통이에요" | "싫어해요";
 
@@ -129,9 +131,10 @@ function getAwkwardTermsToRemove(recipe: AiRecipeRecommendation) {
 }
 
 function normalizeRecipeQuality(recipe: AiRecipeRecommendation): AiRecipeRecommendation {
-  const awkwardTerms = getAwkwardTermsToRemove(recipe);
+  const recipeBase = normalizeRecipeRecommendation(recipe);
+  const awkwardTerms = getAwkwardTermsToRemove(recipeBase);
   const replacement = "물";
-  const ingredients = recipe.ingredients
+  const ingredients = recipeBase.ingredients
     .filter((ingredient) => !awkwardTerms.some((term) => includesTerm(ingredient, term)))
     .map((ingredient) => replaceAllTerms(ingredient, awkwardTerms, replacement))
     .filter((ingredient, index, items) => ingredient.trim().length > 0 && items.indexOf(ingredient) === index);
@@ -142,11 +145,11 @@ function normalizeRecipeQuality(recipe: AiRecipeRecommendation): AiRecipeRecomme
   }
 
   const normalized: AiRecipeRecommendation = {
-    ...recipe,
-    title: replaceAllTerms(recipe.title, awkwardTerms, "").replaceAll(/\s+/g, " ").trim(),
-    subtitle: replaceAllTerms(recipe.subtitle, awkwardTerms, "").replaceAll(/\s+/g, " ").trim(),
+    ...recipeBase,
+    title: replaceAllTerms(recipeBase.title, awkwardTerms, "").replaceAll(/\s+/g, " ").trim(),
+    subtitle: replaceAllTerms(recipeBase.subtitle, awkwardTerms, "").replaceAll(/\s+/g, " ").trim(),
     ingredients,
-    steps: recipe.steps.map((step) => replaceAllTerms(step, awkwardTerms, replacement)),
+    steps: recipeBase.steps.map((step) => replaceAllTerms(step, awkwardTerms, replacement)),
   };
 
   if (hasAllergyIngredient(normalized) && !hasAllergyCaution(normalized)) {
@@ -169,22 +172,30 @@ function countInputIngredients(recipe: AiRecipeRecommendation, input: GenerateRe
 }
 
 export function isProductionReadyRecipe(recipe: AiRecipeRecommendation, input: GenerateRecipeInput) {
-  if (titleLength(recipe.title) > 18 || titleLength(recipe.subtitle) > 28) return false;
-  if (recipe.ingredients.length < 3 || recipe.steps.length < 3) return false;
-  if (!recipe.sourceName || !recipe.sourceUrl) return false;
-  if (hasAwkwardPair(recipe)) return false;
-  if (hasAllergyIngredient(recipe) && !hasAllergyCaution(recipe)) return false;
-  const minimumInputMatches = inputHasAwkwardPair(input)
+  const normalizedRecipe = normalizeRecipeRecommendation(recipe);
+  const normalizedInput = {
+    ...input,
+    ingredients: normalizeIngredientList(input.ingredients),
+  };
+
+  if (titleLength(normalizedRecipe.title) > 18 || titleLength(normalizedRecipe.subtitle) > 28) return false;
+  if (normalizedRecipe.ingredients.length < 3 || normalizedRecipe.steps.length < 3) return false;
+  if (!normalizedRecipe.sourceName || !normalizedRecipe.sourceUrl) return false;
+  if (hasAwkwardPair(normalizedRecipe)) return false;
+  if (hasAllergyIngredient(normalizedRecipe) && !hasAllergyCaution(normalizedRecipe)) return false;
+  const minimumInputMatches = inputHasAwkwardPair(normalizedInput)
     ? 1
-    : Math.min(2, input.ingredients.length);
-  return countInputIngredients(recipe, input) >= minimumInputMatches;
+    : Math.min(2, normalizedInput.ingredients.length);
+  return countInputIngredients(normalizedRecipe, normalizedInput) >= minimumInputMatches;
 }
 
 export function selectProductionReadyRecommendations(
   recommendations: AiRecipeRecommendation[],
   input: GenerateRecipeInput
 ) {
-  const ready = recommendations.filter((recipe) => isProductionReadyRecipe(recipe, input));
+  const ready = recommendations
+    .map(normalizeRecipeRecommendation)
+    .filter((recipe) => isProductionReadyRecipe(recipe, input));
   return ready.slice(0, input.limit);
 }
 
@@ -358,20 +369,27 @@ export async function generateRecipeRecommendationsWithOpenAI(
 
   const model = process.env.OPENAI_MODEL ?? "gpt-4.1-mini";
   const client = new OpenAI({ apiKey });
+  const normalizedInput: GenerateRecipeInput = {
+    ...input,
+    ingredients: normalizeIngredientList(input.ingredients, { limit: 20 }),
+  };
+  if (normalizedInput.ingredients.length === 0) {
+    throw new Error("추천에 사용할 재료가 없습니다.");
+  }
 
-  const strict = await generateOnce(client, model, input, true);
-  if (hasEnoughReadyRecommendations(strict.recommendations, input)) {
+  const strict = await generateOnce(client, model, normalizedInput, true);
+  if (hasEnoughReadyRecommendations(strict.recommendations, normalizedInput)) {
     return {
-      recommendations: selectProductionReadyRecommendations(strict.recommendations, input),
+      recommendations: selectProductionReadyRecommendations(strict.recommendations, normalizedInput),
       usage: strict.usage,
       fallbackUsed: false,
     };
   }
 
-  const fallback = await generateOnce(client, model, input, false);
+  const fallback = await generateOnce(client, model, normalizedInput, false);
   const selected = selectProductionReadyRecommendations(
     [...strict.recommendations, ...fallback.recommendations],
-    input
+    normalizedInput
   );
   if (selected.length < input.limit) {
     throw new Error("AI가 레시피를 생성하지 못했습니다.");

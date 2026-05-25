@@ -156,6 +156,8 @@
 - AI는 비결정적이므로 출력 형식을 강제하고 검증해야 함
 - 단순 prompt보다 schema + 서버 검증이 안정적
 
+1차 정규화 전략은 [AI Recipe Quality Strategy](ai-recipe-quality-strategy.md)에 정리한다.
+
 ### 3단계: 재료 정규화 레이어
 
 목표:
