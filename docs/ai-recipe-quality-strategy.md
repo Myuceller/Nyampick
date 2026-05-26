@@ -130,6 +130,22 @@ AI 추천이 탈락하면 boolean만 남기지 않고 reason code를 남긴다.
 
 이 구조를 두면 추천 실패가 단순 실패로 끝나지 않고, 어떤 기준에서 자주 실패하는지 집계할 수 있다.
 
+## Reason code 리포트
+
+파일:
+
+- `scripts/ai-recipe-quality-report.mjs`
+- `docs/ai-recipe-quality-report.md`
+
+하는 일:
+
+- `docs/ai-recipe-quality-history.json`의 추천 히스토리를 읽는다.
+- 각 추천을 `evaluateRecipeQuality`로 다시 평가한다.
+- 통과 추천 수와 탈락 추천 수를 집계한다.
+- `missing_source`, `awkward_pair`, `missing_allergy_caution` 같은 reason code별 빈도를 표로 만든다.
+
+이 리포트는 AI 추천 개선 우선순위를 정하는 기준으로 사용한다.
+
 ## 테스트
 
 파일:
@@ -165,9 +181,9 @@ AI 추천이 탈락하면 boolean만 남기지 않고 reason code를 남긴다.
 
 ## 다음 단계
 
-1. 재료 정규화 사전을 확장한다.
-2. 추천 결과 캐싱 key에 정규화된 재료 목록을 사용한다.
-3. 실패 사례를 eval case로 축적한다.
+1. 실패 사례를 eval case로 축적한다.
+2. 재료 정규화 사전을 확장한다.
+3. 추천 결과 캐싱 key에 정규화된 재료 목록을 사용한다.
 4. 사용자 피드백을 가볍게 수집한다.
    - 예: `마음에 들어요`, `재료가 이상해요`, `아이에게 안 맞아요`, `너무 복잡해요`
    - 피드백은 바로 AI를 자동 수정하는 데 쓰지 않고, reason code와 함께 개선 후보를 찾는 근거로 쌓는다.

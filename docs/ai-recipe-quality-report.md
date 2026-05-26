@@ -1,6 +1,6 @@
 # AI Recipe Quality Report
 
-Generated at: 2026-04-30T17:04:34.654Z
+Generated at: 2026-05-26T04:50:27.803Z
 
 Sources:
 
@@ -14,6 +14,25 @@ Summary is calculated from the latest measured run for each case.
 | Total cases | Measured cases | Pending cases | Pass rate | Quality score | Valid recommendations | Ingredient utilization | Source validity | Awkward violations | Forbidden claims |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | 15 | 5 | 10 | 100% | 99% | 100% | 93% | 100% | 0 | 0 |
+
+## Quality Gate Reason Summary
+
+Calculated with `evaluateRecipeQuality` from the latest measured run for each case.
+
+| Ready recipes | Rejected recipes | Top reject reasons |
+| ---: | ---: | --- |
+| 15 | 0 | - |
+
+| Reason | Count |
+| --- | ---: |
+| title_too_long | 0 |
+| subtitle_too_long | 0 |
+| too_few_ingredients | 0 |
+| too_few_steps | 0 |
+| missing_source | 0 |
+| awkward_pair | 0 |
+| missing_allergy_caution | 0 |
+| not_enough_input_match | 0 |
 
 ## Evaluation Cases
 
@@ -54,30 +73,15 @@ These cases are defined but do not have a recorded AI run yet.
 
 ## Latest Results
 
-| Created at | Case | Quality | Valid recs | Ingredient use | Source validity | Awkward | Forbidden | Result |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| 2026-04-30T16:58:20.144Z | R5 | 100% | 100% | 100% | 100% | 0 | 0 | pass |
-| 2026-04-30T16:58:11.552Z | R4 | 100% | 100% | 100% | 100% | 0 | 0 | pass |
-| 2026-04-30T16:58:04.267Z | R3 | 100% | 100% | 100% | 100% | 0 | 0 | pass |
-| 2026-04-30T16:57:55.891Z | R2 | 93% | 100% | 67% | 100% | 0 | 0 | pass |
-| 2026-04-30T16:57:48.271Z | R1 | 100% | 100% | 100% | 100% | 0 | 0 | pass |
-| 2026-04-30T10:58:26.285Z | R5 | 85% | 100% | 100% | 100% | 3 | 0 | fail |
-| 2026-04-30T10:58:15.857Z | R4 | 77% | 33% | 100% | 100% | 0 | 0 | fail |
-| 2026-04-30T10:58:01.624Z | R3 | 100% | 100% | 100% | 100% | 0 | 0 | pass |
-| 2026-04-30T10:57:51.325Z | R2 | 88% | 67% | 100% | 100% | 0 | 0 | fail |
-| 2026-04-30T10:57:45.340Z | R1 | 100% | 100% | 100% | 100% | 0 | 0 | pass |
-
-## History Entry Format
-
-```json
-{
-  "createdAt": "2026-04-30T00:00:00.000Z",
-  "caseId": "R1",
-  "model": "OPENAI_MODEL",
-  "limit": 3,
-  "recommendations": [],
-  "latencyMs": 2140,
-  "totalTokens": 1030,
-  "fallbackUsed": false
-}
-```
+| Created at | Case | Quality | Valid recs | Ingredient use | Source validity | Awkward | Forbidden | Top reject reasons | Result |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| 2026-04-30T16:58:20.144Z | R5 | 100% | 100% | 100% | 100% | 0 | 0 | - | pass |
+| 2026-04-30T16:58:11.552Z | R4 | 100% | 100% | 100% | 100% | 0 | 0 | - | pass |
+| 2026-04-30T16:58:04.267Z | R3 | 100% | 100% | 100% | 100% | 0 | 0 | - | pass |
+| 2026-04-30T16:57:55.891Z | R2 | 93% | 100% | 67% | 100% | 0 | 0 | - | pass |
+| 2026-04-30T16:57:48.271Z | R1 | 100% | 100% | 100% | 100% | 0 | 0 | - | pass |
+| 2026-04-30T10:58:26.285Z | R5 | 85% | 100% | 100% | 100% | 3 | 0 | awkward_pair 3, missing_allergy_caution 3 | fail |
+| 2026-04-30T10:58:15.857Z | R4 | 77% | 33% | 100% | 100% | 0 | 0 | missing_allergy_caution 3 | fail |
+| 2026-04-30T10:58:01.624Z | R3 | 100% | 100% | 100% | 100% | 0 | 0 | - | pass |
+| 2026-04-30T10:57:51.325Z | R2 | 88% | 67% | 100% | 100% | 0 | 0 | - | fail |
+| 2026-04-30T10:57:45.340Z | R1 | 100% | 100% | 100% | 100% | 0 | 0 | missing_allergy_caution 3 | pass |
