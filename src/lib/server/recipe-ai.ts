@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { z } from "zod";
 import { normalizeIngredientList } from "../ai/ingredient-normalize.ts";
 import { normalizeRecipeRecommendation } from "../ai/recipe-normalize.ts";
 
@@ -53,16 +54,6 @@ interface JsonObject {
   [key: string]: JsonValue;
 }
 
-interface RecipeCandidate {
-  title?: JsonValue;
-  subtitle?: JsonValue;
-  taste?: JsonValue;
-  ingredients?: JsonValue;
-  steps?: JsonValue;
-  source_name?: JsonValue;
-  source_url?: JsonValue;
-}
-
 const awkwardIngredientPairs: [string, string][] = [
   ["바나나", "소고기"],
   ["바나나", "닭고기"],
@@ -73,6 +64,19 @@ const awkwardIngredientPairs: [string, string][] = [
 
 const allergyIngredients = ["계란", "달걀", "두부", "우유", "치즈", "새우"];
 const neutralSupplementalIngredients = ["쌀", "물", "육수"];
+const aiRecipeResponseSchema = z.object({
+  recipes: z.array(
+    z.object({
+      title: z.string(),
+      subtitle: z.string(),
+      taste: z.enum(["좋아해요", "보통이에요", "싫어해요"]).catch("보통이에요"),
+      ingredients: z.array(z.string()),
+      steps: z.array(z.string()),
+      source_name: z.string().optional().default(""),
+      source_url: z.string().optional().default(""),
+    })
+  ),
+});
 
 function stripCodeFence(text: string) {
   return text.replace(/^```(?:json)?\s*/i, "").replace(/```$/i, "").trim();
@@ -242,7 +246,7 @@ function hasEnoughReadyRecommendations(
   return recommendations.filter((recipe) => evaluateRecipeQuality(recipe, input).ready).length >= input.limit;
 }
 
-function parseRecommendations(
+export function parseRecommendations(
   text: string,
   options?: { requireSource?: boolean }
 ): AiRecipeRecommendation[] {
@@ -260,47 +264,31 @@ function parseRecommendations(
     throw new Error("AI 응답 형식이 올바르지 않습니다.");
   }
 
-  const recipes = (parsed as { recipes?: JsonValue }).recipes;
-  if (!Array.isArray(recipes)) {
-    throw new Error("AI 응답에 recipes 배열이 없습니다.");
+  const result = aiRecipeResponseSchema.safeParse(parsed);
+  if (!result.success) {
+    throw new Error("AI 응답 스키마가 올바르지 않습니다.");
   }
 
-  const validTaste: AiTaste[] = ["좋아해요", "보통이에요", "싫어해요"];
-
-  return recipes
-    .filter((item) => !!item && typeof item === "object")
-    .map((itemRaw) => {
-      const item = itemRaw as RecipeCandidate;
-      const title = typeof item.title === "string" ? item.title.trim() : "";
-      const subtitle =
-        typeof item.subtitle === "string" ? item.subtitle.trim() : "";
-      const taste = validTaste.includes(item.taste as AiTaste)
-        ? (item.taste as AiTaste)
-        : "보통이에요";
-      const ingredients = Array.isArray(item.ingredients)
-        ? item.ingredients
-            .filter((v): v is string => typeof v === "string")
-            .map((v) => v.trim())
-            .filter((v) => v.length > 0)
-            .slice(0, 8)
-        : [];
-      const steps = Array.isArray(item.steps)
-        ? item.steps
-            .filter((v): v is string => typeof v === "string")
-            .map((v) => v.trim())
-            .filter((v) => v.length > 0)
-            .slice(0, 5)
-        : [];
-      const sourceName =
-        typeof item.source_name === "string" ? item.source_name.trim() : "";
-      const sourceUrl =
-        typeof item.source_url === "string" ? item.source_url.trim() : "";
+  return result.data.recipes
+    .map((item) => {
+      const title = item.title.trim();
+      const subtitle = item.subtitle.trim();
+      const ingredients = item.ingredients
+        .map((v) => v.trim())
+        .filter((v) => v.length > 0)
+        .slice(0, 8);
+      const steps = item.steps
+        .map((v) => v.trim())
+        .filter((v) => v.length > 0)
+        .slice(0, 5);
+      const sourceName = item.source_name.trim();
+      const sourceUrl = item.source_url.trim();
       const hasValidSource = sourceName.length > 0 && isValidHttpUrl(sourceUrl);
 
       return normalizeRecipeQuality({
         title,
         subtitle,
-        taste,
+        taste: item.taste,
         ingredients: ingredients.length >= 3 ? ingredients : [...ingredients, "쌀", "물"].slice(0, 3),
         steps,
         sourceName: hasValidSource ? sourceName : undefined,

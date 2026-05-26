@@ -8,6 +8,7 @@ import { normalizeRecipeRecommendation } from "../src/lib/ai/recipe-normalize.ts
 import {
   evaluateRecipeQuality,
   isProductionReadyRecipe,
+  parseRecommendations,
   selectProductionReadyRecommendations,
   type AiRecipeRecommendation,
 } from "../src/lib/server/recipe-ai.ts";
@@ -126,6 +127,55 @@ test("evaluateRecipeQuality returns normalized ready recipe", () => {
     "쌀과 함께 부드럽게 끓인다.",
     "알레르기 반응을 소량부터 확인한다.",
   ]);
+});
+
+test("parseRecommendations validates AI response schema", () => {
+  assert.throws(
+    () =>
+      parseRecommendations(
+        JSON.stringify({
+          recipes: [
+            {
+              title: "두부 애호박죽",
+              subtitle: "부드러운 유아식 죽",
+              taste: "좋아해요",
+              ingredients: "두부, 애호박, 쌀",
+              steps: ["두부와 애호박을 다진다."],
+              source_name: "공개 레시피",
+              source_url: "https://example.com/recipe",
+            },
+          ],
+        })
+      ),
+    /AI 응답 스키마/
+  );
+});
+
+test("parseRecommendations normalizes valid AI response", () => {
+  const recipes = parseRecommendations(
+    JSON.stringify({
+      recipes: [
+        {
+          title: "  두부   애호박죽  ",
+          subtitle: " 부드러운 유아식 죽 ",
+          taste: "좋아해요",
+          ingredients: ["친환경 애호박 1개", "두부 1/2모", "쌀 100g"],
+          steps: [
+            "1. 두부와 애호박을 잘게 다진다.",
+            "2) 쌀과 함께 부드럽게 끓인다.",
+            "- 알레르기 반응을 소량부터 확인한다.",
+          ],
+          source_name: " 공개 레시피 ",
+          source_url: " https://example.com/recipe ",
+        },
+      ],
+    })
+  );
+
+  assert.equal(recipes.length, 1);
+  assert.equal(recipes[0]?.title, "두부 애호박죽");
+  assert.deepEqual(recipes[0]?.ingredients, ["애호박", "두부", "쌀"]);
+  assert.equal(recipes[0]?.sourceName, "공개 레시피");
 });
 
 test("selectProductionReadyRecommendations keeps only ready recommendations", () => {

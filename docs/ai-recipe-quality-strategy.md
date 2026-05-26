@@ -24,6 +24,7 @@ AI 추천을 바로 사용자에게 보여주지 않고, 아래 흐름을 통과
 → 입력 재료 정규화
 → AI 호출
 → 응답 파싱
+→ Zod schema 검증
 → 추천 데이터 정규화
 → 품질 gate
 → 부족하면 fallback
@@ -69,6 +70,20 @@ AI 추천을 바로 사용자에게 보여주지 않고, 아래 흐름을 통과
 - 빈 단계 제거
 - 중복 단계 제거
 - 부족한 재료는 `쌀`, `물`, `육수` 같은 보조 재료로 최소 조건 보강
+
+### AI 응답 schema 검증
+
+파일:
+
+- `src/lib/server/recipe-ai.ts`
+
+하는 일:
+
+- AI 응답이 `recipes` 배열을 갖는지 확인
+- 각 recipe의 `title`, `subtitle`, `taste`, `ingredients`, `steps`, `source_name`, `source_url` 타입을 검증
+- `ingredients`와 `steps`가 문자열 배열이 아니면 실패 처리
+- `taste`가 허용값이 아니면 `보통이에요`로 보정
+- schema 검증을 통과한 응답만 정규화와 quality gate로 넘김
 
 ### Quality Gate 연결
 
@@ -126,6 +141,7 @@ AI 추천이 탈락하면 boolean만 남기지 않고 reason code를 남긴다.
 - noisy 재료명을 대표 재료명으로 정규화
 - 같은 재료의 중복 입력 제거
 - AI 응답의 제목/재료/조리 단계 정규화
+- AI 응답 schema 검증
 - 정규화된 alias 기준으로 quality gate 평가
 
 ## 한계
@@ -149,11 +165,10 @@ AI 추천이 탈락하면 boolean만 남기지 않고 reason code를 남긴다.
 
 ## 다음 단계
 
-1. AI 응답 schema를 Zod 또는 Structured Outputs로 검증한다.
-2. 재료 정규화 사전을 확장한다.
-3. 추천 결과 캐싱 key에 정규화된 재료 목록을 사용한다.
-4. 실패 사례를 eval case로 축적한다.
-5. 사용자 피드백을 가볍게 수집한다.
+1. 재료 정규화 사전을 확장한다.
+2. 추천 결과 캐싱 key에 정규화된 재료 목록을 사용한다.
+3. 실패 사례를 eval case로 축적한다.
+4. 사용자 피드백을 가볍게 수집한다.
    - 예: `마음에 들어요`, `재료가 이상해요`, `아이에게 안 맞아요`, `너무 복잡해요`
    - 피드백은 바로 AI를 자동 수정하는 데 쓰지 않고, reason code와 함께 개선 후보를 찾는 근거로 쌓는다.
 
