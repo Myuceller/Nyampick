@@ -30,6 +30,7 @@ export interface AiRecipeGenerationResult {
   recommendations: AiRecipeRecommendation[];
   usage: AiUsageSummary;
   fallbackUsed: boolean;
+  quality: AiRecipeQualityTelemetry;
 }
 
 export type RecipeRejectReason =
@@ -48,6 +49,15 @@ export interface RecipeQualityResult {
   recipe: AiRecipeRecommendation;
 }
 
+export interface AiRecipeQualityTelemetry {
+  normalizedIngredients: string[];
+  strictCandidateCount: number;
+  fallbackCandidateCount: number;
+  readyCount: number;
+  rejectedCount: number;
+  rejectReasonCounts: Record<RecipeRejectReason, number>;
+}
+
 type JsonScalar = string | number | boolean | null;
 type JsonValue = JsonScalar | JsonObject | JsonValue[];
 interface JsonObject {
@@ -60,6 +70,17 @@ const awkwardIngredientPairs: [string, string][] = [
   ["바나나", "양파"],
   ["새우", "우유"],
   ["새우", "치즈"],
+];
+
+const recipeRejectReasons: RecipeRejectReason[] = [
+  "title_too_long",
+  "subtitle_too_long",
+  "too_few_ingredients",
+  "too_few_steps",
+  "missing_source",
+  "awkward_pair",
+  "missing_allergy_caution",
+  "not_enough_input_match",
 ];
 
 const allergyIngredients = ["계란", "달걀", "두부", "우유", "치즈", "새우"];
@@ -246,6 +267,38 @@ function hasEnoughReadyRecommendations(
   return recommendations.filter((recipe) => evaluateRecipeQuality(recipe, input).ready).length >= input.limit;
 }
 
+function summarizeQualityTelemetry(input: {
+  recommendations: AiRecipeRecommendation[];
+  normalizedInput: GenerateRecipeInput;
+  strictCandidateCount: number;
+  fallbackCandidateCount: number;
+}): AiRecipeQualityTelemetry {
+  const rejectReasonCounts = Object.fromEntries(
+    recipeRejectReasons.map((reason) => [reason, 0])
+  ) as Record<RecipeRejectReason, number>;
+  let readyCount = 0;
+  let rejectedCount = 0;
+
+  for (const recipe of input.recommendations) {
+    const result = evaluateRecipeQuality(recipe, input.normalizedInput);
+    if (result.ready) {
+      readyCount += 1;
+      continue;
+    }
+    rejectedCount += 1;
+    for (const reason of result.reasons) rejectReasonCounts[reason] += 1;
+  }
+
+  return {
+    normalizedIngredients: input.normalizedInput.ingredients,
+    strictCandidateCount: input.strictCandidateCount,
+    fallbackCandidateCount: input.fallbackCandidateCount,
+    readyCount,
+    rejectedCount,
+    rejectReasonCounts,
+  };
+}
+
 export function parseRecommendations(
   text: string,
   options?: { requireSource?: boolean }
@@ -403,16 +456,24 @@ export async function generateRecipeRecommendationsWithOpenAI(
 
   const strict = await generateOnce(client, model, normalizedInput, true);
   if (hasEnoughReadyRecommendations(strict.recommendations, normalizedInput)) {
+    const recommendations = selectProductionReadyRecommendations(strict.recommendations, normalizedInput);
     return {
-      recommendations: selectProductionReadyRecommendations(strict.recommendations, normalizedInput),
+      recommendations,
       usage: strict.usage,
       fallbackUsed: false,
+      quality: summarizeQualityTelemetry({
+        recommendations: strict.recommendations,
+        normalizedInput,
+        strictCandidateCount: strict.recommendations.length,
+        fallbackCandidateCount: 0,
+      }),
     };
   }
 
   const fallback = await generateOnce(client, model, normalizedInput, false);
+  const allRecommendations = [...strict.recommendations, ...fallback.recommendations];
   const selected = selectProductionReadyRecommendations(
-    [...strict.recommendations, ...fallback.recommendations],
+    allRecommendations,
     normalizedInput
   );
   if (selected.length < input.limit) {
@@ -427,5 +488,11 @@ export async function generateRecipeRecommendationsWithOpenAI(
       totalTokens: strict.usage.totalTokens + fallback.usage.totalTokens,
     },
     fallbackUsed: true,
+    quality: summarizeQualityTelemetry({
+      recommendations: allRecommendations,
+      normalizedInput,
+      strictCandidateCount: strict.recommendations.length,
+      fallbackCandidateCount: fallback.recommendations.length,
+    }),
   };
 }
