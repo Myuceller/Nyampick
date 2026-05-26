@@ -10,6 +10,7 @@ import {
   isProductionReadyRecipe,
   parseRecommendations,
   selectProductionReadyRecommendations,
+  type AiRecipeGenerationResult,
   type AiRecipeRecommendation,
 } from "../src/lib/server/recipe-ai.ts";
 
@@ -213,4 +214,36 @@ test("quality gate evaluates normalized ingredient aliases", () => {
 
   assert.equal(selected.length, 1);
   assert.deepEqual(selected[0]?.ingredients, ["닭고기", "애호박", "쌀"]);
+});
+
+test("AI recipe generation result exposes quality telemetry shape", () => {
+  const result: AiRecipeGenerationResult = {
+    recommendations: [readyRecipe],
+    usage: {
+      inputTokens: 10,
+      outputTokens: 20,
+      totalTokens: 30,
+    },
+    fallbackUsed: false,
+    quality: {
+      normalizedIngredients: ["두부", "애호박", "쌀"],
+      strictCandidateCount: 3,
+      fallbackCandidateCount: 0,
+      readyCount: 3,
+      rejectedCount: 0,
+      rejectReasonCounts: {
+        title_too_long: 0,
+        subtitle_too_long: 0,
+        too_few_ingredients: 0,
+        too_few_steps: 0,
+        missing_source: 0,
+        awkward_pair: 0,
+        missing_allergy_caution: 0,
+        not_enough_input_match: 0,
+      },
+    },
+  };
+
+  assert.deepEqual(result.quality.normalizedIngredients, ["두부", "애호박", "쌀"]);
+  assert.equal(result.quality.rejectedCount, 0);
 });
