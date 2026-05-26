@@ -128,6 +128,25 @@ function formatTopReasons(counts, limit = 3) {
   return reasons.length > 0 ? reasons.join(", ") : "-";
 }
 
+function getEvalGaps(row) {
+  const gaps = [];
+  if ((row.validRecommendationRate ?? 0) < 0.9) gaps.push("invalid_recommendation");
+  if ((row.ingredientUtilization ?? 0) < (row.minIngredientUtilization ?? 0.6)) {
+    gaps.push("low_ingredient_use");
+  }
+  if ((row.sourceValidityRate ?? 0) < 0.9) gaps.push("invalid_source");
+  if ((row.awkwardPairViolations ?? 0) > 0) gaps.push("awkward_pair");
+  if ((row.forbiddenClaimViolations ?? 0) > 0) gaps.push("forbidden_claim");
+  if (row.cautionTonePass === false) gaps.push("missing_caution_tone");
+  if ((row.requiredTermRate ?? 1) < 1) gaps.push("missing_required_terms");
+  return gaps;
+}
+
+function formatEvalGaps(row) {
+  const gaps = getEvalGaps(row);
+  return gaps.length > 0 ? gaps.join(", ") : "-";
+}
+
 function evaluateEntry(entry, evalCase) {
   const recommendations = Array.isArray(entry.recommendations) ? entry.recommendations : [];
   const checks = evalCase?.checks ?? {};
@@ -193,6 +212,7 @@ function evaluateEntry(entry, evalCase) {
     forbiddenClaimViolations,
     cautionTonePass,
     requiredTermRate,
+    minIngredientUtilization: checks.minIngredientUtilization ?? 0.6,
     rejectReasonCounts: rejectReasons.counts,
     readyCount: rejectReasons.readyCount,
     rejectedCount: rejectReasons.rejectedCount,
@@ -237,6 +257,14 @@ function summarize(rows) {
   };
 }
 
+function summarizeEvalGaps(rows) {
+  const counts = new Map();
+  for (const row of rows) {
+    for (const gap of getEvalGaps(row)) counts.set(gap, (counts.get(gap) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort(([, left], [, right]) => right - left);
+}
+
 function summarizeRejectReasons(rows) {
   const counts = Object.fromEntries(knownRejectReasons.map((reason) => [reason, 0]));
   for (const row of rows) {
@@ -260,6 +288,7 @@ function buildMarkdown(cases, evaluatedRows) {
   const pendingCases = cases.filter((item) => !measuredCaseIds.has(item.caseId));
   const summary = summarize(latestRows);
   const rejectReasonSummary = summarizeRejectReasons(latestRows);
+  const evalGapSummary = summarizeEvalGaps(latestRows);
 
   const caseRows = cases
     .map(
@@ -276,7 +305,7 @@ function buildMarkdown(cases, evaluatedRows) {
           .reverse()
           .map(
             (row) =>
-              `| ${row.createdAt ?? row.date ?? "TBD"} | ${row.caseId ?? "-"} | ${formatRate(row.qualityScore)} | ${formatRate(row.validRecommendationRate)} | ${formatRate(row.ingredientUtilization)} | ${formatRate(row.sourceValidityRate)} | ${row.awkwardPairViolations ?? 0} | ${row.forbiddenClaimViolations ?? 0} | ${formatTopReasons(row.rejectReasonCounts)} | ${row.pass ? "pass" : "fail"} |`,
+              `| ${row.createdAt ?? row.date ?? "TBD"} | ${row.caseId ?? "-"} | ${formatRate(row.qualityScore)} | ${formatRate(row.validRecommendationRate)} | ${formatRate(row.ingredientUtilization)} | ${formatRate(row.sourceValidityRate)} | ${row.awkwardPairViolations ?? 0} | ${row.forbiddenClaimViolations ?? 0} | ${formatTopReasons(row.rejectReasonCounts)} | ${formatEvalGaps(row)} | ${row.pass ? "pass" : "fail"} |`,
           )
           .join("\n");
 
@@ -316,6 +345,14 @@ Calculated with \`evaluateRecipeQuality\` from the latest measured run for each 
 | --- | ---: |
 ${knownRejectReasons.map((reason) => `| ${reason} | ${rejectReasonSummary[reason] ?? 0} |`).join("\n")}
 
+## Eval Gap Summary
+
+These gaps are stricter eval-case expectations. A recipe can pass the production quality gate but still fail an eval case.
+
+| Gap | Count |
+| --- | ---: |
+${evalGapSummary.length === 0 ? "| - | 0 |" : evalGapSummary.map(([gap, count]) => `| ${gap} | ${count} |`).join("\n")}
+
 ## Evaluation Cases
 
 | Case | Ingredients | Expected | Min ingredient use | Require source |
@@ -332,8 +369,8 @@ ${pendingRows}
 
 ## Latest Results
 
-| Created at | Case | Quality | Valid recs | Ingredient use | Source validity | Awkward | Forbidden | Top reject reasons | Result |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| Created at | Case | Quality | Valid recs | Ingredient use | Source validity | Awkward | Forbidden | Top reject reasons | Eval gaps | Result |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |
 ${resultRows}
 `;
 }

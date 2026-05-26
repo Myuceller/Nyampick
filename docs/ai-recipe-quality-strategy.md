@@ -147,6 +147,7 @@ AI 추천이 탈락하면 boolean만 남기지 않고 reason code를 남긴다.
 - 각 추천을 `evaluateRecipeQuality`로 다시 평가한다.
 - 통과 추천 수와 탈락 추천 수를 집계한다.
 - `missing_source`, `awkward_pair`, `missing_allergy_caution` 같은 reason code별 빈도를 표로 만든다.
+- production quality gate는 통과했지만 eval case의 추가 기대 조건을 못 맞춘 경우는 eval gap으로 따로 집계한다.
 
 이 리포트는 AI 추천 개선 우선순위를 정하는 기준으로 사용한다.
 

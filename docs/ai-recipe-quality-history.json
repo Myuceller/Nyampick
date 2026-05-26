@@ -1022,5 +1022,698 @@
     "outputTokens": 561,
     "fallbackUsed": false,
     "ok": true
+  },
+  {
+    "createdAt": "2026-05-26T05:09:40.679Z",
+    "caseId": "R6",
+    "model": "gpt-4.1-mini",
+    "limit": 3,
+    "recommendations": [
+      {
+        "title": "소고기 당근 야채죽",
+        "subtitle": "부드러운 소고기와 당근 야채죽",
+        "taste": "좋아해요",
+        "ingredients": [
+          "소고기",
+          "당근",
+          "애호박"
+        ],
+        "steps": [
+          "쌀을 깨끗이 씻어 물과 함께 끓인다.",
+          "소고기와 당근, 애호박을 잘게 다진다.",
+          "야채와 소고기를 넣고 부드럽게 익힌다.",
+          "식혀서 아이에게 먹인다."
+        ],
+        "sourceName": "아이맘",
+        "sourceUrl": "https://www.i-mom.co.kr/recipe/recipe_view.asp?idx=12345"
+      },
+      {
+        "title": "소고기 애호박 미음",
+        "subtitle": "소고기와 애호박으로 만든 미음",
+        "taste": "좋아해요",
+        "ingredients": [
+          "소고기",
+          "애호박",
+          "당근"
+        ],
+        "steps": [
+          "쌀을 씻어 물과 함께 끓여 미음을 만든다.",
+          "소고기와 애호박, 당근을 잘게 다진다.",
+          "모든 재료를 넣고 부드럽게 끓인다.",
+          "식혀서 아이에게 제공한다."
+        ],
+        "sourceName": "맘스홀릭",
+        "sourceUrl": "https://www.momsholic.com/recipe/recipe_view.asp?idx=67890"
+      },
+      {
+        "title": "당근 소고기 야채죽",
+        "subtitle": "당근과 소고기 야채죽으로 영양 가득",
+        "taste": "좋아해요",
+        "ingredients": [
+          "당근",
+          "소고기",
+          "애호박"
+        ],
+        "steps": [
+          "쌀을 깨끗이 씻어 물과 함께 끓인다.",
+          "소고기와 당근, 애호박을 곱게 다진다.",
+          "모든 재료를 넣고 부드럽게 익힌다.",
+          "식혀서 아이에게 먹인다."
+        ],
+        "sourceName": "베이비뉴스",
+        "sourceUrl": "https://www.ibabynews.com/news/articleView.html?idxno=54321"
+      }
+    ],
+    "latencyMs": 16340,
+    "totalTokens": 1056,
+    "inputTokens": 501,
+    "outputTokens": 555,
+    "fallbackUsed": false,
+    "ok": true
+  },
+  {
+    "createdAt": "2026-05-26T05:09:57.019Z",
+    "caseId": "R7",
+    "model": "gpt-4.1-mini",
+    "limit": 3,
+    "recommendations": [
+      {
+        "title": "두부 브로콜리 계란찜",
+        "subtitle": "부드러운 두부와 브로콜리 계란찜",
+        "taste": "좋아해요",
+        "ingredients": [
+          "계란",
+          "두부",
+          "브로콜리",
+          "소금"
+        ],
+        "steps": [
+          "브로콜리를 잘게 썬다",
+          "두부는 으깨고 계란은 푼다",
+          "모든 재료를 섞어 찜기에 넣고 쪄낸다",
+          "알레르기 반응 확인"
+        ],
+        "sourceName": "맘스레시피",
+        "sourceUrl": "https://momsrecipe.co.kr/recipe/steamed-egg-tofu-broccoli"
+      },
+      {
+        "title": "브로콜리 두부 스크램블",
+        "subtitle": "부드러운 두부와 브로콜리 스크램블",
+        "taste": "좋아해요",
+        "ingredients": [
+          "계란",
+          "두부",
+          "브로콜리",
+          "식용유",
+          "소금"
+        ],
+        "steps": [
+          "브로콜리를 잘게 썬다",
+          "두부는 으깨고 계란을 푼다",
+          "팬에 식용유를 두르고 재료를 넣어 부드럽게 익힌다",
+          "소량부터 확인"
+        ],
+        "sourceName": "아이밥상",
+        "sourceUrl": "https://babyfood.co.kr/recipe/broccoli-tofu-scramble"
+      },
+      {
+        "title": "브로콜리 두부 미음",
+        "subtitle": "부드러운 브로콜리 두부 미음",
+        "taste": "좋아해요",
+        "ingredients": [
+          "두부",
+          "브로콜리",
+          "육수"
+        ],
+        "steps": [
+          "쌀을 곱게 갈아 미음을 만든다",
+          "브로콜리와 두부를 잘게 다진다",
+          "모든 재료를 넣고 부드럽게 끓인다",
+          "알레르기 반응을 소량부터 확인한다."
+        ],
+        "sourceName": "베이비푸드넷",
+        "sourceUrl": "https://babyfoodnet.com/recipe/broccoli-tofu-porridge"
+      }
+    ],
+    "latencyMs": 9548,
+    "totalTokens": 1034,
+    "inputTokens": 501,
+    "outputTokens": 533,
+    "fallbackUsed": false,
+    "ok": true
+  },
+  {
+    "createdAt": "2026-05-26T05:10:06.568Z",
+    "caseId": "R8",
+    "model": "gpt-4.1-mini",
+    "limit": 3,
+    "recommendations": [
+      {
+        "title": "닭고기 당근 죽",
+        "subtitle": "부드러운 닭고기와 당근 영양죽",
+        "taste": "좋아해요",
+        "ingredients": [
+          "닭고기",
+          "당근",
+          "쌀"
+        ],
+        "steps": [
+          "닭고기는 잘게 다져 준비한다.",
+          "당근은 곱게 다져 쌀과 함께 냄비에 넣는다.",
+          "물과 함께 끓여 부드러운 죽으로 완성한다."
+        ],
+        "sourceName": "아이맘",
+        "sourceUrl": "https://www.imom.co.kr/recipe/recipe_view.asp?idx=12345"
+      },
+      {
+        "title": "양파 당근 채소죽",
+        "subtitle": "양파와 당근으로 만든 부드러운 죽",
+        "taste": "보통이에요",
+        "ingredients": [
+          "양파",
+          "당근",
+          "쌀"
+        ],
+        "steps": [
+          "양파와 당근을 잘게 다진다.",
+          "쌀과 함께 냄비에 넣고 물을 부어 끓인다.",
+          "재료가 부드럽게 익으면 죽을 완성한다."
+        ],
+        "sourceName": "맘스레시피",
+        "sourceUrl": "https://www.momsrecipe.co.kr/recipe/vegetable_porridge"
+      },
+      {
+        "title": "바나나 이유식",
+        "subtitle": "부드럽고 달콤한 바나나 이유식",
+        "taste": "좋아해요",
+        "ingredients": [
+          "바나나",
+          "쌀",
+          "물"
+        ],
+        "steps": [
+          "바나나는 껍질을 벗겨 잘게 으깬다.",
+          "쌀과 물을 끓여 죽을 만든다.",
+          "죽에 바나나를 섞어 부드럽게 완성한다."
+        ],
+        "sourceName": "베이비푸드",
+        "sourceUrl": "https://www.babyfood.co.kr/recipe/banana_porridge"
+      }
+    ],
+    "latencyMs": 6659,
+    "totalTokens": 992,
+    "inputTokens": 505,
+    "outputTokens": 487,
+    "fallbackUsed": false,
+    "ok": true
+  },
+  {
+    "createdAt": "2026-05-26T05:10:13.227Z",
+    "caseId": "R9",
+    "model": "gpt-4.1-mini",
+    "limit": 3,
+    "recommendations": [
+      {
+        "title": "새우 애호박 죽",
+        "subtitle": "부드러운 새우와 애호박 죽",
+        "taste": "좋아해요",
+        "ingredients": [
+          "새우",
+          "애호박",
+          "쌀"
+        ],
+        "steps": [
+          "쌀을 깨끗이 씻어 물과 함께 끓인다",
+          "애호박은 잘게 다져서 쌀죽에 넣고 끓인다",
+          "새우는 잘게 다져서 죽에 넣고 익힌다",
+          "알레르기 반응 확인하며 소량부터 먹인다"
+        ],
+        "sourceName": "아이맘",
+        "sourceUrl": "https://www.imom.co.kr/bbs/board.php?bo_table=recipe&wr_id=12345"
+      },
+      {
+        "title": "애호박 당근 볶음",
+        "subtitle": "부드러운 애호박과 당근 볶음",
+        "taste": "좋아해요",
+        "ingredients": [
+          "애호박",
+          "당근",
+          "식용유"
+        ],
+        "steps": [
+          "애호박과 당근을 잘게 썬다",
+          "팬에 식용유를 두르고 당근을 먼저 볶는다",
+          "애호박을 넣고 부드럽게 익힌다",
+          "식혀서 유아에게 먹인다"
+        ],
+        "sourceName": "맘스홀릭",
+        "sourceUrl": "https://momsholic.com/recipe/5678"
+      },
+      {
+        "title": "당근 새우 죽",
+        "subtitle": "부드러운 당근과 새우 죽",
+        "taste": "좋아해요",
+        "ingredients": [
+          "당근",
+          "새우",
+          "쌀"
+        ],
+        "steps": [
+          "쌀을 깨끗이 씻어 물과 함께 끓인다",
+          "당근은 잘게 다져 쌀죽에 넣고 끓인다",
+          "새우는 잘게 다져 넣고 익힌다",
+          "알레르기 반응 확인하며 소량부터 먹인다"
+        ],
+        "sourceName": "아이맘",
+        "sourceUrl": "https://www.imom.co.kr/bbs/board.php?bo_table=recipe&wr_id=67890"
+      }
+    ],
+    "latencyMs": 6760,
+    "totalTokens": 1036,
+    "inputTokens": 500,
+    "outputTokens": 536,
+    "fallbackUsed": false,
+    "ok": true
+  },
+  {
+    "createdAt": "2026-05-26T05:10:19.987Z",
+    "caseId": "R10",
+    "model": "gpt-4.1-mini",
+    "limit": 3,
+    "recommendations": [
+      {
+        "title": "고구마 브로콜리 수프",
+        "subtitle": "부드러운 고구마와 브로콜리 수프",
+        "taste": "좋아해요",
+        "ingredients": [
+          "고구마",
+          "브로콜리",
+          "우유",
+          "감자"
+        ],
+        "steps": [
+          "고구마와 감자를 껍질 벗겨 작게 썬다",
+          "브로콜리는 데쳐서 준비한다",
+          "모든 재료를 냄비에 넣고 물과 우유를 부어 끓인다",
+          "부드럽게 익으면 믹서로 갈아 완성한다",
+          "알레르기 반응을 소량부터 확인한다."
+        ],
+        "sourceName": "아이맘",
+        "sourceUrl": "https://www.imom.co.kr/recipe/recipe_view.asp?idx=12345"
+      },
+      {
+        "title": "브로콜리 치즈 리조또",
+        "subtitle": "부드러운 치즈와 브로콜리 리조또",
+        "taste": "좋아해요",
+        "ingredients": [
+          "브로콜리",
+          "치즈",
+          "양파"
+        ],
+        "steps": [
+          "쌀을 깨끗이 씻고 물에 불린다",
+          "양파와 브로콜리를 잘게 다진다",
+          "냄비에 재료와 물을 넣고 끓인다",
+          "쌀이 익으면 치즈를 넣고 녹여 완성한다",
+          "알레르기 반응을 소량부터 확인한다."
+        ],
+        "sourceName": "베이비뉴스",
+        "sourceUrl": "https://www.ibabynews.com/news/articleView.html?idxno=56789"
+      },
+      {
+        "title": "고구마 치즈 구이",
+        "subtitle": "달콤한 고구마와 치즈의 조화",
+        "taste": "좋아해요",
+        "ingredients": [
+          "고구마",
+          "치즈",
+          "올리브유",
+          "허브가루"
+        ],
+        "steps": [
+          "고구마를 얇게 썰어 올리브유를 바른다",
+          "오븐에 고구마를 굽다가 치즈를 올린다",
+          "치즈가 녹을 때까지 더 굽는다",
+          "식혀서 아이에게 제공한다",
+          "알레르기 반응을 소량부터 확인한다."
+        ],
+        "sourceName": "아이쿡",
+        "sourceUrl": "https://www.icook.co.kr/recipe/345678"
+      }
+    ],
+    "latencyMs": 10837,
+    "totalTokens": 1070,
+    "inputTokens": 505,
+    "outputTokens": 565,
+    "fallbackUsed": false,
+    "ok": true
+  },
+  {
+    "createdAt": "2026-05-26T05:13:56.774Z",
+    "caseId": "R11",
+    "model": "gpt-4.1-mini",
+    "limit": 3,
+    "recommendations": [
+      {
+        "title": "브로콜리 두부 스프",
+        "subtitle": "부드러운 브로콜리와 두부 스프",
+        "taste": "좋아해요",
+        "ingredients": [
+          "브로콜리",
+          "두부",
+          "감자"
+        ],
+        "steps": [
+          "브로콜리와 감자를 깨끗이 씻어 작게 자른다",
+          "두부는 으깨서 준비한다",
+          "모든 재료를 냄비에 넣고 물과 함께 끓인다",
+          "부드럽게 익으면 믹서로 갈아 완성한다",
+          "알레르기 반응을 소량부터 확인한다."
+        ],
+        "sourceName": "아기식단연구소",
+        "sourceUrl": "https://www.babykitchen.co.kr/recipe/broccoli-tofu-soup"
+      },
+      {
+        "title": "당근 브로콜리 죽",
+        "subtitle": "영양 가득 부드러운 야채죽",
+        "taste": "좋아해요",
+        "ingredients": [
+          "당근",
+          "브로콜리",
+          "쌀"
+        ],
+        "steps": [
+          "쌀을 깨끗이 씻어 물에 불린다",
+          "당근과 브로콜리를 잘게 썬다",
+          "모든 재료를 냄비에 넣고 부드럽게 끓인다",
+          "잘 익으면 으깨서 아기에게 준다"
+        ],
+        "sourceName": "맘스레시피",
+        "sourceUrl": "https://www.momsrecipe.co.kr/recipe/carrot-broccoli-porridge"
+      },
+      {
+        "title": "두부 당근 야채전",
+        "subtitle": "부드러운 두부와 당근 야채전",
+        "taste": "좋아해요",
+        "ingredients": [
+          "두부",
+          "당근",
+          "밀가루"
+        ],
+        "steps": [
+          "두부는 으깨고 당근은 잘게 다진다",
+          "밀가루와 물을 섞어 반죽을 만든다",
+          "모든 재료를 섞어 팬에 노릇하게 굽는다",
+          "식힌 후 아기에게 준다",
+          "알레르기 반응을 소량부터 확인한다."
+        ],
+        "sourceName": "아이밥상",
+        "sourceUrl": "https://www.aibapsang.com/recipe/tofu-carrot-pancake"
+      }
+    ],
+    "latencyMs": 9970,
+    "totalTokens": 1050,
+    "inputTokens": 501,
+    "outputTokens": 549,
+    "fallbackUsed": false,
+    "ok": true
+  },
+  {
+    "createdAt": "2026-05-26T05:14:06.744Z",
+    "caseId": "R12",
+    "model": "gpt-4.1-mini",
+    "limit": 3,
+    "recommendations": [
+      {
+        "title": "애호박 치즈구이",
+        "subtitle": "부드러운 애호박과 치즈 조합",
+        "taste": "좋아해요",
+        "ingredients": [
+          "애호박",
+          "치즈",
+          "올리브유",
+          "소금",
+          "후추"
+        ],
+        "steps": [
+          "애호박을 얇게 썰어 준비해요",
+          "팬에 올리브유를 두르고 애호박을 살짝 볶아요",
+          "치즈를 올리고 뚜껑을 덮어 녹을 때까지 익혀요",
+          "식힌 후 아이에게 제공해요",
+          "알레르기 반응을 소량부터 확인한다."
+        ],
+        "sourceName": "아이맘",
+        "sourceUrl": "https://www.imbaby.co.kr/recipe/recipe_view.asp?idx=12345"
+      },
+      {
+        "title": "새우 애호박 죽",
+        "subtitle": "부드러운 새우와 애호박 죽",
+        "taste": "좋아해요",
+        "ingredients": [
+          "새우",
+          "애호박",
+          "소금"
+        ],
+        "steps": [
+          "쌀을 깨끗이 씻어 물과 함께 끓여 죽을 만들어요",
+          "새우는 잘게 다져 데쳐 준비해요",
+          "애호박은 잘게 썰어 죽에 넣고 함께 끓여요",
+          "식힌 후 아이에게 제공해요",
+          "알레르기 반응을 소량부터 확인한다."
+        ],
+        "sourceName": "맘스홀릭베이비",
+        "sourceUrl": "https://momsholicbaby.com/recipe/shrimp-zucchini-porridge"
+      },
+      {
+        "title": "우유 애호박 스프",
+        "subtitle": "부드러운 우유와 애호박 스프",
+        "taste": "좋아해요",
+        "ingredients": [
+          "애호박",
+          "우유",
+          "감자",
+          "양파"
+        ],
+        "steps": [
+          "애호박, 감자, 양파를 작게 썰어요",
+          "냄비에 물과 함께 넣고 부드럽게 끓여요",
+          "부드러워지면 우유를 넣고 한소끔 더 끓여요",
+          "식힌 후 아이에게 제공해요",
+          "알레르기 반응을 소량부터 확인한다."
+        ],
+        "sourceName": "아이쿡",
+        "sourceUrl": "https://icook.tw/recipes/123456"
+      }
+    ],
+    "latencyMs": 15811,
+    "totalTokens": 1060,
+    "inputTokens": 503,
+    "outputTokens": 557,
+    "fallbackUsed": false,
+    "ok": true
+  },
+  {
+    "createdAt": "2026-05-26T05:14:22.555Z",
+    "caseId": "R13",
+    "model": "gpt-4.1-mini",
+    "limit": 3,
+    "recommendations": [
+      {
+        "title": "닭고기 브로콜리 죽",
+        "subtitle": "부드러운 닭고기와 브로콜리 죽",
+        "taste": "좋아해요",
+        "ingredients": [
+          "닭고기",
+          "브로콜리",
+          "당근"
+        ],
+        "steps": [
+          "닭고기와 당근을 잘게 다진다",
+          "쌀과 물을 넣고 끓인다",
+          "닭고기와 당근, 브로콜리를 넣고 부드럽게 익힌다",
+          "잘 식혀서 아이에게 준다"
+        ],
+        "sourceName": "맘스레시피",
+        "sourceUrl": "https://www.momsrecipe.co.kr/recipe/child/chicken-broccoli-porridge"
+      },
+      {
+        "title": "애호박 당근 닭고기 볶음",
+        "subtitle": "부드러운 야채와 닭고기 볶음",
+        "taste": "좋아해요",
+        "ingredients": [
+          "닭고기",
+          "애호박",
+          "당근",
+          "식용유"
+        ],
+        "steps": [
+          "닭고기와 야채를 작게 썬다",
+          "팬에 식용유를 두르고 닭고기를 볶는다",
+          "애호박과 당근을 넣고 부드럽게 익힌다",
+          "식혀서 아이에게 준다"
+        ],
+        "sourceName": "아이밥상",
+        "sourceUrl": "https://www.aibapsang.com/recipe/chicken-zucchini-carrot"
+      },
+      {
+        "title": "닭고기 야채 스튜",
+        "subtitle": "닭고기와 야채가 듬뿍 스튜",
+        "taste": "좋아해요",
+        "ingredients": [
+          "닭고기",
+          "브로콜리",
+          "애호박",
+          "당근",
+          "감자"
+        ],
+        "steps": [
+          "닭고기와 감자를 작게 썬다",
+          "냄비에 물과 재료를 넣고 끓인다",
+          "브로콜리와 애호박, 당근을 넣고 부드럽게 익힌다",
+          "식혀서 아이에게 준다"
+        ],
+        "sourceName": "베이비푸드",
+        "sourceUrl": "https://www.babyfood.co.kr/recipe/chicken-vegetable-stew"
+      }
+    ],
+    "latencyMs": 9128,
+    "totalTokens": 1080,
+    "inputTokens": 507,
+    "outputTokens": 573,
+    "fallbackUsed": false,
+    "ok": true
+  },
+  {
+    "createdAt": "2026-05-26T05:14:31.683Z",
+    "caseId": "R14",
+    "model": "gpt-4.1-mini",
+    "limit": 3,
+    "recommendations": [
+      {
+        "title": "고구마 바나나 퓨레",
+        "subtitle": "부드러운 고구마와 바나나 퓨레",
+        "taste": "좋아해요",
+        "ingredients": [
+          "고구마",
+          "바나나",
+          "쌀"
+        ],
+        "steps": [
+          "고구마를 찜기에 쪄서 부드럽게 익힌다",
+          "바나나는 껍질을 벗겨 준비한다",
+          "고구마와 바나나를 함께 으깨서 퓨레를 만든다"
+        ],
+        "sourceName": "아이맘",
+        "sourceUrl": "https://www.imom.co.kr/recipe/recipe_view.asp?idx=12345"
+      },
+      {
+        "title": "고구마 우유죽",
+        "subtitle": "고구마와 우유로 만든 부드러운 죽",
+        "taste": "좋아해요",
+        "ingredients": [
+          "고구마",
+          "우유",
+          "쌀"
+        ],
+        "steps": [
+          "고구마를 잘게 썰어 끓는 물에 익힌다",
+          "고구마가 익으면 우유를 넣고 부드럽게 끓인다",
+          "잘 저어가며 죽처럼 농도를 맞춘다",
+          "알레르기 반응 확인"
+        ],
+        "sourceName": "맘스레시피",
+        "sourceUrl": "https://www.momsrecipe.co.kr/recipe/5678"
+      },
+      {
+        "title": "바나나 우유 스무디",
+        "subtitle": "바나나와 우유로 만든 부드러운 스무디",
+        "taste": "좋아해요",
+        "ingredients": [
+          "바나나",
+          "우유",
+          "쌀"
+        ],
+        "steps": [
+          "바나나를 껍질을 벗겨 적당히 자른다",
+          "바나나와 우유, 물을 믹서에 넣고 간다",
+          "부드럽게 섞인 스무디를 컵에 담는다",
+          "소량부터 확인"
+        ],
+        "sourceName": "베이비푸드",
+        "sourceUrl": "https://www.babyfood.co.kr/recipes/banana-milk-smoothie"
+      }
+    ],
+    "latencyMs": 7752,
+    "totalTokens": 1021,
+    "inputTokens": 501,
+    "outputTokens": 520,
+    "fallbackUsed": false,
+    "ok": true
+  },
+  {
+    "createdAt": "2026-05-26T05:14:39.435Z",
+    "caseId": "R15",
+    "model": "gpt-4.1-mini",
+    "limit": 3,
+    "recommendations": [
+      {
+        "title": "소고기 당근 죽",
+        "subtitle": "부드러운 소고기와 당근 죽",
+        "taste": "좋아해요",
+        "ingredients": [
+          "소고기",
+          "당근",
+          "쌀"
+        ],
+        "steps": [
+          "소고기는 곱게 다진다",
+          "당근은 잘게 썬다",
+          "쌀과 물을 넣고 끓이다가 소고기와 당근을 넣고 부드럽게 익힌다"
+        ],
+        "sourceName": "아이맘",
+        "sourceUrl": "https://www.imom.co.kr/recipe/recipe_view.asp?idx=12345"
+      },
+      {
+        "title": "소고기 양파 스튜",
+        "subtitle": "부드러운 소고기와 양파 스튜",
+        "taste": "좋아해요",
+        "ingredients": [
+          "소고기",
+          "양파",
+          "당근",
+          "감자"
+        ],
+        "steps": [
+          "소고기는 작게 썬다",
+          "양파, 당근, 감자는 잘게 썬다",
+          "모든 재료를 넣고 부드럽게 익힌다"
+        ],
+        "sourceName": "맘스레시피",
+        "sourceUrl": "https://www.momsrecipe.co.kr/recipe/45678"
+      },
+      {
+        "title": "소고기 야채죽",
+        "subtitle": "소고기와 야채가 어우러진 죽",
+        "taste": "좋아해요",
+        "ingredients": [
+          "소고기",
+          "양파",
+          "당근"
+        ],
+        "steps": [
+          "소고기와 야채를 잘게 다진다",
+          "쌀과 물을 넣고 끓인다",
+          "소고기와 야채를 넣고 부드럽게 익힌다"
+        ],
+        "sourceName": "베이비푸드",
+        "sourceUrl": "https://www.babyfood.co.kr/recipe/78901"
+      }
+    ],
+    "latencyMs": 7917,
+    "totalTokens": 977,
+    "inputTokens": 500,
+    "outputTokens": 477,
+    "fallbackUsed": false,
+    "ok": true
   }
 ]
