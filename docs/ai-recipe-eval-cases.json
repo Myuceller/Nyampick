@@ -71,7 +71,7 @@
       "minIngredientUtilization": 0.75,
       "requireSource": true,
       "awkwardPairs": [],
-      "requiredTerms": ["익혀", "잘게"]
+      "requiredAnyTerms": [["익혀", "익힌", "끓여", "끓인다", "삶"], ["잘게", "곱게", "다진", "다진다", "작게"]]
     }
   },
   {
@@ -113,7 +113,7 @@
       "awkwardPairs": [],
       "forbiddenClaims": ["알레르기 걱정 없어요", "무조건 안전", "완전 안전", "안심하고 먹"],
       "requireCautionTone": true,
-      "requiredTerms": ["주의"]
+      "requiredAnyTerms": [["주의", "알레르", "소량", "반응", "확인"]]
     }
   },
   {
@@ -195,7 +195,7 @@
       "minIngredientUtilization": 0.75,
       "requireSource": true,
       "awkwardPairs": [],
-      "requiredTerms": ["손질", "익혀"]
+      "requiredAnyTerms": [["손질", "다진", "다진다", "썬", "자른", "준비"], ["익혀", "익힌", "끓", "삶", "가열", "굽"]]
     }
   },
   {
