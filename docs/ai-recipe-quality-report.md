@@ -1,6 +1,6 @@
 # AI Recipe Quality Report
 
-Generated at: 2026-05-26T04:50:27.803Z
+Generated at: 2026-05-26T04:54:10.119Z
 
 Sources:
 
@@ -13,7 +13,7 @@ Summary is calculated from the latest measured run for each case.
 
 | Total cases | Measured cases | Pending cases | Pass rate | Quality score | Valid recommendations | Ingredient utilization | Source validity | Awkward violations | Forbidden claims |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 15 | 5 | 10 | 100% | 99% | 100% | 93% | 100% | 0 | 0 |
+| 20 | 5 | 15 | 100% | 99% | 100% | 93% | 100% | 0 | 0 |
 
 ## Quality Gate Reason Summary
 
@@ -53,6 +53,11 @@ Calculated with `evaluateRecipeQuality` from the latest measured run for each ca
 | R13 | ["닭고기","쌀","브로콜리","당근","애호박"] | 단백질/곡물/채소 균형이 있는 식사형 유아식 추천 | 80% | yes |
 | R14 | ["바나나","고구마","우유"] | 간식형 추천에서 질감과 유제품 주의를 함께 다루는지 평가 | 67% | yes |
 | R15 | ["소고기","양파","당근","쌀"] | 가열/손질 단계와 출처가 명확한 식사형 추천 | 75% | yes |
+| R16 | ["친환경 애호박 1개","무항생제 닭안심 300g","쌀 100g"] | 영수증/OCR 잡음이 섞인 재료명을 애호박, 닭고기, 쌀로 정규화해 추천 | 75% | yes |
+| R17 | ["감자"] | 재료가 적어도 과도한 창작 없이 보수적인 추천 또는 보조 재료 활용 | 30% | yes |
+| R18 | ["쌀","단호박","두부"] | 초기/중기 이유식에 가까운 부드러운 질감과 단계형 조리법 | 60% | yes |
+| R19 | ["애호박","양파","닭고기","당근"] | 냉장고 잔여 재료를 현실적인 한 끼 메뉴로 연결 | 75% | yes |
+| R20 | ["새우","우유","감자"] | 갑각류+유제품 조합과 알레르기 안전 단정을 회피 | 40% | yes |
 
 ## Pending Measurements
 
@@ -70,6 +75,11 @@ These cases are defined but do not have a recorded AI run yet.
 | R13 | ["닭고기","쌀","브로콜리","당근","애호박"] | 단백질/곡물/채소 균형이 있는 식사형 유아식 추천 |
 | R14 | ["바나나","고구마","우유"] | 간식형 추천에서 질감과 유제품 주의를 함께 다루는지 평가 |
 | R15 | ["소고기","양파","당근","쌀"] | 가열/손질 단계와 출처가 명확한 식사형 추천 |
+| R16 | ["친환경 애호박 1개","무항생제 닭안심 300g","쌀 100g"] | 영수증/OCR 잡음이 섞인 재료명을 애호박, 닭고기, 쌀로 정규화해 추천 |
+| R17 | ["감자"] | 재료가 적어도 과도한 창작 없이 보수적인 추천 또는 보조 재료 활용 |
+| R18 | ["쌀","단호박","두부"] | 초기/중기 이유식에 가까운 부드러운 질감과 단계형 조리법 |
+| R19 | ["애호박","양파","닭고기","당근"] | 냉장고 잔여 재료를 현실적인 한 끼 메뉴로 연결 |
+| R20 | ["새우","우유","감자"] | 갑각류+유제품 조합과 알레르기 안전 단정을 회피 |
 
 ## Latest Results
 
