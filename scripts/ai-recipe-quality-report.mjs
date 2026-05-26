@@ -1,5 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { normalizeIngredientList } from "../src/lib/ai/ingredient-normalize.ts";
+import { evaluateRecipeQuality } from "../src/lib/server/recipe-ai.ts";
 
 const root = process.cwd();
 const casesPath = path.join(root, "docs", "ai-recipe-eval-cases.json");
@@ -7,6 +9,16 @@ const historyPath = path.join(root, "docs", "ai-recipe-quality-history.json");
 const reportPath = path.join(root, "docs", "ai-recipe-quality-report.md");
 
 const validTastes = new Set(["좋아해요", "보통이에요", "싫어해요"]);
+const knownRejectReasons = [
+  "title_too_long",
+  "subtitle_too_long",
+  "too_few_ingredients",
+  "too_few_steps",
+  "missing_source",
+  "awkward_pair",
+  "missing_allergy_caution",
+  "not_enough_input_match",
+];
 
 function formatRate(value) {
   if (typeof value !== "number") return "TBD";
@@ -68,20 +80,89 @@ function isValidRecipe(recipe, requireSource) {
   );
 }
 
+function normalizeHistoryRecipe(recipe) {
+  const sourceName = recipe?.sourceName ?? recipe?.source_name;
+  const sourceUrl = recipe?.sourceUrl ?? recipe?.source_url;
+  return {
+    title: typeof recipe?.title === "string" ? recipe.title : "",
+    subtitle: typeof recipe?.subtitle === "string" ? recipe.subtitle : "",
+    taste: validTastes.has(recipe?.taste) ? recipe.taste : "보통이에요",
+    ingredients: Array.isArray(recipe?.ingredients)
+      ? recipe.ingredients.filter((value) => typeof value === "string")
+      : [],
+    steps: Array.isArray(recipe?.steps)
+      ? recipe.steps.filter((value) => typeof value === "string")
+      : [],
+    sourceName: typeof sourceName === "string" ? sourceName : undefined,
+    sourceUrl: typeof sourceUrl === "string" ? sourceUrl : undefined,
+  };
+}
+
+function countRejectReasons(recommendations, evalCase, limit) {
+  const counts = Object.fromEntries(knownRejectReasons.map((reason) => [reason, 0]));
+  let readyCount = 0;
+  let rejectedCount = 0;
+
+  for (const recipe of recommendations) {
+    const result = evaluateRecipeQuality(normalizeHistoryRecipe(recipe), {
+      ingredients: evalCase?.ingredients ?? [],
+      limit,
+    });
+    if (result.ready) {
+      readyCount += 1;
+      continue;
+    }
+    rejectedCount += 1;
+    for (const reason of result.reasons) counts[reason] = (counts[reason] ?? 0) + 1;
+  }
+
+  return { counts, readyCount, rejectedCount };
+}
+
+function formatTopReasons(counts, limit = 3) {
+  const reasons = Object.entries(counts ?? {})
+    .filter(([, count]) => count > 0)
+    .sort(([, left], [, right]) => right - left)
+    .slice(0, limit)
+    .map(([reason, count]) => `${reason} ${count}`);
+  return reasons.length > 0 ? reasons.join(", ") : "-";
+}
+
+function getEvalGaps(row) {
+  const gaps = [];
+  if ((row.validRecommendationRate ?? 0) < 0.9) gaps.push("invalid_recommendation");
+  if ((row.ingredientUtilization ?? 0) < (row.minIngredientUtilization ?? 0.6)) {
+    gaps.push("low_ingredient_use");
+  }
+  if ((row.sourceValidityRate ?? 0) < 0.9) gaps.push("invalid_source");
+  if ((row.awkwardPairViolations ?? 0) > 0) gaps.push("awkward_pair");
+  if ((row.forbiddenClaimViolations ?? 0) > 0) gaps.push("forbidden_claim");
+  if (row.cautionTonePass === false) gaps.push("missing_caution_tone");
+  if ((row.requiredTermRate ?? 1) < 1) gaps.push("missing_required_terms");
+  return gaps;
+}
+
+function formatEvalGaps(row) {
+  const gaps = getEvalGaps(row);
+  return gaps.length > 0 ? gaps.join(", ") : "-";
+}
+
 function evaluateEntry(entry, evalCase) {
   const recommendations = Array.isArray(entry.recommendations) ? entry.recommendations : [];
   const checks = evalCase?.checks ?? {};
   const requireSource = checks.requireSource !== false;
   const limit = Number(entry.limit ?? evalCase?.limit ?? recommendations.length ?? 0);
+  const rejectReasons = countRejectReasons(recommendations, evalCase, limit);
   const validCount = recommendations.filter((recipe) => isValidRecipe(recipe, requireSource)).length;
   const validRecommendationRate = limit > 0 ? Math.min(1, validCount / limit) : null;
 
   const joinedText = recommendations.map(textOfRecipe).join(" ");
-  const usedIngredients = (evalCase?.ingredients ?? []).filter((ingredient) =>
+  const normalizedCaseIngredients = normalizeIngredientList(evalCase?.ingredients ?? []);
+  const usedIngredients = normalizedCaseIngredients.filter((ingredient) =>
     containsIngredient(joinedText, ingredient),
   );
   const ingredientUtilization =
-    evalCase?.ingredients?.length > 0 ? usedIngredients.length / evalCase.ingredients.length : null;
+    normalizedCaseIngredients.length > 0 ? usedIngredients.length / normalizedCaseIngredients.length : null;
 
   const sourceUrls = recommendations
     .map((recipe) => recipe?.source_url ?? recipe?.sourceUrl)
@@ -131,6 +212,10 @@ function evaluateEntry(entry, evalCase) {
     forbiddenClaimViolations,
     cautionTonePass,
     requiredTermRate,
+    minIngredientUtilization: checks.minIngredientUtilization ?? 0.6,
+    rejectReasonCounts: rejectReasons.counts,
+    readyCount: rejectReasons.readyCount,
+    rejectedCount: rejectReasons.rejectedCount,
     qualityScore,
     pass:
       (validRecommendationRate ?? 0) >= 0.9 &&
@@ -167,7 +252,27 @@ function summarize(rows) {
     sourceValidityRate: average(rows.map((row) => row.sourceValidityRate)),
     awkwardPairViolations: rows.reduce((sum, row) => sum + (row.awkwardPairViolations ?? 0), 0),
     forbiddenClaimViolations: rows.reduce((sum, row) => sum + (row.forbiddenClaimViolations ?? 0), 0),
+    readyCount: rows.reduce((sum, row) => sum + (row.readyCount ?? 0), 0),
+    rejectedCount: rows.reduce((sum, row) => sum + (row.rejectedCount ?? 0), 0),
   };
+}
+
+function summarizeEvalGaps(rows) {
+  const counts = new Map();
+  for (const row of rows) {
+    for (const gap of getEvalGaps(row)) counts.set(gap, (counts.get(gap) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort(([, left], [, right]) => right - left);
+}
+
+function summarizeRejectReasons(rows) {
+  const counts = Object.fromEntries(knownRejectReasons.map((reason) => [reason, 0]));
+  for (const row of rows) {
+    for (const reason of knownRejectReasons) {
+      counts[reason] += row.rejectReasonCounts?.[reason] ?? 0;
+    }
+  }
+  return counts;
 }
 
 function latestRowsByCase(rows) {
@@ -182,6 +287,8 @@ function buildMarkdown(cases, evaluatedRows) {
   const measuredCaseIds = new Set(latestRows.map((row) => row.caseId));
   const pendingCases = cases.filter((item) => !measuredCaseIds.has(item.caseId));
   const summary = summarize(latestRows);
+  const rejectReasonSummary = summarizeRejectReasons(latestRows);
+  const evalGapSummary = summarizeEvalGaps(latestRows);
 
   const caseRows = cases
     .map(
@@ -198,7 +305,7 @@ function buildMarkdown(cases, evaluatedRows) {
           .reverse()
           .map(
             (row) =>
-              `| ${row.createdAt ?? row.date ?? "TBD"} | ${row.caseId ?? "-"} | ${formatRate(row.qualityScore)} | ${formatRate(row.validRecommendationRate)} | ${formatRate(row.ingredientUtilization)} | ${formatRate(row.sourceValidityRate)} | ${row.awkwardPairViolations ?? 0} | ${row.forbiddenClaimViolations ?? 0} | ${row.pass ? "pass" : "fail"} |`,
+              `| ${row.createdAt ?? row.date ?? "TBD"} | ${row.caseId ?? "-"} | ${formatRate(row.qualityScore)} | ${formatRate(row.validRecommendationRate)} | ${formatRate(row.ingredientUtilization)} | ${formatRate(row.sourceValidityRate)} | ${row.awkwardPairViolations ?? 0} | ${row.forbiddenClaimViolations ?? 0} | ${formatTopReasons(row.rejectReasonCounts)} | ${formatEvalGaps(row)} | ${row.pass ? "pass" : "fail"} |`,
           )
           .join("\n");
 
@@ -226,6 +333,26 @@ Summary is calculated from the latest measured run for each case.
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | ${cases.length} | ${summary.total} | ${pendingCases.length} | ${formatRate(summary.passRate)} | ${formatRate(summary.qualityScore)} | ${formatRate(summary.validRecommendationRate)} | ${formatRate(summary.ingredientUtilization)} | ${formatRate(summary.sourceValidityRate)} | ${summary.awkwardPairViolations} | ${summary.forbiddenClaimViolations} |
 
+## Quality Gate Reason Summary
+
+Calculated with \`evaluateRecipeQuality\` from the latest measured run for each case.
+
+| Ready recipes | Rejected recipes | Top reject reasons |
+| ---: | ---: | --- |
+| ${summary.readyCount} | ${summary.rejectedCount} | ${formatTopReasons(rejectReasonSummary, 8)} |
+
+| Reason | Count |
+| --- | ---: |
+${knownRejectReasons.map((reason) => `| ${reason} | ${rejectReasonSummary[reason] ?? 0} |`).join("\n")}
+
+## Eval Gap Summary
+
+These gaps are stricter eval-case expectations. A recipe can pass the production quality gate but still fail an eval case.
+
+| Gap | Count |
+| --- | ---: |
+${evalGapSummary.length === 0 ? "| - | 0 |" : evalGapSummary.map(([gap, count]) => `| ${gap} | ${count} |`).join("\n")}
+
 ## Evaluation Cases
 
 | Case | Ingredients | Expected | Min ingredient use | Require source |
@@ -242,8 +369,8 @@ ${pendingRows}
 
 ## Latest Results
 
-| Created at | Case | Quality | Valid recs | Ingredient use | Source validity | Awkward | Forbidden | Result |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| Created at | Case | Quality | Valid recs | Ingredient use | Source validity | Awkward | Forbidden | Top reject reasons | Eval gaps | Result |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |
 ${resultRows}
 `;
 }

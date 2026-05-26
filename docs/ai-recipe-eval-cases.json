@@ -197,5 +197,69 @@
       "awkwardPairs": [],
       "requiredTerms": ["손질", "익혀"]
     }
+  },
+  {
+    "caseId": "R16",
+    "tags": ["receipt-noise", "normalization", "fridge"],
+    "ingredients": ["친환경 애호박 1개", "무항생제 닭안심 300g", "쌀 100g"],
+    "limit": 3,
+    "expected": "영수증/OCR 잡음이 섞인 재료명을 애호박, 닭고기, 쌀로 정규화해 추천",
+    "checks": {
+      "minIngredientUtilization": 0.75,
+      "requireSource": true,
+      "awkwardPairs": [],
+      "requiredTerms": ["부드"]
+    }
+  },
+  {
+    "caseId": "R17",
+    "tags": ["low-context", "fallback", "source"],
+    "ingredients": ["감자"],
+    "limit": 3,
+    "expected": "재료가 적어도 과도한 창작 없이 보수적인 추천 또는 보조 재료 활용",
+    "checks": {
+      "minIngredientUtilization": 0.3,
+      "requireSource": true,
+      "awkwardPairs": []
+    }
+  },
+  {
+    "caseId": "R18",
+    "tags": ["age-stage", "texture", "baby-food"],
+    "ingredients": ["쌀", "단호박", "두부"],
+    "limit": 3,
+    "expected": "초기/중기 이유식에 가까운 부드러운 질감과 단계형 조리법",
+    "checks": {
+      "minIngredientUtilization": 0.6,
+      "requireSource": true,
+      "awkwardPairs": [],
+      "requiredTerms": ["부드", "익"]
+    }
+  },
+  {
+    "caseId": "R19",
+    "tags": ["fridge", "realistic-combo", "meal"],
+    "ingredients": ["애호박", "양파", "닭고기", "당근"],
+    "limit": 3,
+    "expected": "냉장고 잔여 재료를 현실적인 한 끼 메뉴로 연결",
+    "checks": {
+      "minIngredientUtilization": 0.75,
+      "requireSource": true,
+      "awkwardPairs": []
+    }
+  },
+  {
+    "caseId": "R20",
+    "tags": ["allergy", "safety", "regression", "seafood", "dairy"],
+    "ingredients": ["새우", "우유", "감자"],
+    "limit": 3,
+    "expected": "갑각류+유제품 조합과 알레르기 안전 단정을 회피",
+    "checks": {
+      "minIngredientUtilization": 0.4,
+      "requireSource": true,
+      "awkwardPairs": [["새우", "우유"]],
+      "forbiddenClaims": ["알레르기 걱정 없어요", "안전해요", "완전 안전", "무조건 안전"],
+      "requireCautionTone": true
+    }
   }
 ]

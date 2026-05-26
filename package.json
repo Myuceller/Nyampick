@@ -12,6 +12,7 @@
     "perf:report": "node scripts/performance-report.mjs",
     "perf:api": "node scripts/api-latency-benchmark.mjs",
     "ai:report": "node scripts/ai-performance-report.mjs",
+    "ai:quality:run": "node scripts/ai-recipe-quality-run.mjs",
     "ai:quality": "node scripts/ai-recipe-quality-report.mjs",
     "ai:cases:suggest": "node scripts/ai-recipe-case-suggestions.mjs",
     "lighthouse:landing": "mkdir -p .tmp && lighthouse http://localhost:3000/landing --form-factor=mobile --screenEmulation.mobile --output=json --output-path=.tmp/lighthouse-landing-mobile.json",
