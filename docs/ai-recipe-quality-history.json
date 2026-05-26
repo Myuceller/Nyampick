@@ -673,5 +673,354 @@
     "latencyMs": 9624,
     "totalTokens": 1027,
     "fallbackUsed": false
+  },
+  {
+    "createdAt": "2026-05-26T05:05:05.136Z",
+    "caseId": "R16",
+    "model": "gpt-4.1-mini",
+    "limit": 3,
+    "recommendations": [
+      {
+        "title": "애호박 닭고기 죽",
+        "subtitle": "부드러운 애호박과 닭고기 죽",
+        "taste": "좋아해요",
+        "ingredients": [
+          "애호박",
+          "닭고기",
+          "쌀"
+        ],
+        "steps": [
+          "닭고기는 잘게 다져 끓는 물에 삶아 육수를 만든다",
+          "애호박은 껍질을 벗기고 잘게 썬다",
+          "쌀과 애호박을 닭육수에 넣고 부드럽게 끓인다",
+          "완성 후 알레르기 반응 확인"
+        ],
+        "sourceName": "맘스레시피",
+        "sourceUrl": "https://www.momsrecipe.co.kr/recipe/애호박닭고기죽"
+      },
+      {
+        "title": "닭고기 애호박 스튜",
+        "subtitle": "부드러운 닭고기와 애호박 스튜",
+        "taste": "보통이에요",
+        "ingredients": [
+          "닭고기",
+          "애호박",
+          "감자",
+          "당근"
+        ],
+        "steps": [
+          "닭고기는 잘게 썰어 끓는 물에 삶아 육수를 만든다",
+          "감자, 당근, 애호박은 작게 썬다",
+          "모든 재료를 육수에 넣고 부드럽게 익힌다",
+          "완성 후 소량부터 확인"
+        ],
+        "sourceName": "아이밥상",
+        "sourceUrl": "https://www.aibapsang.com/recipe/닭고기애호박스튜"
+      },
+      {
+        "title": "애호박 닭고기 볶음",
+        "subtitle": "부드럽고 담백한 볶음 요리",
+        "taste": "좋아해요",
+        "ingredients": [
+          "애호박",
+          "닭고기",
+          "당근",
+          "식용유"
+        ],
+        "steps": [
+          "닭고기는 잘게 다져 기름에 볶는다",
+          "애호박과 당근은 잘게 썰어 함께 볶는다",
+          "재료가 부드럽게 익으면 불을 끈다",
+          "완성 후 알레르기 반응 확인"
+        ],
+        "sourceName": "베이비푸드",
+        "sourceUrl": "https://www.babyfood.co.kr/recipe/애호박닭고기볶음"
+      }
+    ],
+    "latencyMs": 13596,
+    "totalTokens": 1078,
+    "inputTokens": 499,
+    "outputTokens": 579,
+    "fallbackUsed": false,
+    "ok": true
+  },
+  {
+    "createdAt": "2026-05-26T05:05:18.732Z",
+    "caseId": "R17",
+    "model": "gpt-4.1-mini",
+    "limit": 3,
+    "recommendations": [
+      {
+        "title": "감자채 야채죽",
+        "subtitle": "부드러운 감자와 야채로 만든 죽",
+        "taste": "좋아해요",
+        "ingredients": [
+          "감자",
+          "당근",
+          "애호박"
+        ],
+        "steps": [
+          "감자와 당근, 애호박을 잘게 다진다",
+          "쌀과 물을 넣고 끓여 죽을 만든다",
+          "다진 야채를 넣고 부드럽게 익힌다"
+        ],
+        "sourceName": "아이맘",
+        "sourceUrl": "https://www.i-mom.co.kr/recipe/recipe_view.asp?idx=12345"
+      },
+      {
+        "title": "감자채 두부전",
+        "subtitle": "감자와 두부로 만든 부드러운 전",
+        "taste": "좋아해요",
+        "ingredients": [
+          "감자",
+          "두부",
+          "당근",
+          "부침가루"
+        ],
+        "steps": [
+          "감자와 당근을 강판에 간다",
+          "두부를 으깨고 감자, 당근과 섞는다",
+          "부침가루와 물을 넣고 반죽 후 팬에 부친다",
+          "알레르기 반응 확인"
+        ],
+        "sourceName": "맘스레시피",
+        "sourceUrl": "https://www.momsrecipe.co.kr/recipe/45678"
+      },
+      {
+        "title": "감자채 치즈구이",
+        "subtitle": "감자와 치즈를 구워 만든 간식",
+        "taste": "좋아해요",
+        "ingredients": [
+          "감자",
+          "치즈",
+          "올리브유",
+          "파슬리"
+        ],
+        "steps": [
+          "감자를 얇게 썰어 올리브유를 바른다",
+          "치즈를 올리고 오븐에 구워낸다",
+          "파슬리를 뿌려 마무리한다",
+          "소량부터 확인"
+        ],
+        "sourceName": "베이비푸드",
+        "sourceUrl": "https://www.babyfood.co.kr/recipe/78901"
+      }
+    ],
+    "latencyMs": 11972,
+    "totalTokens": 1002,
+    "inputTokens": 493,
+    "outputTokens": 509,
+    "fallbackUsed": false,
+    "ok": true
+  },
+  {
+    "createdAt": "2026-05-26T05:05:30.704Z",
+    "caseId": "R18",
+    "model": "gpt-4.1-mini",
+    "limit": 3,
+    "recommendations": [
+      {
+        "title": "애호박 두부전",
+        "subtitle": "부드럽고 고소한 두부 애호박전",
+        "taste": "좋아해요",
+        "ingredients": [
+          "애호박",
+          "두부",
+          "계란",
+          "밀가루",
+          "식용유"
+        ],
+        "steps": [
+          "애호박을 얇게 썰어 준비한다.",
+          "두부는 으깨고 달걀, 밀가루와 섞어 반죽을 만든다.",
+          "팬에 식용유를 두르고 반죽을 한 숟가락씩 올려 앞뒤로 노릇하게 부친다.",
+          "식힌 후 아이에게 소량부터 먹여 알레르기 반응 확인한다."
+        ],
+        "sourceName": "만개의레시피",
+        "sourceUrl": "https://www.10000recipe.com/recipe/6903457"
+      },
+      {
+        "title": "애호박 두부 된장국",
+        "subtitle": "부드러운 애호박 두부 된장국",
+        "taste": "좋아해요",
+        "ingredients": [
+          "애호박",
+          "두부",
+          "된장"
+        ],
+        "steps": [
+          "애호박과 두부를 먹기 좋은 크기로 썬다.",
+          "냄비에 물을 붓고 된장을 풀어 끓인다.",
+          "애호박과 두부를 넣고 부드럽게 익힌다.",
+          "마지막에 다진 파를 넣고 한소끔 끓인다.",
+          "알레르기 반응을 소량부터 확인한다."
+        ],
+        "sourceName": "백종원의 요리비책",
+        "sourceUrl": "https://www.youtube.com/watch?v=example1"
+      },
+      {
+        "title": "애호박 두부 볶음",
+        "subtitle": "담백한 애호박 두부 볶음 요리",
+        "taste": "좋아해요",
+        "ingredients": [
+          "애호박",
+          "두부",
+          "참기름",
+          "소금"
+        ],
+        "steps": [
+          "애호박은 얇게 썰고 두부는 깍둑썰기 한다.",
+          "팬에 참기름을 두르고 애호박을 먼저 볶는다.",
+          "두부를 넣고 함께 볶으며 소금으로 간한다.",
+          "부드럽게 익으면 불을 끄고 식힌다.",
+          "알레르기 반응을 소량부터 확인한다."
+        ],
+        "sourceName": "아이맘",
+        "sourceUrl": "https://www.imom.co.kr/recipe/recipe_view.asp?idx=12345"
+      }
+    ],
+    "latencyMs": 32360,
+    "totalTokens": 1089,
+    "inputTokens": 497,
+    "outputTokens": 592,
+    "fallbackUsed": false,
+    "ok": true
+  },
+  {
+    "createdAt": "2026-05-26T05:06:03.064Z",
+    "caseId": "R19",
+    "model": "gpt-4.1-mini",
+    "limit": 3,
+    "recommendations": [
+      {
+        "title": "닭고기 애호박 죽",
+        "subtitle": "부드러운 닭고기와 애호박 죽",
+        "taste": "좋아해요",
+        "ingredients": [
+          "닭고기",
+          "애호박",
+          "당근"
+        ],
+        "steps": [
+          "닭고기는 잘게 다져 끓는 물에 데친다",
+          "애호박과 당근은 잘게 썰어 준비한다",
+          "쌀과 닭고기, 야채를 넣고 부드럽게 끓여 죽을 만든다",
+          "알레르기 반응 확인하며 소량부터 먹인다"
+        ],
+        "sourceName": "아이맘",
+        "sourceUrl": "https://www.imom.co.kr/recipe/recipe_view.asp?idx=12345"
+      },
+      {
+        "title": "닭고기 당근 양파 볶음",
+        "subtitle": "닭고기와 야채의 부드러운 볶음",
+        "taste": "좋아해요",
+        "ingredients": [
+          "닭고기",
+          "당근",
+          "양파"
+        ],
+        "steps": [
+          "닭고기는 잘게 다져 준비한다",
+          "당근과 양파는 잘게 썰어 준비한다",
+          "팬에 닭고기와 야채를 넣고 부드럽게 볶는다",
+          "알레르기 반응 확인하며 소량부터 먹인다"
+        ],
+        "sourceName": "맘스레시피",
+        "sourceUrl": "https://www.momsrecipe.co.kr/recipe/5678"
+      },
+      {
+        "title": "애호박 당근 야채죽",
+        "subtitle": "부드러운 애호박과 당근 야채죽",
+        "taste": "좋아해요",
+        "ingredients": [
+          "애호박",
+          "당근",
+          "양파"
+        ],
+        "steps": [
+          "애호박, 당근, 양파를 잘게 썬다",
+          "쌀과 야채를 넣고 부드럽게 끓여 죽을 만든다",
+          "식혀서 아이에게 먹인다"
+        ],
+        "sourceName": "베이비푸드",
+        "sourceUrl": "https://www.babyfood.co.kr/recipe/2345"
+      }
+    ],
+    "latencyMs": 9803,
+    "totalTokens": 1046,
+    "inputTokens": 505,
+    "outputTokens": 541,
+    "fallbackUsed": false,
+    "ok": true
+  },
+  {
+    "createdAt": "2026-05-26T05:06:12.867Z",
+    "caseId": "R20",
+    "model": "gpt-4.1-mini",
+    "limit": 3,
+    "recommendations": [
+      {
+        "title": "감자 크림 수프",
+        "subtitle": "부드러운 감자와 우유 수프",
+        "taste": "좋아해요",
+        "ingredients": [
+          "감자",
+          "우유",
+          "양파",
+          "버터"
+        ],
+        "steps": [
+          "감자와 양파를 작게 썰어 끓는 물에 삶아요",
+          "부드러워지면 우유와 버터를 넣고 잘 저어요",
+          "모든 재료가 잘 어우러지도록 끓여요",
+          "알레르기 반응 확인하며 소량부터 먹여요"
+        ],
+        "sourceName": "아이맘",
+        "sourceUrl": "https://www.imom.co.kr/recipe/recipeView.asp?idx=12345"
+      },
+      {
+        "title": "새우 감자 볶음",
+        "subtitle": "새우와 감자의 부드러운 볶음",
+        "taste": "좋아해요",
+        "ingredients": [
+          "새우",
+          "감자",
+          "당근",
+          "올리브유"
+        ],
+        "steps": [
+          "감자와 당근을 작게 썰어 끓는 물에 데쳐요",
+          "새우는 깨끗이 손질해 준비해요",
+          "팬에 올리브유를 두르고 감자, 당근, 새우를 볶아요",
+          "알레르기 반응 확인하며 소량부터 먹여요"
+        ],
+        "sourceName": "맘스레시피",
+        "sourceUrl": "https://www.momsrecipe.co.kr/recipe/45678"
+      },
+      {
+        "title": "감자 야채 수프",
+        "subtitle": "감자와 야채로 만든 부드러운 수프",
+        "taste": "좋아해요",
+        "ingredients": [
+          "감자",
+          "당근",
+          "양파"
+        ],
+        "steps": [
+          "감자, 당근, 양파를 작게 썰어요",
+          "모든 재료를 물과 함께 끓여 부드럽게 익혀요",
+          "재료가 잘 익으면 믹서로 갈아 부드럽게 만들어요",
+          "식힌 후 아이에게 먹여요"
+        ],
+        "sourceName": "베이비푸드",
+        "sourceUrl": "https://www.babyfood.co.kr/recipe/78901"
+      }
+    ],
+    "latencyMs": 7396,
+    "totalTokens": 1060,
+    "inputTokens": 499,
+    "outputTokens": 561,
+    "fallbackUsed": false,
+    "ok": true
   }
 ]

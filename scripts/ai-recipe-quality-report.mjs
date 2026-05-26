@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { normalizeIngredientList } from "../src/lib/ai/ingredient-normalize.ts";
 import { evaluateRecipeQuality } from "../src/lib/server/recipe-ai.ts";
 
 const root = process.cwd();
@@ -137,11 +138,12 @@ function evaluateEntry(entry, evalCase) {
   const validRecommendationRate = limit > 0 ? Math.min(1, validCount / limit) : null;
 
   const joinedText = recommendations.map(textOfRecipe).join(" ");
-  const usedIngredients = (evalCase?.ingredients ?? []).filter((ingredient) =>
+  const normalizedCaseIngredients = normalizeIngredientList(evalCase?.ingredients ?? []);
+  const usedIngredients = normalizedCaseIngredients.filter((ingredient) =>
     containsIngredient(joinedText, ingredient),
   );
   const ingredientUtilization =
-    evalCase?.ingredients?.length > 0 ? usedIngredients.length / evalCase.ingredients.length : null;
+    normalizedCaseIngredients.length > 0 ? usedIngredients.length / normalizedCaseIngredients.length : null;
 
   const sourceUrls = recommendations
     .map((recipe) => recipe?.source_url ?? recipe?.sourceUrl)

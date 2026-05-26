@@ -134,11 +134,15 @@ AI 추천이 탈락하면 boolean만 남기지 않고 reason code를 남긴다.
 
 파일:
 
+- `scripts/ai-recipe-quality-run.mjs`
 - `scripts/ai-recipe-quality-report.mjs`
 - `docs/ai-recipe-quality-report.md`
 
 하는 일:
 
+- `npm run ai:quality:run`으로 미측정 eval case를 실제 OpenAI 추천으로 실행한다.
+- 기본 실행은 아직 측정되지 않은 케이스 5개만 실행한다.
+- 특정 케이스만 실행하려면 `AI_QUALITY_CASES=R16,R20 npm run ai:quality:run`을 사용한다.
 - `docs/ai-recipe-quality-history.json`의 추천 히스토리를 읽는다.
 - 각 추천을 `evaluateRecipeQuality`로 다시 평가한다.
 - 통과 추천 수와 탈락 추천 수를 집계한다.
