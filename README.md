@@ -106,6 +106,21 @@ type RecipeRejectReason =
 - [AI Recipe Quality Report](docs/ai-recipe-quality-report.md)
 - [AI Recipe Eval Cases](docs/ai-recipe-eval-cases.json)
 
+### AI 모듈 구조
+
+AI 추천 로직은 OpenAI 호출과 품질 검증 책임을 분리했습니다.
+
+| 파일 | 책임 |
+| --- | --- |
+| `src/lib/server/recipe-ai.ts` | OpenAI 호출, strict/fallback 실행, 최종 결과 조립 |
+| `src/lib/ai/recipe-prompt.ts` | strict/fallback 프롬프트 생성 |
+| `src/lib/ai/recipe-response-parser.ts` | AI JSON 응답 파싱, Zod schema 검증 |
+| `src/lib/ai/ingredient-normalize.ts` | 사용자 입력/영수증 재료명 정규화 |
+| `src/lib/ai/recipe-normalize.ts` | 추천 레시피 제목, 재료, 조리 단계 정규화 |
+| `src/lib/ai/recipe-quality-gate.ts` | 품질 기준 검사, 탈락 reason code 판정 |
+| `src/lib/ai/recipe-quality-telemetry.ts` | 추천 통과/탈락 수와 reason code 집계 |
+| `src/lib/ai/recipe-types.ts` | AI 추천 관련 공통 타입 |
+
 ## 기술 스택
 
 | 분류 | 기술 |
@@ -189,6 +204,15 @@ npm run test:unit
 npm run lint
 npm run build
 ```
+
+최근 로컬 기준:
+
+| 항목 | 결과 |
+| --- | ---: |
+| Unit tests | 23 passed |
+| Line coverage | 96.57% |
+| Branch coverage | 87.85% |
+| Function coverage | 96.88% |
 
 AI 품질 리포트:
 
