@@ -1,5 +1,5 @@
 import { normalizeIngredientList } from "./ingredient-normalize.ts";
-import type { AiRecipeRecommendation } from "../server/recipe-ai.ts";
+import type { AiRecipeRecommendation } from "./recipe-types.ts";
 
 const neutralSupplementalIngredients = ["쌀", "물", "육수"];
 

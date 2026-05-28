@@ -15,7 +15,11 @@ import {
   FridgeSectionKey,
   sectionFromFridgeItem,
 } from "@/features/fridge/lib/fridge-types";
-import { selectNewDraftIngredients } from "@/features/fridge/lib/fridge-duplicates";
+import {
+  buildFridgePayloadName,
+  selectAddableDraftIngredients,
+  selectNewDraftIngredients,
+} from "@/features/fridge/lib/fridge-duplicates";
 
 export type { FridgeCategory, FridgeItem, FridgeSection, FridgeSectionKey };
 
@@ -212,15 +216,24 @@ export function useFridgePage() {
   const addDraftIngredients = async () => {
     if (draftIngredients.length === 0) return;
 
+    const selection = selectAddableDraftIngredients({
+      drafts: draftIngredients,
+      existingItems: fridgeItems,
+    });
+    if (selection.drafts.length === 0) {
+      toast.warning("이미 냉장고에 있는 재료예요.");
+      return;
+    }
+    if (selection.skippedExisting.length > 0 || selection.skippedRepeated.length > 0) {
+      toast.warning("중복 재료는 제외했어요.");
+    }
+
     try {
       setIsAdding(true);
-      for (const ingredient of draftIngredients) {
+      for (const ingredient of selection.drafts) {
         const effectiveType = ingredient.type;
         const category = effectiveType === "cube" ? "other" : effectiveType;
-        const payloadName =
-          effectiveType === "cube" && !ingredient.name.includes("큐브")
-            ? `${ingredient.name} 큐브`
-            : ingredient.name;
+        const payloadName = buildFridgePayloadName(ingredient.name, effectiveType);
         const res = await authedFetch("/api/fridge/items", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

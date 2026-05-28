@@ -59,3 +59,35 @@ export function selectNewDraftIngredients(input: {
 
   return { drafts, skippedExisting, skippedRepeated };
 }
+
+export function selectAddableDraftIngredients(input: {
+  drafts: DraftIngredientCandidate[];
+  existingItems: Pick<FridgeItem, "name">[];
+}): DraftIngredientSelection {
+  const existingKeys = new Set(
+    input.existingItems.map((item) => normalizeFridgeItemKey(item.name))
+  );
+  const seenKeys = new Set<string>();
+  const drafts: DraftIngredientCandidate[] = [];
+  const skippedExisting: string[] = [];
+  const skippedRepeated: string[] = [];
+
+  for (const draft of input.drafts) {
+    const finalName = buildFridgePayloadName(draft.name, draft.type);
+    const key = normalizeFridgeItemKey(finalName);
+
+    if (existingKeys.has(key)) {
+      skippedExisting.push(draft.name);
+      continue;
+    }
+    if (seenKeys.has(key)) {
+      skippedRepeated.push(draft.name);
+      continue;
+    }
+
+    seenKeys.add(key);
+    drafts.push(draft);
+  }
+
+  return { drafts, skippedExisting, skippedRepeated };
+}

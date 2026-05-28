@@ -52,6 +52,7 @@ export function useRecipePage() {
   const [selectedIngredientIds, setSelectedIngredientIds] = useState<Set<string>>(new Set());
   const [generatedRecipes, setGeneratedRecipes] = useState<GeneratedRecipe[]>([]);
   const [savedGeneratedIds, setSavedGeneratedIds] = useState<Set<string>>(new Set());
+  const [savingGeneratedIds, setSavingGeneratedIds] = useState<Set<string>>(new Set());
   const [isLoadingSavedRecipes, setIsLoadingSavedRecipes] = useState(true);
   const [detailRecipeId, setDetailRecipeId] = useState<string | null>(null);
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
@@ -320,9 +321,10 @@ export function useRecipePage() {
   };
 
   const saveGeneratedRecipe = async (item: GeneratedRecipe) => {
-    if (savedGeneratedIds.has(item.id)) return;
+    if (savedGeneratedIds.has(item.id) || savingGeneratedIds.has(item.id)) return;
 
     try {
+      setSavingGeneratedIds((prev) => new Set(prev).add(item.id));
       const res = await authedFetch("/api/recipes/saved", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -353,6 +355,12 @@ export function useRecipePage() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "레시피 저장에 실패했습니다.";
       toast.error(message);
+    } finally {
+      setSavingGeneratedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(item.id);
+        return next;
+      });
     }
   };
 
@@ -410,6 +418,7 @@ export function useRecipePage() {
       await wait(250);
       setGeneratedRecipes(recommended);
       setSavedGeneratedIds(new Set());
+      setSavingGeneratedIds(new Set());
       setAiSheetView("result");
     } catch (error) {
       const message =
@@ -524,6 +533,7 @@ export function useRecipePage() {
     selectedIngredientIds,
     generatedRecipes,
     savedGeneratedIds,
+    savingGeneratedIds,
     isAllDisplayedSelected,
     openAiRecommendSheet,
     closeAiRecommendSheet,

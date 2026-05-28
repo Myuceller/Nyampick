@@ -8,11 +8,13 @@ import { normalizeRecipeRecommendation } from "../src/lib/ai/recipe-normalize.ts
 import {
   evaluateRecipeQuality,
   isProductionReadyRecipe,
-  parseRecommendations,
   selectProductionReadyRecommendations,
-  type AiRecipeGenerationResult,
-  type AiRecipeRecommendation,
-} from "../src/lib/server/recipe-ai.ts";
+} from "../src/lib/ai/recipe-quality-gate.ts";
+import { parseRecommendations } from "../src/lib/ai/recipe-response-parser.ts";
+import type {
+  AiRecipeGenerationResult,
+  AiRecipeRecommendation,
+} from "../src/lib/ai/recipe-types.ts";
 
 const readyRecipe: AiRecipeRecommendation = {
   title: "두부 애호박죽",

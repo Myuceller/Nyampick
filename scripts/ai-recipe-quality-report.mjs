@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { normalizeIngredientList } from "../src/lib/ai/ingredient-normalize.ts";
-import { evaluateRecipeQuality } from "../src/lib/server/recipe-ai.ts";
+import { evaluateRecipeQuality } from "../src/lib/ai/recipe-quality-gate.ts";
 
 const root = process.cwd();
 const casesPath = path.join(root, "docs", "ai-recipe-eval-cases.json");
