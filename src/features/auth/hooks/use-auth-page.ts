@@ -123,16 +123,20 @@ export function useAuthPage() {
         try {
           if (callback.authCode) {
             setLoadingPhase("oauth");
-            const { error } = await supabase.auth.exchangeCodeForSession(callback.authCode);
+            const { data, error } = await supabase.auth.exchangeCodeForSession(callback.authCode);
             if (error) {
               if (!active) return;
               setErrorMessage(toFriendlyAuthErrorMessage(error));
               setScreenMode("form");
               return;
             }
+            if (data.session) {
+              await finalizeSession(data.session);
+              return;
+            }
           } else if (callback.hashAccessToken && callback.hashRefreshToken) {
             setLoadingPhase("oauth");
-            const { error } = await supabase.auth.setSession({
+            const { data, error } = await supabase.auth.setSession({
               access_token: callback.hashAccessToken,
               refresh_token: callback.hashRefreshToken,
             });
@@ -140,6 +144,10 @@ export function useAuthPage() {
               if (!active) return;
               setErrorMessage(toFriendlyAuthErrorMessage(error));
               setScreenMode("form");
+              return;
+            }
+            if (data.session) {
+              await finalizeSession(data.session);
               return;
             }
           }
