@@ -295,5 +295,49 @@
     "unit": "kB",
     "commit": "pending",
     "reason": "My Page logout now shows a success toast, while AuthGate shows a deduped warning toast when an authenticated request ends with a final 401."
+  },
+  {
+    "date": "2026-05-28",
+    "change": "Split AI recipe modules and harden auth/fridge/recipe save flows",
+    "metric": "route_size",
+    "route": "/auth",
+    "before": 8.46,
+    "after": 8.47,
+    "unit": "kB",
+    "commit": "26bd6d9",
+    "reason": "Auth callback now finalizes the returned Supabase session immediately, adding a minimal route bundle increase."
+  },
+  {
+    "date": "2026-05-28",
+    "change": "Split AI recipe modules and harden auth/fridge/recipe save flows",
+    "metric": "route_size",
+    "route": "/fridge",
+    "before": 9.9,
+    "after": 10.4,
+    "unit": "kB",
+    "commit": "26bd6d9",
+    "reason": "Fridge add flow rechecks duplicate drafts at save time and keeps mobile add modal safeguards."
+  },
+  {
+    "date": "2026-05-28",
+    "change": "Split AI recipe modules and harden auth/fridge/recipe save flows",
+    "metric": "route_size",
+    "route": "/recipe",
+    "before": 12.3,
+    "after": 12.4,
+    "unit": "kB",
+    "commit": "26bd6d9",
+    "reason": "Recipe page now tracks in-flight AI recommendation saves to prevent duplicate save clicks."
+  },
+  {
+    "date": "2026-05-28",
+    "change": "Split AI recipe modules and harden auth/fridge/recipe save flows",
+    "metric": "route_size",
+    "route": "/mypage",
+    "before": 5.58,
+    "after": 5.62,
+    "unit": "kB",
+    "commit": "26bd6d9",
+    "reason": "Current local build snapshot after README and reliability work; route remains within prior bundle range."
   }
 ]

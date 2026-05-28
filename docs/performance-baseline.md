@@ -1,7 +1,7 @@
 # Performance Baseline
 
-측정일: 2026-05-13 KST  
-브랜치: `perf/performance-improvements`  
+측정일: 2026-05-28 KST  
+브랜치: `dev`  
 목적: 배포 전후 성능 변화를 같은 기준으로 남기고, 클릭 지연 개선 효과를 추적한다.
 
 ## 자료
@@ -9,6 +9,7 @@
 | 항목 | 파일 |
 | --- | --- |
 | 번들 사이즈 이력 원본 | [Performance History](performance-history.json) |
+| 번들 사이즈 이력 리포트 | [Performance History Report](performance-history-report.md) |
 | Lighthouse 이력 원본 | [Lighthouse Performance History](lighthouse-performance-history.md) |
 | API 응답 시간 이력 원본 | [API Latency History](api-latency-history.md) |
 | AI 성능 리포트 | [AI Performance Report](ai-performance-report.md) |
@@ -45,19 +46,22 @@ npm run build
 
 | Route | Size | First Load JS |
 | --- | ---: | ---: |
-| `/` | 7.64 kB | 167 kB |
-| `/auth` | 8.46 kB | 156 kB |
+| `/` | 189 B | 101 kB |
+| `/auth` | 8.47 kB | 156 kB |
 | `/children` | 6.65 kB | 167 kB |
 | `/family` | 5.87 kB | 154 kB |
-| `/fridge` | 9.9 kB | 174 kB |
+| `/fridge` | 10.4 kB | 174 kB |
 | `/fridge/edit` | 8.24 kB | 167 kB |
-| `/landing` | 186 B | 101 kB |
+| `/landing` | 189 B | 101 kB |
+| `/meal` | 7.65 kB | 167 kB |
 | `/meal/edit` | 6.7 kB | 162 kB |
 | `/meal/overview` | 5.12 kB | 160 kB |
-| `/mypage` | 5.58 kB | 158 kB |
+| `/mypage` | 5.62 kB | 159 kB |
 | `/mypage/profile` | 5.15 kB | 160 kB |
-| `/recipe` | 12.3 kB | 176 kB |
+| `/recipe` | 12.4 kB | 176 kB |
 | Shared by all | - | 87.4 kB |
+
+비고: 2026-05-28 측정은 production 배포 전 `dev` 로컬 build 기준이다. `dev -> main` PR 머지 후 배포본 Lighthouse/API 지표를 별도로 다시 측정한다.
 
 클릭 지연 개선 후 번들 변화:
 
@@ -73,6 +77,24 @@ npm run build
 | `/mypage` | 5.3 kB | 5.58 kB | +0.28 kB | 158 kB | 158 kB | 0 kB |
 | `/mypage/profile` | 4.82 kB | 5.15 kB | +0.33 kB | 160 kB | 160 kB | 0 kB |
 | `/recipe` | 11.9 kB | 12.3 kB | +0.4 kB | 176 kB | 176 kB | 0 kB |
+
+최근 로컬 build 변화:
+
+| Route | 이전 Size | 현재 Size | 변화 | 이전 First Load JS | 현재 First Load JS | 변화 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `/auth` | 8.46 kB | 8.47 kB | +0.01 kB | 156 kB | 156 kB | 0 kB |
+| `/fridge` | 9.9 kB | 10.4 kB | +0.5 kB | 174 kB | 174 kB | 0 kB |
+| `/recipe` | 12.3 kB | 12.4 kB | +0.1 kB | 176 kB | 176 kB | 0 kB |
+| `/mypage` | 5.58 kB | 5.62 kB | +0.04 kB | 158 kB | 159 kB | +1 kB |
+
+최근 변경 해석:
+
+| 항목 | 판단 |
+| --- | --- |
+| `/auth` | 카카오/소셜 콜백 세션 확정 로직 추가 후 route size 변화는 +0.01 kB로 미미하다. |
+| `/fridge` | 모바일 추가 모달 안정화와 중복 재검사 로직 추가로 +0.5 kB 증가했다. |
+| `/recipe` | AI 추천 저장 중복 클릭 방지 상태 추가로 +0.1 kB 증가했다. |
+| 공통 JS | Shared by all은 87.4 kB로 유지됐다. |
 
 비고:
 
