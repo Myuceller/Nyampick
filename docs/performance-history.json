@@ -339,5 +339,16 @@
     "unit": "kB",
     "commit": "26bd6d9",
     "reason": "Current local build snapshot after README and reliability work; route remains within prior bundle range."
+  },
+  {
+    "date": "2026-05-28",
+    "change": "Split fridge page into focused UI components",
+    "metric": "route_size",
+    "route": "/fridge",
+    "before": 10.4,
+    "after": 10.4,
+    "unit": "kB",
+    "commit": "pending",
+    "reason": "Fridge page was reduced to composition while add modal, receipt modal, and main content moved into feature components without increasing the route bundle."
   }
 ]

@@ -1,6 +1,6 @@
 # Performance History Report
 
-Generated at: 2026-05-28T07:51:26.772Z
+Generated at: 2026-05-28T08:28:39.115Z
 
 Source: `docs/performance-history.json`
 
@@ -37,3 +37,4 @@ Source: `docs/performance-history.json`
 | 2026-05-28 | /fridge | route_size | 9.9 kB | 10.4 kB | +0.5 kB | Split AI recipe modules and harden auth/fridge/recipe save flows |
 | 2026-05-28 | /recipe | route_size | 12.3 kB | 12.4 kB | +0.1 kB | Split AI recipe modules and harden auth/fridge/recipe save flows |
 | 2026-05-28 | /mypage | route_size | 5.58 kB | 5.62 kB | +0.04 kB | Split AI recipe modules and harden auth/fridge/recipe save flows |
+| 2026-05-28 | /fridge | route_size | 10.4 kB | 10.4 kB | +0 kB | Split fridge page into focused UI components |
