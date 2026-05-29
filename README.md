@@ -2,24 +2,6 @@
 
 냠픽은 아이 식단 기록, 냉장고 재료 관리, 영수증 스캔, AI 유아식 레시피 추천을 하나의 흐름으로 연결한 모바일 중심 웹앱입니다.
 
-## Screenshots
-
-| 랜딩 | 식단 홈 | 식단 상세 |
-| --- | --- | --- |
-| <img src="public/nyampick_screenshot/landing.png" width="220" alt="냠픽 랜딩 페이지" /> | <img src="public/nyampick_screenshot/meal-home-empty.png" width="220" alt="냠픽 식단 홈 빈 상태" /> | <img src="public/nyampick_screenshot/meal-home-filled.png" width="220" alt="냠픽 식단 홈 기록 상태" /> |
-
-| 식단 수정 | 메뉴 추가 | 냉장고 |
-| --- | --- | --- |
-| <img src="public/nyampick_screenshot/meal-edit.png" width="220" alt="냠픽 식단 수정" /> | <img src="public/nyampick_screenshot/menu-add.png" width="220" alt="냠픽 메뉴 추가" /> | <img src="public/nyampick_screenshot/fridge-list.png" width="220" alt="냠픽 냉장고 재료 목록" /> |
-
-| 재료 입력 | 재료 확인 | 레시피 북 |
-| --- | --- | --- |
-| <img src="public/nyampick_screenshot/fridge-add-draft.png" width="220" alt="냠픽 냉장고 재료 입력" /> | <img src="public/nyampick_screenshot/fridge-add-confirm.png" width="220" alt="냠픽 냉장고 재료 확인" /> | <img src="public/nyampick_screenshot/recipe-list.png" width="220" alt="냠픽 레시피 북" /> |
-
-| AI 재료 선택 | AI 추천 결과 | 마이페이지 |
-| --- | --- | --- |
-| <img src="public/nyampick_screenshot/recipe-ai-select.png" width="220" alt="냠픽 AI 추천 재료 선택" /> | <img src="public/nyampick_screenshot/recipe-ai-results.png" width="220" alt="냠픽 AI 레시피 추천 결과" /> | <img src="public/nyampick_screenshot/mypage.png" width="220" alt="냠픽 마이페이지" /> |
-
 ## 문제 정의
 
 아이 식단을 관리할 때 보호자는 여러 정보를 따로 관리해야 합니다.
@@ -180,6 +162,24 @@ AI 추천 로직은 OpenAI 호출과 품질 검증 책임을 분리했습니다.
 | `POST /api/children` | 아이 추가 |
 
 자세한 요청/응답 형식은 [API Spec](docs/api-spec.md)을 참고합니다.
+
+## Screenshots
+
+| 랜딩 | 식단 홈 | 식단 상세 |
+| --- | --- | --- |
+| <img src="public/nyampick_screenshot/landing.png" width="220" alt="냠픽 랜딩 페이지" /> | <img src="public/nyampick_screenshot/meal-home-empty.png" width="220" alt="냠픽 식단 홈 빈 상태" /> | <img src="public/nyampick_screenshot/meal-home-filled.png" width="220" alt="냠픽 식단 홈 기록 상태" /> |
+
+| 식단 수정 | 메뉴 추가 | 냉장고 |
+| --- | --- | --- |
+| <img src="public/nyampick_screenshot/meal-edit.png" width="220" alt="냠픽 식단 수정" /> | <img src="public/nyampick_screenshot/menu-add.png" width="220" alt="냠픽 메뉴 추가" /> | <img src="public/nyampick_screenshot/fridge-list.png" width="220" alt="냠픽 냉장고 재료 목록" /> |
+
+| 재료 입력 | 재료 확인 | 레시피 북 |
+| --- | --- | --- |
+| <img src="public/nyampick_screenshot/fridge-add-draft.png" width="220" alt="냠픽 냉장고 재료 입력" /> | <img src="public/nyampick_screenshot/fridge-add-confirm.png" width="220" alt="냠픽 냉장고 재료 확인" /> | <img src="public/nyampick_screenshot/recipe-list.png" width="220" alt="냠픽 레시피 북" /> |
+
+| AI 재료 선택 | AI 추천 결과 | 마이페이지 |
+| --- | --- | --- |
+| <img src="public/nyampick_screenshot/recipe-ai-select.png" width="220" alt="냠픽 AI 추천 재료 선택" /> | <img src="public/nyampick_screenshot/recipe-ai-results.png" width="220" alt="냠픽 AI 레시피 추천 결과" /> | <img src="public/nyampick_screenshot/mypage.png" width="220" alt="냠픽 마이페이지" /> |
 
 ## 시작하기
 
