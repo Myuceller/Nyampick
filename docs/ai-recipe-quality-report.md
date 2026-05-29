@@ -1,6 +1,6 @@
 # AI Recipe Quality Report
 
-Generated at: 2026-05-26T05:15:49.917Z
+Generated at: 2026-05-26T05:51:38.257Z
 
 Sources:
 
@@ -13,7 +13,7 @@ Summary is calculated from the latest measured run for each case.
 
 | Total cases | Measured cases | Pending cases | Pass rate | Quality score | Valid recommendations | Ingredient utilization | Source validity | Awkward violations | Forbidden claims |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 20 | 20 | 0 | 80% | 98% | 100% | 97% | 100% | 0 | 0 |
+| 20 | 20 | 0 | 95% | 99% | 100% | 97% | 100% | 0 | 0 |
 
 ## Quality Gate Reason Summary
 
@@ -40,7 +40,7 @@ These gaps are stricter eval-case expectations. A recipe can pass the production
 
 | Gap | Count |
 | --- | ---: |
-| missing_required_terms | 4 |
+| missing_required_terms | 1 |
 
 ## Evaluation Cases
 
@@ -79,16 +79,16 @@ These cases are defined but do not have a recorded AI run yet.
 
 | Created at | Case | Quality | Valid recs | Ingredient use | Source validity | Awkward | Forbidden | Top reject reasons | Eval gaps | Result |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |
-| 2026-05-26T05:14:39.435Z | R15 | 90% | 100% | 100% | 100% | 0 | 0 | - | missing_required_terms | fail |
+| 2026-05-26T05:14:39.435Z | R15 | 100% | 100% | 100% | 100% | 0 | 0 | - | - | pass |
 | 2026-05-26T05:14:31.683Z | R14 | 100% | 100% | 100% | 100% | 0 | 0 | - | - | pass |
 | 2026-05-26T05:14:22.555Z | R13 | 100% | 100% | 100% | 100% | 0 | 0 | - | - | pass |
 | 2026-05-26T05:14:06.744Z | R12 | 100% | 100% | 100% | 100% | 0 | 0 | - | - | pass |
 | 2026-05-26T05:13:56.774Z | R11 | 90% | 100% | 100% | 100% | 0 | 0 | - | missing_required_terms | fail |
 | 2026-05-26T05:10:19.987Z | R10 | 100% | 100% | 100% | 100% | 0 | 0 | - | - | pass |
-| 2026-05-26T05:10:13.227Z | R9 | 90% | 100% | 100% | 100% | 0 | 0 | - | missing_required_terms | fail |
+| 2026-05-26T05:10:13.227Z | R9 | 100% | 100% | 100% | 100% | 0 | 0 | - | - | pass |
 | 2026-05-26T05:10:06.568Z | R8 | 100% | 100% | 100% | 100% | 0 | 0 | - | - | pass |
 | 2026-05-26T05:09:57.019Z | R7 | 100% | 100% | 100% | 100% | 0 | 0 | - | - | pass |
-| 2026-05-26T05:09:40.679Z | R6 | 95% | 100% | 100% | 100% | 0 | 0 | - | missing_required_terms | fail |
+| 2026-05-26T05:09:40.679Z | R6 | 100% | 100% | 100% | 100% | 0 | 0 | - | - | pass |
 | 2026-05-26T05:06:12.867Z | R20 | 100% | 100% | 100% | 100% | 0 | 0 | - | - | pass |
 | 2026-05-26T05:06:03.064Z | R19 | 100% | 100% | 100% | 100% | 0 | 0 | - | - | pass |
 | 2026-05-26T05:05:30.704Z | R18 | 100% | 100% | 100% | 100% | 0 | 0 | - | - | pass |

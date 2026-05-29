@@ -14,6 +14,12 @@ interface RecommendationsRequestBody {
   limit?: number;
 }
 
+function getNonZeroReasons(reasons: Record<string, number>) {
+  return Object.fromEntries(
+    Object.entries(reasons).filter(([, count]) => count > 0)
+  );
+}
+
 export async function POST(request: Request) {
   const user = await getUserFromRequest(request);
   if (!user) {
@@ -96,6 +102,25 @@ export async function POST(request: Request) {
     }
 
     registerAiSuccess({ userId: user.id, action: "recipes" });
+    const logPayload = {
+      userId: user.id,
+      normalizedIngredients: result.quality.normalizedIngredients,
+      requestedLimit: limit,
+      recommendationCount: result.recommendations.length,
+      fallbackUsed: result.fallbackUsed,
+      latencyMs,
+      totalTokens: result.usage.totalTokens,
+      strictCandidateCount: result.quality.strictCandidateCount,
+      fallbackCandidateCount: result.quality.fallbackCandidateCount,
+      readyCount: result.quality.readyCount,
+      rejectedCount: result.quality.rejectedCount,
+      rejectReasons: getNonZeroReasons(result.quality.rejectReasonCounts),
+    };
+    if (result.quality.rejectedCount > 0 || result.fallbackUsed) {
+      console.warn("[ai.recipe.quality]", logPayload);
+    } else {
+      console.info("[ai.recipe.quality]", logPayload);
+    }
 
     return NextResponse.json({
       recommendations: result.recommendations,

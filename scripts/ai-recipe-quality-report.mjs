@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { normalizeIngredientList } from "../src/lib/ai/ingredient-normalize.ts";
-import { evaluateRecipeQuality } from "../src/lib/server/recipe-ai.ts";
+import { evaluateRecipeQuality } from "../src/lib/ai/recipe-quality-gate.ts";
 
 const root = process.cwd();
 const casesPath = path.join(root, "docs", "ai-recipe-eval-cases.json");
@@ -59,6 +59,24 @@ function containsIngredient(text, ingredient) {
 function includesAny(text, terms) {
   const normalized = text.replaceAll(/\s+/g, "");
   return terms.some((term) => normalized.includes(String(term).replaceAll(/\s+/g, "")));
+}
+
+function getRequiredAnyTermGroups(checks) {
+  if (!Array.isArray(checks.requiredAnyTerms)) return [];
+  return checks.requiredAnyTerms.filter(
+    (group) => Array.isArray(group) && group.some((term) => typeof term === "string" && term.trim().length > 0),
+  );
+}
+
+function getRequiredTermRate(text, checks) {
+  const requiredTerms = Array.isArray(checks.requiredTerms) ? checks.requiredTerms : [];
+  const requiredAnyTermGroups = getRequiredAnyTermGroups(checks);
+  const requiredCount = requiredTerms.length + requiredAnyTermGroups.length;
+  if (requiredCount === 0) return 1;
+
+  const exactMatches = requiredTerms.filter((term) => containsIngredient(text, term)).length;
+  const groupMatches = requiredAnyTermGroups.filter((group) => includesAny(text, group)).length;
+  return (exactMatches + groupMatches) / requiredCount;
 }
 
 function isValidRecipe(recipe, requireSource) {
@@ -172,7 +190,6 @@ function evaluateEntry(entry, evalCase) {
 
   const awkwardPairs = Array.isArray(checks.awkwardPairs) ? checks.awkwardPairs : [];
   const forbiddenClaims = Array.isArray(checks.forbiddenClaims) ? checks.forbiddenClaims : [];
-  const requiredTerms = Array.isArray(checks.requiredTerms) ? checks.requiredTerms : [];
   const cautionTerms = ["알레르", "주의", "소량", "확인", "전문", "의사", "반응"];
   const awkwardPairViolations = awkwardPairs.reduce((count, pair) => {
     const [left, right] = pair;
@@ -187,10 +204,7 @@ function evaluateEntry(entry, evalCase) {
   const forbiddenClaimViolations = forbiddenClaims.reduce((count, term) => {
     return count + (containsIngredient(joinedText, term) ? 1 : 0);
   }, 0);
-  const requiredTermRate =
-    requiredTerms.length > 0
-      ? requiredTerms.filter((term) => containsIngredient(joinedText, term)).length / requiredTerms.length
-      : 1;
+  const requiredTermRate = getRequiredTermRate(joinedText, checks);
   const cautionTonePass = checks.requireCautionTone ? includesAny(joinedText, cautionTerms) : true;
   const safetyRate =
     awkwardPairViolations === 0 && forbiddenClaimViolations === 0 && cautionTonePass ? 1 : 0;

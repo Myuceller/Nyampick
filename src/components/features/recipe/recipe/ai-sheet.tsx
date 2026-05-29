@@ -24,6 +24,7 @@ interface AiSheetProps {
   isAllDisplayedSelected: boolean;
   generatedRecipes: GeneratedRecipe[];
   savedGeneratedIds: Set<string>;
+  savingGeneratedIds: Set<string>;
   onClose: () => void;
   onKeywordChange: (value: string) => void;
   onToggleSelectAllDisplayed: () => void;
@@ -47,6 +48,7 @@ export function AiSheet({
   isAllDisplayedSelected,
   generatedRecipes,
   savedGeneratedIds,
+  savingGeneratedIds,
   onClose,
   onKeywordChange,
   onToggleSelectAllDisplayed,
@@ -159,6 +161,7 @@ export function AiSheet({
             <div className="mt-3 max-h-[calc(88dvh-220px)] space-y-3 overflow-y-auto pr-1">
               {generatedRecipes.map((item) => {
                 const saved = savedGeneratedIds.has(item.id);
+                const saving = savingGeneratedIds.has(item.id);
                 return (
                   <article
                     key={item.id}
@@ -176,14 +179,14 @@ export function AiSheet({
                       <button
                         type="button"
                         onClick={() => onSaveGeneratedRecipe(item)}
-                        disabled={saved}
+                        disabled={saved || saving}
                         className={cn(
                           "flex shrink-0 items-center gap-1 rounded-full px-4 py-1.5 text-[14px] font-bold text-white",
-                          saved ? "bg-[#9f8adf]" : "bg-[#8d27f3]"
+                          saved || saving ? "bg-[#9f8adf]" : "bg-[#8d27f3]"
                         )}
                       >
                         <Bookmark className="h-4 w-4" />
-                        {saved ? "저장됨" : "저장"}
+                        {saved ? "저장됨" : saving ? "저장 중" : "저장"}
                       </button>
                     </div>
 

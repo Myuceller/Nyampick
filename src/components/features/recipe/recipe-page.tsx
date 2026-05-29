@@ -89,6 +89,7 @@ export function RecipePage() {
         isAllDisplayedSelected={vm.isAllDisplayedSelected}
         generatedRecipes={vm.generatedRecipes}
         savedGeneratedIds={vm.savedGeneratedIds}
+        savingGeneratedIds={vm.savingGeneratedIds}
         onClose={vm.closeAiRecommendSheet}
         onKeywordChange={vm.setIngredientKeyword}
         onToggleSelectAllDisplayed={vm.toggleSelectAllDisplayed}
