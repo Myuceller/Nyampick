@@ -110,6 +110,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           animation: babyFloat 4s ease-in-out infinite;
         }
 
+        .onboarding-screen .onboarding-tremble {
+          animation: onboardingTremble 620ms steps(3, end) infinite;
+          transform-origin: 50% 60%;
+        }
+
         .onboarding-screen .spoon-action {
           position: absolute;
           top: 40%;
@@ -218,6 +223,19 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           }
           50% {
             transform: translateY(-15px);
+          }
+        }
+
+        @keyframes onboardingTremble {
+          0%,
+          100% {
+            transform: translate3d(0, 0, 0) rotate(0deg);
+          }
+          33% {
+            transform: translate3d(0.5px, -1px, 0) rotate(0.25deg);
+          }
+          66% {
+            transform: translate3d(-0.5px, -0.5px, 0) rotate(-0.25deg);
           }
         }
 

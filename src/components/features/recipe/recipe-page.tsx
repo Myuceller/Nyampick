@@ -23,8 +23,16 @@ export function RecipePage() {
   const vm = useRecipePage();
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-white pb-[116px]">
-      <div className="sticky top-0 z-30 bg-white">
+    <div className="min-h-[100dvh] bg-white pb-[116px] pt-[220px]">
+      <div
+        className="z-[60] w-full max-w-[480px] bg-white shadow-[0_1px_0_rgba(0,0,0,0.08)]"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: "50%",
+          transform: "translateX(-50%)",
+        }}
+      >
         <div className="px-4 pb-3 pt-12">
           <div className="mb-6 flex items-center">
             <h1 className="text-[24px] font-bold leading-[1.28] text-[#1f2423]">
@@ -44,7 +52,7 @@ export function RecipePage() {
         <RecipeTabs activeTab={vm.activeTab} onChange={vm.setActiveTab} />
       </div>
 
-      <div className="flex-1 px-4 pb-4 pt-4">
+      <div className="px-4 pb-4 pt-4">
         {vm.shouldShowAiEmpty ? (
           <AiEmptyState onRecommend={vm.openAiRecommendSheet} />
         ) : (

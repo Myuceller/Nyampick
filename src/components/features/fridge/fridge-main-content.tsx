@@ -16,8 +16,16 @@ interface FridgeMainContentProps {
 export function FridgeMainContent({ vm }: FridgeMainContentProps) {
   return (
     <>
-      <main className="flex flex-1 flex-col">
-        <div className="sticky top-0 z-30 border-b border-[#d3d7d5] bg-white px-4 pb-4 pt-12">
+      <main className="flex flex-1 flex-col pt-[190px]">
+        <div
+          className="z-[60] w-full max-w-[480px] border-b border-[#d3d7d5] bg-white px-4 pb-4 pt-12"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: "50%",
+            transform: "translateX(-50%)",
+          }}
+        >
           <div className="mb-6 flex items-center justify-between">
             <h1 className="text-[24px] font-bold leading-[1.28] text-[#1f2725]">
               내 냉장고
