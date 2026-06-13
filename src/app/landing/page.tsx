@@ -66,7 +66,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-2">
             <div className="relative h-9 w-9 overflow-hidden rounded-[12px]">
               <Image
-                src="/icons/icon-source-baby.png"
+                src="/icon_main.gif"
                 alt=""
                 fill
                 sizes="36px"
@@ -104,7 +104,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-4">
             <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-[28px] bg-white">
               <Image
-                src="/icons/icon-source-baby.png"
+                src="/icon_main.gif"
                 alt=""
                 fill
                 sizes="88px"
