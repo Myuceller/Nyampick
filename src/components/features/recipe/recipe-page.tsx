@@ -23,26 +23,36 @@ export function RecipePage() {
   const vm = useRecipePage();
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-white pb-[116px]">
-      <div className="px-4 pb-3 pt-12">
-        <div className="mb-6 flex items-center">
-          <h1 className="text-[24px] font-bold leading-[1.28] text-[#1f2423]">
-            레시피 북
-          </h1>
+    <div className="min-h-[100dvh] bg-white pb-[116px] pt-[220px]">
+      <div
+        className="z-[60] w-full max-w-[480px] bg-white shadow-[0_1px_0_rgba(0,0,0,0.08)]"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: "50%",
+          transform: "translateX(-50%)",
+        }}
+      >
+        <div className="px-4 pb-3 pt-12">
+          <div className="mb-6 flex items-center">
+            <h1 className="text-[24px] font-bold leading-[1.28] text-[#1f2423]">
+              레시피 북
+            </h1>
+          </div>
+
+          <AppSearchInput
+            value={vm.searchQuery}
+            onChange={vm.setSearchQuery}
+            placeholder="레시피 검색"
+            inputClassName="border-[#e7e9e8] bg-[#e9ebea]"
+            iconClassName="left-5 h-[22px] w-[22px] text-[#97a09d]"
+          />
         </div>
 
-        <AppSearchInput
-          value={vm.searchQuery}
-          onChange={vm.setSearchQuery}
-          placeholder="레시피 검색"
-          inputClassName="border-[#e7e9e8] bg-[#e9ebea]"
-          iconClassName="left-5 h-[22px] w-[22px] text-[#97a09d]"
-        />
+        <RecipeTabs activeTab={vm.activeTab} onChange={vm.setActiveTab} />
       </div>
 
-      <RecipeTabs activeTab={vm.activeTab} onChange={vm.setActiveTab} />
-
-      <div className="flex-1 px-4 pb-4 pt-4">
+      <div className="px-4 pb-4 pt-4">
         {vm.shouldShowAiEmpty ? (
           <AiEmptyState onRecommend={vm.openAiRecommendSheet} />
         ) : (
