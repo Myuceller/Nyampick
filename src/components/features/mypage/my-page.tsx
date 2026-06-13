@@ -165,7 +165,7 @@ export function MyPage() {
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
-          <h1 className="text-[24px] font-extrabold tracking-[-0.02em] text-[#202725]">
+          <h1 className="text-[24px] font-bold leading-[1.28] text-[#202725]">
             마이페이지
           </h1>
         </div>
@@ -182,7 +182,7 @@ export function MyPage() {
               <button
                 type="button"
                 onClick={vm.openGuardianProfilePage}
-                className="mt-5 block w-full text-left text-[20px] font-extrabold tracking-[-0.02em] text-[#202725]"
+                className="mt-5 block w-full text-left text-[20px] font-semibold leading-[1.32] text-[#202725]"
               >
                 {guardianName}
                 <span className="font-medium text-[#8a9490]">님</span>
@@ -206,7 +206,7 @@ export function MyPage() {
                     />
                   ) : (
                     <Image
-                      src="/icon_main.gif"
+                      src="/icon_main.png"
                       alt=""
                       fill
                       sizes="65px"
@@ -216,7 +216,7 @@ export function MyPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="min-w-0 truncate text-[18px] font-extrabold text-[#202725]">
+                    <p className="min-w-0 truncate text-[18px] font-semibold text-[#202725]">
                       {babyName}
                     </p>
                     {additionalChildCount > 0 ? (
@@ -241,7 +241,7 @@ export function MyPage() {
                 onClick={() => toast.message("알레르기 관리 화면은 준비 중입니다.")}
                 className="mt-5 block w-full text-left"
               >
-                <p className="text-[18px] font-bold tracking-[-0.02em] text-[#202725]">
+                <p className="text-[18px] font-semibold leading-[1.32] text-[#202725]">
                   {babyName}의 알레르기
                 </p>
                 <p className="mt-2 text-[17px] font-semibold text-[#ff3030]">
@@ -261,7 +261,7 @@ export function MyPage() {
               className="mt-5 flex w-full items-center justify-between gap-4 text-left"
             >
               <div>
-                <p className="text-[18px] font-bold tracking-[-0.02em] text-[#202725]">
+                <p className="text-[18px] font-semibold leading-[1.32] text-[#202725]">
                   가족 연동
                 </p>
                 <p className="mt-2 text-[16px] font-semibold text-[#7c8782]">

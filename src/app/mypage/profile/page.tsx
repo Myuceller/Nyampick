@@ -148,7 +148,7 @@ export default function GuardianProfilePage() {
         >
           <ArrowLeft className="h-6 w-6" />
         </button>
-        <h1 className="text-[17px] font-extrabold tracking-[-0.02em]">보호자 프로필</h1>
+        <h1 className="text-[17px] font-extrabold leading-[1.32]">보호자 프로필</h1>
       </header>
 
       <input
@@ -191,7 +191,7 @@ export default function GuardianProfilePage() {
               {isSavingPhoto ? "사진 저장 중..." : "프로필 사진 등록"}
             </button>
             <div className="mt-7 flex items-center gap-2">
-              <p className="text-[22px] font-extrabold tracking-[-0.02em]">{displayName}</p>
+              <p className="text-[22px] font-extrabold leading-[1.28]">{displayName}</p>
               <button
                 type="button"
                 onClick={openNameEditor}
@@ -207,7 +207,7 @@ export default function GuardianProfilePage() {
 
           <section className="px-4 py-8">
             <div className="flex items-center justify-between">
-              <h2 className="text-[23px] font-extrabold tracking-[-0.02em]">내 정보</h2>
+              <h2 className="text-[23px] font-extrabold leading-[1.28]">내 정보</h2>
               <button
                 type="button"
                 onClick={openNameEditor}
@@ -239,7 +239,7 @@ export default function GuardianProfilePage() {
           <div className="h-2 bg-[#f5f6f6]" />
 
           <section className="px-4 py-8">
-            <h2 className="text-[23px] font-extrabold tracking-[-0.02em]">계정 관리</h2>
+            <h2 className="text-[23px] font-extrabold leading-[1.28]">계정 관리</h2>
             <button
               type="button"
               onClick={() => toast.message("비밀번호 변경은 준비 중입니다.")}
@@ -265,7 +265,7 @@ export default function GuardianProfilePage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#6b716e]/55 px-4 pb-4 pt-16">
           <div className="w-full max-w-[480px] rounded-[24px] bg-white p-4 shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
             <div className="flex items-center justify-between">
-              <h2 className="text-[20px] font-extrabold tracking-[-0.02em]">이름 변경</h2>
+              <h2 className="text-[20px] font-extrabold leading-[1.32]">이름 변경</h2>
               <button
                 type="button"
                 onClick={() => setIsEditingName(false)}

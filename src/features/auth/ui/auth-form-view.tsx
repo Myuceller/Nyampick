@@ -44,7 +44,7 @@ export function AuthFormView({
 }: AuthFormViewProps) {
   return (
     <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-[rgb(243,248,244)] px-5 pb-10 pt-14">
-      <h1 className="text-[34px] font-extrabold tracking-[-0.02em] text-[#1f2725]">냠픽</h1>
+      <h1 className="text-[34px] font-extrabold leading-[1.25] text-[#1f2725]">냠픽</h1>
       <p className="mt-2 text-[16px] text-[#6f7875]">
         {mode === "signin" ? "로그인해서 식단을 관리하세요." : "회원가입 후 바로 시작할 수 있어요."}
       </p>

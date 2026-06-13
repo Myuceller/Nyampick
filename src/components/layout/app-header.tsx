@@ -9,7 +9,7 @@ export function AppHeader() {
       <div className="flex items-center gap-2">
         <div className="relative h-8 w-8 overflow-hidden rounded-full">
           <Image
-            src="/icons/icon-192.png"
+            src="/icon_main.png"
             alt="냠픽 아이콘"
             fill
             sizes="32px"

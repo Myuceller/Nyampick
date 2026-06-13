@@ -53,7 +53,7 @@ export function MealList({
     <div className="flex-1 px-4 pb-24 pt-6 bg-[#fdfefd]">
       <p className="ml-3 mb-2 text-[12px] text-[#7f8885]">{dateLabel}</p>
       <div className="ml-3 mb-4 flex items-center justify-between">
-        <h2 className="text-[20px] font-bold leading-none text-[#242b29]">
+        <h2 className="text-[20px] font-bold leading-[1.32] text-[#242b29]">
           오늘의 식단
         </h2>
         {!readOnly ? (
@@ -93,7 +93,7 @@ export function MealList({
                 className="rounded-[14px] border border-[#c8cfcd] bg-[#fdfefd] px-4 py-3.5"
               >
                 <div className="mb-2">
-                  <span className="text-[18px] font-bold leading-none text-[#252c2a]">
+                  <span className="text-[18px] font-bold leading-[1.32] text-[#252c2a]">
                     {MEAL_LABELS[type]}
                   </span>
                 </div>
