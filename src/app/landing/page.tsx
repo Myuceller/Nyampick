@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Camera, ChefHat, Refrigerator, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "냠픽 - 아이 식단과 냉장고 관리",
@@ -31,17 +31,17 @@ const features = [
   {
     title: "식단 기록",
     description: "오늘 식단과 일주일 식단표를 빠르게 확인해요.",
-    icon: ChefHat,
+    image: "/landing-motion/calendar.png",
   },
   {
     title: "냉장고 관리",
     description: "재료를 저장하고 이유식 큐브까지 함께 관리해요.",
-    icon: Refrigerator,
+    image: "/landing-motion/spoon_food.png",
   },
   {
     title: "영수증 스캔",
     description: "장 본 재료를 사진으로 빠르게 추가할 수 있어요.",
-    icon: Camera,
+    image: "/landing-motion/family.png",
   },
 ];
 
@@ -102,13 +102,13 @@ export default function LandingPage() {
 
         <div className="mt-8 rounded-[24px] bg-[#f3f8f4] px-5 py-5 shadow-[0_8px_24px_rgba(42,62,52,0.06)]">
           <div className="flex items-center gap-4">
-            <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-[28px] bg-white">
+            <div className="relative h-[92px] w-[92px] shrink-0">
               <Image
-                src="/icon_main.png"
+                src="/landing-motion/baby.png"
                 alt=""
                 fill
-                sizes="88px"
-                className="object-contain"
+                sizes="92px"
+                className="nyam-boing object-contain"
                 priority
               />
             </div>
@@ -145,8 +145,14 @@ export default function LandingPage() {
         <div className="mt-5 space-y-3">
           {features.map((feature) => (
             <div key={feature.title} className="flex gap-4 rounded-[18px] bg-[#f6f7f7] p-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-white text-[#57bf8e]">
-                <feature.icon className="h-5 w-5" />
+              <div className="relative h-12 w-12 shrink-0">
+                <Image
+                  src={feature.image}
+                  alt=""
+                  fill
+                  sizes="48px"
+                  className="nyam-tremble object-contain"
+                />
               </div>
               <div>
                 <h3 className="text-[17px] font-extrabold">{feature.title}</h3>

@@ -126,7 +126,7 @@ export function clearSocialProviderParam() {
 export function getOAuthRedirectTo() {
   if (typeof window === "undefined") return undefined;
   const nextPath = getAuthNextPath();
-  const redirectUrl = new URL("/auth", getOAuthOrigin());
+  const redirectUrl = new URL("/auth", window.location.origin);
   if (nextPath !== "/") {
     redirectUrl.searchParams.set("next", nextPath);
   }
