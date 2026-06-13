@@ -17,7 +17,7 @@ export function FridgeMainContent({ vm }: FridgeMainContentProps) {
   return (
     <>
       <main className="flex flex-1 flex-col">
-        <div className="bg-white px-4 pb-4 pt-12">
+        <div className="sticky top-0 z-30 border-b border-[#d3d7d5] bg-white px-4 pb-4 pt-12">
           <div className="mb-6 flex items-center justify-between">
             <h1 className="text-[24px] font-bold leading-[1.28] text-[#1f2725]">
               내 냉장고
@@ -44,8 +44,6 @@ export function FridgeMainContent({ vm }: FridgeMainContentProps) {
             onChange={(key) => vm.setActiveFilter(key as "all" | FridgeSectionKey)}
           />
         </div>
-
-        <div className="h-px bg-[#d3d7d5]" />
 
         <div className="flex-1 px-4 pb-40 pt-5">
           {vm.isLoading ? (
