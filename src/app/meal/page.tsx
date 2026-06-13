@@ -63,7 +63,7 @@ export default function Page() {
                   />
                 ) : (
                   <Image
-                    src="/icons/icon-source-baby.png"
+                    src="/icon_main.gif"
                     alt=""
                     fill
                     sizes="44px"

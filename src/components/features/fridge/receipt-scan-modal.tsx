@@ -17,10 +17,14 @@ interface ReceiptScanModalProps {
 export function ReceiptScanModal({ vm }: ReceiptScanModalProps) {
   if (!vm.isReceiptPopupOpen) return null;
 
+  const albumInputId = "receipt-album-input";
+  const cameraInputId = "receipt-camera-input";
+
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#6b716e]/65 px-4 py-4">
       <div className="mx-auto w-full max-w-[480px] rounded-[28px] bg-[#f6f7f6] px-4 pb-5 pt-4">
         <input
+          id={albumInputId}
           ref={vm.albumInputRef}
           type="file"
           accept="image/*"
@@ -31,6 +35,7 @@ export function ReceiptScanModal({ vm }: ReceiptScanModalProps) {
           }}
         />
         <input
+          id={cameraInputId}
           ref={vm.cameraInputRef}
           type="file"
           accept="image/*"
@@ -42,7 +47,13 @@ export function ReceiptScanModal({ vm }: ReceiptScanModalProps) {
           }}
         />
 
-        {vm.receiptStage === "capture" ? <ReceiptCaptureStep vm={vm} /> : null}
+        {vm.receiptStage === "capture" ? (
+          <ReceiptCaptureStep
+            vm={vm}
+            albumInputId={albumInputId}
+            cameraInputId={cameraInputId}
+          />
+        ) : null}
         {vm.receiptStage === "scanning" ? <ReceiptScanningStep vm={vm} /> : null}
         {vm.receiptStage === "result" ? <ReceiptResultStep vm={vm} /> : null}
       </div>
@@ -50,7 +61,14 @@ export function ReceiptScanModal({ vm }: ReceiptScanModalProps) {
   );
 }
 
-function ReceiptCaptureStep({ vm }: ReceiptScanModalProps) {
+function ReceiptCaptureStep({
+  vm,
+  albumInputId,
+  cameraInputId,
+}: ReceiptScanModalProps & {
+  albumInputId: string;
+  cameraInputId: string;
+}) {
   return (
     <>
       <div className="mb-5 flex items-center justify-between">
@@ -75,22 +93,26 @@ function ReceiptCaptureStep({ vm }: ReceiptScanModalProps) {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => vm.albumInputRef.current?.click()}
-          disabled={vm.isScanningReceipt}
-          className="h-12 rounded-2xl bg-[#e5e7e6] text-[16px] font-semibold text-[#7f8885]"
+        <label
+          htmlFor={albumInputId}
+          aria-disabled={vm.isScanningReceipt}
+          className={cn(
+            "flex h-12 items-center justify-center rounded-2xl bg-[#e5e7e6] text-[16px] font-semibold text-[#7f8885]",
+            vm.isScanningReceipt ? "pointer-events-none opacity-60" : "cursor-pointer"
+          )}
         >
           {vm.isScanningReceipt ? "처리 중..." : "앨범에서"}
-        </button>
-        <button
-          type="button"
-          onClick={() => vm.cameraInputRef.current?.click()}
-          disabled={vm.isScanningReceipt}
-          className="h-12 rounded-2xl bg-[#57bf8e] text-[16px] font-semibold text-white"
+        </label>
+        <label
+          htmlFor={cameraInputId}
+          aria-disabled={vm.isScanningReceipt}
+          className={cn(
+            "flex h-12 items-center justify-center rounded-2xl bg-[#57bf8e] text-[16px] font-semibold text-white",
+            vm.isScanningReceipt ? "pointer-events-none opacity-60" : "cursor-pointer"
+          )}
         >
           {vm.isScanningReceipt ? "처리 중..." : "촬영하기"}
-        </button>
+        </label>
       </div>
     </>
   );

@@ -32,7 +32,7 @@ function Avatar({ photoUrl }: { photoUrl?: string }) {
   return (
     <div className="relative h-[70px] w-[70px] shrink-0 overflow-hidden rounded-full">
       <Image
-        src="/icons/icon-source-baby.png"
+        src="/icon_main.gif"
         alt=""
         fill
         sizes="70px"
