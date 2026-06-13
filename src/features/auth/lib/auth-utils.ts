@@ -10,6 +10,7 @@ export type LoadingPhase =
   | "profile"
   | "redirect"
   | "onboarding";
+export type OAuthSocialProvider = "google" | "kakao";
 
 const AUTH_CALLBACK_KEYS = [
   "code",
@@ -25,7 +26,10 @@ const AUTH_CALLBACK_KEYS = [
   "expires_at",
   "token_type",
   "sb",
+  "social_provider",
 ] as const;
+
+const SOCIAL_PROVIDER_PARAM = "social_provider";
 
 export interface AuthCallbackParams {
   authCode: string | null;
@@ -49,10 +53,80 @@ export class FatalProfileSeedError extends Error {
   }
 }
 
+function isLocalOrigin(origin: string) {
+  try {
+    const { hostname } = new URL(origin);
+    return hostname === "localhost" || hostname === "127.0.0.1";
+  } catch {
+    return false;
+  }
+}
+
+function getConfiguredAppOrigin() {
+  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (!configuredUrl) return null;
+
+  try {
+    return new URL(configuredUrl).origin;
+  } catch {
+    return null;
+  }
+}
+
+function getCurrentOrigin() {
+  if (typeof window === "undefined") return null;
+  return window.location.origin;
+}
+
+function getOAuthOrigin() {
+  const currentOrigin = getCurrentOrigin();
+  if (!currentOrigin) return undefined;
+  if (isLocalOrigin(currentOrigin)) return currentOrigin;
+
+  const currentHost = window.location.hostname;
+  if (currentHost === "nyampick.kr" || currentHost.endsWith(".nyampick.kr")) {
+    return currentOrigin;
+  }
+
+  return getConfiguredAppOrigin() ?? currentOrigin;
+}
+
+export function getCanonicalSocialAuthUrl(provider: OAuthSocialProvider) {
+  const currentOrigin = getCurrentOrigin();
+  const oauthOrigin = getOAuthOrigin();
+  if (!currentOrigin || !oauthOrigin || currentOrigin === oauthOrigin) return null;
+
+  const nextPath = getAuthNextPath();
+  const authUrl = new URL("/auth", oauthOrigin);
+  if (nextPath !== "/") {
+    authUrl.searchParams.set("next", nextPath);
+  }
+  authUrl.searchParams.set(SOCIAL_PROVIDER_PARAM, provider);
+  return authUrl.toString();
+}
+
+export function readSocialProviderParam(): OAuthSocialProvider | null {
+  if (typeof window === "undefined") return null;
+  const provider = new URL(window.location.href).searchParams.get(SOCIAL_PROVIDER_PARAM);
+  return provider === "google" || provider === "kakao" ? provider : null;
+}
+
+export function clearSocialProviderParam() {
+  if (typeof window === "undefined") return;
+  const currentUrl = new URL(window.location.href);
+  currentUrl.searchParams.delete(SOCIAL_PROVIDER_PARAM);
+  const nextSearch = currentUrl.searchParams.toString();
+  window.history.replaceState(
+    {},
+    "",
+    `${currentUrl.pathname}${nextSearch ? `?${nextSearch}` : ""}`
+  );
+}
+
 export function getOAuthRedirectTo() {
   if (typeof window === "undefined") return undefined;
   const nextPath = getAuthNextPath();
-  const redirectUrl = new URL("/auth", window.location.origin);
+  const redirectUrl = new URL("/auth", getOAuthOrigin());
   if (nextPath !== "/") {
     redirectUrl.searchParams.set("next", nextPath);
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
 import { getAuthNextPath, hasAuthNextPath } from "@/lib/auth-redirect";
@@ -13,11 +13,14 @@ import {
   ScreenMode,
   SocialProvider,
   clearAuthCallbackParams,
+  clearSocialProviderParam,
   ensureProfileSeeded,
+  getCanonicalSocialAuthUrl,
   getOAuthRedirectTo,
   getSupabaseOrThrow,
   normalizeAuthEmail,
   readAuthCallbackParams,
+  readSocialProviderParam,
   toFriendlyAuthErrorMessage,
   validateAuthForm,
 } from "../lib/auth-utils";
@@ -39,6 +42,7 @@ export function useAuthPage() {
   const [canRetryProfileSeed, setCanRetryProfileSeed] = useState(false);
   const isProcessingCallbackRef = useRef(false);
   const isFinalizingSessionRef = useRef(false);
+  const autoStartedSocialRef = useRef(false);
   const lastSessionRef = useRef<Session | null>(null);
   const isBusy = isSubmitting || isSocialSubmitting;
 
@@ -293,11 +297,19 @@ export function useAuthPage() {
     }
   };
 
-  const signInWithSocial = async (provider: "google" | "kakao") => {
+  const signInWithSocial = useCallback(async (provider: "google" | "kakao") => {
     setErrorMessage(null);
     setNoticeMessage(null);
     setCanRetryProfileSeed(false);
     let didStartRedirect = false;
+
+    const canonicalAuthUrl = getCanonicalSocialAuthUrl(provider);
+    if (canonicalAuthUrl) {
+      setIsSocialSubmitting(true);
+      setSocialProvider(provider);
+      window.location.assign(canonicalAuthUrl);
+      return;
+    }
 
     let supabase: ReturnType<typeof getSupabaseOrThrow>;
     try {
@@ -315,6 +327,7 @@ export function useAuthPage() {
         provider,
         options: {
           redirectTo,
+          skipBrowserRedirect: true,
           queryParams:
             provider === "kakao"
               ? { scope: "profile_nickname profile_image account_email" }
@@ -347,7 +360,18 @@ export function useAuthPage() {
         setSocialProvider(null);
       }
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (autoStartedSocialRef.current || screenMode !== "form" || isBusy) return;
+
+    const provider = readSocialProviderParam();
+    if (!provider) return;
+
+    autoStartedSocialRef.current = true;
+    clearSocialProviderParam();
+    void signInWithSocial(provider);
+  }, [screenMode, isBusy, signInWithSocial]);
 
   return {
     mode,
