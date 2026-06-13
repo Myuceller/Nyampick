@@ -7,13 +7,13 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between bg-card px-4 py-3 shadow-sm">
       <div className="flex items-center gap-2">
-        <div className="relative h-8 w-8 overflow-hidden rounded-full">
+        <div className="relative h-8 w-8">
           <Image
             src="/icon_main.png"
             alt="냠픽 아이콘"
             fill
             sizes="32px"
-            className="object-cover"
+            className="object-contain"
             priority
           />
         </div>
