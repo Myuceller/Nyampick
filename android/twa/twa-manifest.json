@@ -1,0 +1,69 @@
+{
+  "packageId": "kr.nyampick.app",
+  "host": "www.nyampick.kr",
+  "name": "냠픽",
+  "launcherName": "냠픽",
+  "display": "standalone",
+  "themeColor": "#57BF8E",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#FDFEFD",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://www.nyampick.kr/icons/icon-512.png",
+  "maskableIconUrl": "https://www.nyampick.kr/icons/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "/Users/dongdong/workspace/mammanote/android/twa/nyampick-release.keystore",
+    "alias": "nyampick"
+  },
+  "appVersionName": "2",
+  "appVersionCode": 2,
+  "shortcuts": [
+    {
+      "name": "식단 보기",
+      "shortName": "식단",
+      "url": "https://www.nyampick.kr/",
+      "chosenIconUrl": "https://www.nyampick.kr/icons/icon-192.png"
+    },
+    {
+      "name": "냉장고 열기",
+      "shortName": "냉장고",
+      "url": "https://www.nyampick.kr/fridge",
+      "chosenIconUrl": "https://www.nyampick.kr/icons/icon-192.png"
+    },
+    {
+      "name": "레시피 보기",
+      "shortName": "레시피",
+      "url": "https://www.nyampick.kr/recipe",
+      "chosenIconUrl": "https://www.nyampick.kr/icons/icon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://www.nyampick.kr/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://www.nyampick.kr/",
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "appVersion": "2"
+}

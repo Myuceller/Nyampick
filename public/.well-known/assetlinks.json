@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "kr.nyampick.app",
+      "sha256_cert_fingerprints": [
+        "3F:86:FB:9D:5D:26:81:44:A4:72:F0:69:B1:63:95:40:F4:A3:F3:7C:64:A7:C8:1A:E3:C8:DA:6D:2D:CC:82:87"
+      ]
+    }
+  }
+]
