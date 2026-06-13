@@ -28,6 +28,9 @@ export const metadata: Metadata = {
     "식단 기록",
   ],
   manifest: "/manifest.webmanifest",
+  other: {
+    google: "notranslate",
+  },
   alternates: {
     canonical: "/",
   },
@@ -75,7 +78,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" translate="no">
       <body>
         <PwaRegister />
         <AuthGate>{children}</AuthGate>
