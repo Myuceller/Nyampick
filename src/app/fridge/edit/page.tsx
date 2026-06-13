@@ -29,7 +29,7 @@ export default function FridgeEditPage() {
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
-          <h1 className="text-[24px] font-bold tracking-[-0.02em] text-[#1f2725]">냉장고 수정</h1>
+          <h1 className="text-[24px] font-bold leading-[1.28] text-[#1f2725]">냉장고 수정</h1>
           <span className="w-8" />
         </div>
 

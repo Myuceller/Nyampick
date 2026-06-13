@@ -66,7 +66,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-2">
             <div className="relative h-9 w-9 overflow-hidden rounded-[12px]">
               <Image
-                src="/icon_main.gif"
+                src="/icon_main.png"
                 alt=""
                 fill
                 sizes="36px"
@@ -89,7 +89,7 @@ export default function LandingPage() {
             <Sparkles className="h-3.5 w-3.5" />
             이유식 식단 관리
           </div>
-          <h1 className="mt-5 text-[36px] font-extrabold leading-[1.18] tracking-[-0.02em]">
+          <h1 className="mt-5 text-[36px] font-extrabold leading-[1.25]">
             아이 식단과 냉장고를
             <br />
             한 번에 관리해요
@@ -104,7 +104,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-4">
             <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-[28px] bg-white">
               <Image
-                src="/icon_main.gif"
+                src="/icon_main.png"
                 alt=""
                 fill
                 sizes="88px"

@@ -26,7 +26,7 @@ export function RecipePage() {
     <div className="flex min-h-[100dvh] flex-col bg-white pb-[116px]">
       <div className="px-4 pb-3 pt-12">
         <div className="mb-6 flex items-center">
-          <h1 className="text-[24px] font-black leading-none tracking-[-0.03em] text-[#1f2423]">
+          <h1 className="text-[24px] font-bold leading-[1.28] text-[#1f2423]">
             레시피 북
           </h1>
         </div>

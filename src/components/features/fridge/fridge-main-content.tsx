@@ -19,7 +19,7 @@ export function FridgeMainContent({ vm }: FridgeMainContentProps) {
       <main className="flex flex-1 flex-col">
         <div className="bg-white px-4 pb-4 pt-12">
           <div className="mb-6 flex items-center justify-between">
-            <h1 className="text-[24px] font-bold tracking-[-0.02em] text-[#1f2725]">
+            <h1 className="text-[24px] font-bold leading-[1.28] text-[#1f2725]">
               내 냉장고
             </h1>
             <button

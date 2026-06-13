@@ -48,14 +48,14 @@ export default function Page() {
       <div className="bg-[#f3f8f4] px-4 pb-4 pt-11">
         <p className="text-[14px] text-[#6f7875]">안녕하세요 👋</p>
         <PwaInstallPrompt className="mt-3" />
-        <h1 className="mt-2 mb-2 text-[24px] font-extrabold leading-[1.05] tracking-[-0.02em] text-[#1f2725]">
+        <h1 className="mt-2 mb-2 text-[24px] font-bold leading-[1.28] text-[#1f2725]">
           {childName ? `${childName}의 식단` : "식단"}
         </h1>
 
         <div className="mt-3 rounded-[22px] bg-[#fdfefd] px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="relative h-11 w-11 overflow-hidden rounded-[12px]">
+              <div className="relative h-14 w-14 overflow-hidden rounded-[14px]">
                 {childPhotoUrl ? (
                   <div
                     className="h-full w-full bg-cover bg-center"
@@ -63,10 +63,10 @@ export default function Page() {
                   />
                 ) : (
                   <Image
-                    src="/icon_main.gif"
+                    src="/icon_main.png"
                     alt=""
                     fill
-                    sizes="44px"
+                    sizes="56px"
                     className="object-contain"
                   />
                 )}
@@ -83,7 +83,7 @@ export default function Page() {
             <button
               type="button"
               onClick={() => router.push("/children")}
-              className="rounded-[12px] bg-[#57bf8e] px-4 py-2 text-[10px] font-light text-white"
+              className="rounded-[12px] bg-[#57bf8e] px-4 py-2 text-[13px] font-semibold text-white"
             >
               아기 관리
             </button>
@@ -92,7 +92,7 @@ export default function Page() {
 
         <div className="mt-4 rounded-[22px] bg-[#fdfefd] px-4 py-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[18px] font-bold leading-none text-[#232a28]">
+            <h2 className="text-[18px] font-bold leading-[1.32] text-[#232a28]">
               이번 주 식단
             </h2>
             <button

@@ -32,7 +32,7 @@ function Avatar({ photoUrl }: { photoUrl?: string }) {
   return (
     <div className="relative h-[70px] w-[70px] shrink-0 overflow-hidden rounded-full">
       <Image
-        src="/icon_main.gif"
+        src="/icon_main.png"
         alt=""
         fill
         sizes="70px"
@@ -119,7 +119,7 @@ export default function ChildrenPage() {
         </div>
 
         <section className="mt-9">
-          <h2 className="whitespace-pre-line text-[24px] font-extrabold leading-[1.45] tracking-[-0.02em] text-[#202725]">
+          <h2 className="whitespace-pre-line text-[24px] font-extrabold leading-[1.45] text-[#202725]">
             {"아기를 선택하거나\n새로 추가해요"}
           </h2>
         </section>
