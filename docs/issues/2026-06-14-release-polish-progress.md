@@ -29,14 +29,13 @@
 - [ ] 홈 화면 아기 카드 아래 이유식 준비 가이드 추가
 - [ ] 홈 화면 상단 카피라이팅/디자인 일부 변경
 - [ ] 식단표 이미지/차트 구성 재설계
-- [ ] 로그인 화면 디자인 개선
-- [ ] 회원가입 화면에 이용약관/개인정보 동의 추가
 - [ ] 이메일 회원가입 인증 흐름 추가
 - [ ] Kakao 소셜 인증 기준 정리
 
 ### P2
 
 - [ ] 아기 수정하기 기능 추가
+- [ ] 알레르기 관리 기능 구현
 - [ ] 유입 경로 질문 추가: `어느 경로로 이 앱을 알게됐나요?`
 - [ ] 랜딩페이지 손그림 이미지/보호자 이름/아기 이름 예시 정리
 - [ ] 메인 아이콘/앱 아이콘 최종 이미지로 통일
@@ -68,6 +67,25 @@
 - [x] 마이페이지 `<- 마이페이지` 헤더 sticky 처리
   - 위치: `src/components/features/mypage/my-page.tsx`
   - 범위: 뒤로가기 버튼과 마이페이지 타이틀 고정
+- [x] 로그인/회원가입 화면 디자인 개선
+  - 위치: `src/features/auth/ui/auth-form-view.tsx`
+  - 범위: 브랜드 헤더, 카피라이팅, 입력 폼, 소셜 로그인 버튼, 오류/안내 메시지 디자인 정리
+  - 기준: 기존 auth 동작은 유지하고 냠픽 그린/카드/한글 행간 기준으로 통일
+- [x] 회원가입 화면에 이용약관/개인정보 동의 UI 추가
+  - 위치: `src/features/auth/ui/auth-form-view.tsx`
+  - 범위: 필수/선택 약관 체크, 약관 보기 바텀 모달, 가입 전 필수 약관 검증
+- [x] 앱 재진입 시 로그인 유지 중 auth 화면 노출 최소화
+  - 위치: `src/lib/auth-session-cache.ts`, `src/app/auth/page.tsx`
+  - 범위: 세션 캐시를 localStorage에 유지하고, 캐시가 있으면 auth 화면 대신 간단한 스피너 표시
+- [x] 화면 옆에 보이는 스크롤바 제거 확인
+  - 위치: `src/app/globals.css`
+  - 범위: 전역 `scrollbar-width: none`, `::-webkit-scrollbar { display: none }`, `overflow-x: hidden`
+- [x] 회원탈퇴 준비중 처리 확인
+  - 위치: `src/components/features/mypage/my-page.tsx`
+  - 동작: 회원탈퇴 클릭 시 `회원탈퇴는 준비 중입니다.` toast 표시
+- [x] 가족구성원 역할명 변경
+  - 위치: `src/features/family/hooks/use-family-page.ts`, `src/lib/server/family-access.ts`
+  - 범위: 선택지를 `배우자/가족/친구/도우미`로 변경하고 기존 할머니/할아버지/가족 구성원 라벨은 `가족`으로 표시
 
 ## 다음 작업 후보
 
