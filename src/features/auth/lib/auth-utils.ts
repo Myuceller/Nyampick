@@ -1,4 +1,5 @@
-import { getAuthNextPath } from "@/lib/auth-redirect";
+import { getAuthNextPath } from "../../../lib/auth-redirect";
+export { validateAuthForm } from "./auth-form-validation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 export type AuthMode = "signin" | "signup";
@@ -56,7 +57,16 @@ export class FatalProfileSeedError extends Error {
 function isLocalOrigin(origin: string) {
   try {
     const { hostname } = new URL(origin);
-    return hostname === "localhost" || hostname === "127.0.0.1";
+    if (hostname === "localhost" || hostname.endsWith(".localhost")) return true;
+    if (hostname === "127.0.0.1" || hostname === "0.0.0.0") return true;
+    if (hostname.startsWith("10.")) return true;
+    if (hostname.startsWith("192.168.")) return true;
+    const private172Match = hostname.match(/^172\.(\d{1,2})\./);
+    if (private172Match) {
+      const secondOctet = Number(private172Match[1]);
+      return secondOctet >= 16 && secondOctet <= 31;
+    }
+    return false;
   } catch {
     return false;
   }
@@ -197,24 +207,6 @@ export function clearAuthCallbackParams() {
 
 export function normalizeAuthEmail(value: string) {
   return value.trim().toLowerCase();
-}
-
-export function validateAuthForm(input: {
-  mode: AuthMode;
-  email: string;
-  password: string;
-}): string | null {
-  const email = normalizeAuthEmail(input.email);
-  if (!email || !input.password.trim()) {
-    return "이메일과 비밀번호를 입력해주세요.";
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return "이메일 형식을 확인해주세요.";
-  }
-  if (input.mode === "signup" && input.password.length < 8) {
-    return "비밀번호는 8자 이상으로 입력해주세요.";
-  }
-  return null;
 }
 
 export function toFriendlyAuthErrorMessage(error: unknown): string {

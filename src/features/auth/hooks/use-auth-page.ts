@@ -31,6 +31,7 @@ export function useAuthPage() {
   const [screenMode, setScreenMode] = useState<ScreenMode>("loading");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSocialSubmitting, setIsSocialSubmitting] = useState(false);
   const [socialProvider, setSocialProvider] = useState<SocialProvider>(null);
@@ -195,7 +196,7 @@ export function useAuthPage() {
     setNoticeMessage(null);
     setCanRetryProfileSeed(false);
 
-    const validationMessage = validateAuthForm({ mode, email, password });
+    const validationMessage = validateAuthForm({ mode, email, password, confirmPassword });
     if (validationMessage) {
       setErrorMessage(validationMessage);
       return;
@@ -381,6 +382,8 @@ export function useAuthPage() {
     setEmail,
     password,
     setPassword,
+    confirmPassword,
+    setConfirmPassword,
     isSubmitting,
     isSocialSubmitting,
     socialProvider,

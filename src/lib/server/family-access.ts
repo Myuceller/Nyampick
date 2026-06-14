@@ -50,7 +50,10 @@ function makeInviteCode(): string {
 
 function normalizeRelationshipLabel(value?: string): string {
   const label = value?.trim();
-  if (!label) return "가족 구성원";
+  if (!label) return "가족";
+  if (label === "할머니" || label === "할아버지" || label === "가족 구성원") {
+    return "가족";
+  }
   return label.slice(0, 20);
 }
 
@@ -355,7 +358,7 @@ export async function listFamilyMembersForUser(userId: string): Promise<{
       const profile = profileById.get(link.guest_user_id);
       return {
         id: link.guest_user_id,
-        name: profile?.name || profile?.email || "가족 구성원",
+        name: profile?.name || profile?.email || "가족",
         email: profile?.email ?? undefined,
         profileImageUrl: profile?.profile_image_url ?? undefined,
         role: "member" as const,

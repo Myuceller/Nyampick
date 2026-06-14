@@ -15,7 +15,7 @@ export interface FamilyMember {
   linkedAt?: string;
 }
 
-export const RELATIONSHIP_OPTIONS = ["배우자", "할머니", "할아버지", "가족 구성원"];
+export const RELATIONSHIP_OPTIONS = ["배우자", "가족", "친구", "도우미"];
 
 interface FamilyResponse {
   viewerRole?: "owner" | "member";
