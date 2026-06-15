@@ -7,7 +7,7 @@ function SkeletonBlock({ className }: { className: string }) {
 export function HomeSkeleton() {
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-[480px] flex-col bg-[#fdfefd] pb-24">
-      <div className="bg-[#f3f8f4] px-4 pb-4 pt-11">
+      <div className="bg-[#f3f8f4] px-4 pb-4 pt-[calc(44px+env(safe-area-inset-top))]">
         <SkeletonBlock className="h-4 w-20 rounded-full" />
         <div className="mt-5 rounded-[22px] bg-[#fdfefd] px-4 py-4">
           <div className="flex items-center justify-between">

@@ -24,7 +24,8 @@ export function useChildrenPage() {
   const [linkedMode, setLinkedMode] = useState(false);
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
   const [editingChildName, setEditingChildName] = useState("");
-  const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [editingChildMonthsOld, setEditingChildMonthsOld] = useState("0");
+  const [isUpdatingChild, setIsUpdatingChild] = useState(false);
   const [updatingPhotoChildId, setUpdatingPhotoChildId] = useState<string | null>(null);
 
   const loadChildren = async () => {
@@ -79,6 +80,17 @@ export function useChildrenPage() {
   };
 
   const setPrimaryChild = async (childId: string) => {
+    const currentChild = children.find((child) => child.id === childId);
+    if (currentChild?.isPrimary || linkedMode) return;
+
+    const previousChildren = children;
+    setChildren((current) =>
+      current.map((child) => ({
+        ...child,
+        isPrimary: child.id === childId,
+      }))
+    );
+
     try {
       const res = await authedFetch("/api/children", {
         method: "PATCH",
@@ -87,8 +99,9 @@ export function useChildrenPage() {
       });
       const json = (await res.json()) as { message?: string };
       if (!res.ok) throw new Error(json.message ?? "대표 아이 설정에 실패했습니다.");
-      await loadChildren();
+      toast.success("메인 아기를 변경했어요.");
     } catch (error) {
+      setChildren(previousChildren);
       toast.error(error instanceof Error ? error.message : "대표 아이 설정에 실패했습니다.");
     }
   };
@@ -111,38 +124,46 @@ export function useChildrenPage() {
     }
   };
 
-  const startEditChildName = (child: ChildProfile) => {
+  const startEditChild = (child: ChildProfile) => {
     setEditingChildId(child.id);
     setEditingChildName(child.name);
+    setEditingChildMonthsOld(String(child.monthsOld));
   };
 
-  const cancelEditChildName = () => {
+  const cancelEditChild = () => {
     setEditingChildId(null);
     setEditingChildName("");
+    setEditingChildMonthsOld("0");
   };
 
-  const saveChildName = async () => {
+  const saveChildDetails = async () => {
     if (!editingChildId) return;
     const name = editingChildName.trim();
     if (!name) {
       toast.error("이름을 입력해주세요.");
       return;
     }
-    setIsUpdatingName(true);
+    const monthsOld = Number.parseInt(editingChildMonthsOld, 10);
+    if (!Number.isInteger(monthsOld) || monthsOld < 0) {
+      toast.error("개월 수는 0 이상의 정수여야 합니다.");
+      return;
+    }
+    setIsUpdatingChild(true);
     try {
       const res = await authedFetch("/api/children", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: editingChildId, name }),
+        body: JSON.stringify({ id: editingChildId, name, monthsOld }),
       });
       const json = (await res.json()) as { message?: string };
-      if (!res.ok) throw new Error(json.message ?? "이름 변경에 실패했습니다.");
-      cancelEditChildName();
+      if (!res.ok) throw new Error(json.message ?? "아기 정보 수정에 실패했습니다.");
+      toast.success("아기 정보를 수정했어요.");
+      cancelEditChild();
       await loadChildren();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "이름 변경에 실패했습니다.");
+      toast.error(error instanceof Error ? error.message : "아기 정보 수정에 실패했습니다.");
     } finally {
-      setIsUpdatingName(false);
+      setIsUpdatingChild(false);
     }
   };
 
@@ -167,14 +188,15 @@ export function useChildrenPage() {
 
   return {
     addChild,
-    cancelEditChildName,
+    cancelEditChild,
     children,
     deleteChild,
     deletingChildId,
     editingChildId,
+    editingChildMonthsOld,
     editingChildName,
     isSubmitting,
-    isUpdatingName,
+    isUpdatingChild,
     updatingPhotoChildId,
     linkedMode,
     loadChildren,
@@ -182,12 +204,13 @@ export function useChildrenPage() {
     newMonthsOld,
     newName,
     router,
-    saveChildName,
+    saveChildDetails,
     saveChildPhoto,
+    setEditingChildMonthsOld,
     setEditingChildName,
     setNewMonthsOld,
     setNewName,
     setPrimaryChild,
-    startEditChildName,
+    startEditChild,
   };
 }

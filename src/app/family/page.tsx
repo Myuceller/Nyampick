@@ -51,7 +51,7 @@ export default function FamilyPage() {
 
   return (
     <>
-      <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white px-4 pb-28 pt-6">
+      <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white px-4 pb-28 pt-[calc(24px+env(safe-area-inset-top))]">
         <div className="relative flex h-10 items-center justify-center">
           <button
             type="button"
@@ -61,7 +61,7 @@ export default function FamilyPage() {
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
-          <h1 className="text-[18px] font-extrabold text-[#202725]">가족 연동</h1>
+          <h1 className="text-[18px] font-extrabold leading-[1.45] text-[#202725]">가족 연동</h1>
         </div>
 
         <section className="mt-9">
