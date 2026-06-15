@@ -3,7 +3,7 @@ export { validateAuthForm } from "./auth-form-validation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 export type AuthMode = "signin" | "signup";
-export type ScreenMode = "loading" | "form" | "onboarding";
+export type ScreenMode = "loading" | "form" | "onboarding" | "referral";
 export type SocialProvider = "google" | "kakao" | null;
 export type LoadingPhase =
   | "session"

@@ -396,7 +396,13 @@ export function useAuthPage() {
       });
   };
 
-  const completeOnboarding = async () => {
+  const completeOnboarding = () => {
+    setErrorMessage(null);
+    setCanRetryProfileSeed(false);
+    setScreenMode("referral");
+  };
+
+  const completeReferralSurvey = async (referralSource: string | null) => {
     let supabase: ReturnType<typeof getSupabaseOrThrow>;
     try {
       supabase = getSupabaseOrThrow();
@@ -409,10 +415,16 @@ export function useAuthPage() {
     setCanRetryProfileSeed(false);
     try {
       const { error } = await supabase.auth.updateUser({
-        data: { onboarding_completed: true },
+        data: {
+          onboarding_completed: true,
+          referral_source: referralSource ?? "skipped",
+        },
       });
       if (error) throw error;
       localStorage.setItem("nyampick:onboarding:done", "true");
+      if (referralSource) {
+        localStorage.setItem("nyampick:referral-source", referralSource);
+      }
       setCachedHasSession(true);
       router.replace(getAuthNextPath());
     } catch (error) {
@@ -539,6 +551,7 @@ export function useAuthPage() {
     requestEmailVerification,
     verifyEmailCode,
     completeOnboarding,
+    completeReferralSurvey,
     signInWithSocial,
     retryProfileSeed,
     openFormScreen: () => setScreenMode("form"),
