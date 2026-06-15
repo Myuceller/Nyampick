@@ -94,7 +94,7 @@ export function FridgeMainContent({ vm }: FridgeMainContentProps) {
               <div className="mt-5 flex gap-2">
                 <button
                   type="button"
-                  onClick={vm.openReceiptPopup}
+                  onClick={vm.openReceiptCamera}
                   className="h-11 flex-1 rounded-xl border border-[#7bcaa3] bg-[#eef8f2] text-[14px] font-semibold text-[#2f7f59]"
                 >
                   영수증 스캔

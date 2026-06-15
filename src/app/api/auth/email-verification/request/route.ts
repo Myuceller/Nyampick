@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   createEmailVerificationCode,
+  EmailVerificationRateLimitError,
   sendVerificationEmail,
 } from "@/lib/server/email-verification";
 
@@ -29,6 +30,12 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "인증 메일 발송에 실패했습니다.";
+    if (error instanceof EmailVerificationRateLimitError) {
+      return NextResponse.json(
+        { message, retryAfterSeconds: error.retryAfterSeconds },
+        { status: 429 }
+      );
+    }
     return NextResponse.json({ message }, { status: 500 });
   }
 }

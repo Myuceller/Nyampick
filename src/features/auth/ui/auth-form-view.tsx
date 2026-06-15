@@ -3,6 +3,7 @@
 import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react";
 import type { AuthMode, SocialProvider } from "../lib/auth-utils";
 
 interface AuthFormViewProps {
@@ -14,6 +15,7 @@ interface AuthFormViewProps {
   verificationToken: string;
   isRequestingVerification: boolean;
   isVerifyingEmail: boolean;
+  verificationRetryAfter: number;
   verificationNotice: string | null;
   devVerificationCode: string | null;
   isBusy: boolean;
@@ -105,6 +107,7 @@ export function AuthFormView({
   verificationToken,
   isRequestingVerification,
   isVerifyingEmail,
+  verificationRetryAfter,
   verificationNotice,
   devVerificationCode,
   isBusy,
@@ -133,6 +136,8 @@ export function AuthFormView({
   const [agreeAge, setAgreeAge] = useState(false);
   const [agreeMarketing, setAgreeMarketing] = useState(false);
   const [openPolicy, setOpenPolicy] = useState<PolicyKey | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const requiredTermsReady = agreeService && agreePrivacy && agreeAge;
   const allTermsChecked = requiredTermsReady && agreeMarketing;
@@ -143,6 +148,8 @@ export function AuthFormView({
   const isReady = isSignin ? loginReady : signupReady;
 
   const activePolicy = openPolicy ? policyContent[openPolicy] : null;
+  const canRequestVerification =
+    !isBusy && !isRequestingVerification && verificationRetryAfter <= 0;
 
   const submitLabel = useMemo(() => {
     if (isSubmitting) return isSignin ? "로그인 중..." : "가입 중...";
@@ -310,9 +317,13 @@ export function AuthFormView({
                         type="button"
                         onClick={onRequestEmailVerification}
                         className="h-[50px] w-[92px] shrink-0 rounded-[15px] bg-[#57bf8e] text-[13px] font-extrabold text-white disabled:bg-[#cfd8d3]"
-                        disabled={isBusy || isRequestingVerification}
+                        disabled={!canRequestVerification}
                       >
-                        {isRequestingVerification ? "발송 중" : "인증 요청"}
+                        {isRequestingVerification
+                          ? "발송 중"
+                          : verificationRetryAfter > 0
+                            ? `${verificationRetryAfter}초`
+                            : "인증 요청"}
                       </button>
                     </div>
                     <p className="mt-1.5 text-[12px] font-medium leading-[1.55] text-[#8aa99a]">
@@ -376,11 +387,17 @@ export function AuthFormView({
                 </label>
                 <AuthInput
                   id="auth-password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={onSetPassword}
                   placeholder={isSignin ? "비밀번호 입력" : "영문, 숫자 포함 8자 이상"}
                   autoComplete={isSignin ? "current-password" : "new-password"}
+                  rightSlot={
+                    <PasswordVisibilityButton
+                      visible={showPassword}
+                      onToggle={() => setShowPassword((current) => !current)}
+                    />
+                  }
                 />
               </div>
 
@@ -394,11 +411,17 @@ export function AuthFormView({
                   </label>
                   <AuthInput
                     id="auth-password-confirm"
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={onSetConfirmPassword}
                     placeholder="비밀번호를 다시 입력해 주세요"
                     autoComplete="new-password"
+                    rightSlot={
+                      <PasswordVisibilityButton
+                        visible={showConfirmPassword}
+                        onToggle={() => setShowConfirmPassword((current) => !current)}
+                      />
+                    }
                   />
                 </div>
               ) : null}
@@ -590,6 +613,7 @@ function AuthInput({
   autoComplete,
   inputMode,
   maxLength,
+  rightSlot,
 }: {
   id: string;
   type: string;
@@ -599,19 +623,50 @@ function AuthInput({
   autoComplete?: string;
   inputMode?: "numeric";
   maxLength?: number;
+  rightSlot?: ReactNode;
 }) {
   return (
-    <input
-      id={id}
-      type={type}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      placeholder={placeholder}
-      autoComplete={autoComplete}
-      inputMode={inputMode}
-      maxLength={maxLength}
-      className="h-[50px] w-full rounded-[15px] border border-[#d4ede0] bg-[#fffdf8] px-[14px] text-[14px] font-medium leading-[1.55] text-[#1a3a28] outline-none placeholder:text-[#9ab3a5] focus:border-[#57bf8e] focus:bg-white focus:shadow-[0_0_0_4px_rgba(87,191,142,0.14)]"
-    />
+    <div className="relative w-full">
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
+        maxLength={maxLength}
+        className={
+          rightSlot
+            ? "h-[50px] w-full rounded-[15px] border border-[#d4ede0] bg-[#fffdf8] px-[14px] pr-[50px] text-[14px] font-medium leading-[1.55] text-[#1a3a28] outline-none placeholder:text-[#9ab3a5] focus:border-[#57bf8e] focus:bg-white focus:shadow-[0_0_0_4px_rgba(87,191,142,0.14)]"
+            : "h-[50px] w-full rounded-[15px] border border-[#d4ede0] bg-[#fffdf8] px-[14px] text-[14px] font-medium leading-[1.55] text-[#1a3a28] outline-none placeholder:text-[#9ab3a5] focus:border-[#57bf8e] focus:bg-white focus:shadow-[0_0_0_4px_rgba(87,191,142,0.14)]"
+        }
+      />
+      {rightSlot ? (
+        <div className="absolute inset-y-0 right-1 flex items-center">{rightSlot}</div>
+      ) : null}
+    </div>
+  );
+}
+
+function PasswordVisibilityButton({
+  visible,
+  onToggle,
+}: {
+  visible: boolean;
+  onToggle: () => void;
+}) {
+  const Icon = visible ? EyeOff : Eye;
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex h-11 w-11 items-center justify-center rounded-[13px] text-[#6f8f7d] transition active:bg-[#e8f5ef] active:text-[#3fa876]"
+      aria-label={visible ? "비밀번호 숨기기" : "비밀번호 보기"}
+    >
+      <Icon className="h-[18px] w-[18px]" strokeWidth={2.3} />
+    </button>
   );
 }
 

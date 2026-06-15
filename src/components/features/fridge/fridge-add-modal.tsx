@@ -34,7 +34,7 @@ export function FridgeAddModal({ vm }: FridgeAddModalProps) {
 
         <button
           type="button"
-          onClick={vm.openReceiptPopup}
+          onClick={vm.openReceiptCamera}
           className="mb-4 flex w-full shrink-0 items-center gap-3 rounded-[16px] border border-dashed border-[#6bc89a] bg-[#eef5f1] px-4 py-4 text-left"
         >
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#bde8d2]">

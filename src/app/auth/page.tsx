@@ -60,6 +60,7 @@ export default function AuthPage() {
       verificationToken={vm.verificationToken}
       isRequestingVerification={vm.isRequestingVerification}
       isVerifyingEmail={vm.isVerifyingEmail}
+      verificationRetryAfter={vm.verificationRetryAfter}
       verificationNotice={vm.verificationNotice}
       devVerificationCode={vm.devVerificationCode}
       isBusy={vm.isBusy}
