@@ -5,6 +5,7 @@ import { Onboarding } from "@/components/features/onboarding/onboarding";
 import { useAuthPage } from "@/features/auth/hooks/use-auth-page";
 import { AuthFormView } from "@/features/auth/ui/auth-form-view";
 import { AuthLoadingView } from "@/features/auth/ui/auth-loading-view";
+import { ReferralSurveyView } from "@/features/auth/ui/referral-survey-view";
 import { getCachedHasSession } from "@/lib/auth-session-cache";
 
 export default function AuthPage() {
@@ -37,6 +38,16 @@ export default function AuthPage() {
 
   if (vm.screenMode === "onboarding") {
     return <Onboarding onComplete={vm.completeOnboarding} />;
+  }
+
+  if (vm.screenMode === "referral") {
+    return (
+      <ReferralSurveyView
+        onComplete={(source) => {
+          void vm.completeReferralSurvey(source);
+        }}
+      />
+    );
   }
 
   return (

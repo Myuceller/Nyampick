@@ -20,7 +20,6 @@
 
 ### P0
 
-- [ ] 식단표 다운로드/저장 이미지 잘림 수정
 - [ ] 영수증 스캔 UX 개선
 
 ### P1
@@ -33,9 +32,7 @@
 ### P2
 
 - [ ] 알레르기 관리 기능 구현
-- [ ] 유입 경로 질문 추가: `어느 경로로 이 앱을 알게됐나요?`
 - [ ] 랜딩페이지 손그림 이미지/보호자 이름/아기 이름 예시 정리
-- [ ] 메인 아이콘/앱 아이콘 최종 이미지로 통일
 
 ## Blocked
 
@@ -101,11 +98,20 @@
 - [x] 메뉴 추가 최근검색어 로직 개선
   - 위치: `src/features/meal/hooks/use-meal-edit-page.ts`, `src/app/meal/edit/page.tsx`
   - 범위: Enter 의존 제거, 2글자 이상 검색어 자동 저장, 메뉴 기록 시 검색어 저장, 빈 최근검색어 영역 숨김
+- [x] 식단표 다운로드/저장 이미지 잘림 수정
+  - 위치: `src/app/meal/overview/page.tsx`
+  - 범위: 저장용 SVG 크기 산출 안정화, 셀 내부 긴 메뉴명 줄바꿈/말줄임, 오늘/일주일 탭별 이미지 저장
+- [x] 유입 경로 질문 추가
+  - 위치: `src/features/auth/ui/referral-survey-view.tsx`, `src/features/auth/hooks/use-auth-page.ts`
+  - 범위: 온보딩 완료 후 `어느 경로로 이 앱을 알게됐나요?` 카드형 설문 표시, 선택값을 `user_metadata.referral_source`에 저장
+- [x] 메인 아이콘/앱 아이콘 최종 이미지로 통일
+  - 위치: `public/icons/*`, `android/twa/app/src/main/res/mipmap-*`, `android/twa/app/src/main/res/drawable-*`, `android/twa/store_icon.png`
+  - 범위: `public/main_app_icon.png`에서 체크무늬 배경을 제거한 `main_app_icon1.png` 생성 후 PWA/TWA 아이콘 리소스 재생성
 
 ## 다음 작업 후보
 
-1. 식단표 이미지 저장 잘림 재현 및 수정
-2. 영수증 스캔 UX 개선
-3. 홈 화면 아기 카드 아래 이유식 준비 가이드 추가
-4. 유입 경로 질문 추가
-5. 알레르기 관리 기능 구현
+1. 영수증 스캔 UX 개선
+2. 홈 화면 아기 카드 아래 이유식 준비 가이드 추가
+3. 알레르기 관리 기능 구현
+4. 식단표 이미지/차트 구성 재설계
+5. 랜딩페이지 손그림 이미지/보호자 이름/아기 이름 예시 정리
