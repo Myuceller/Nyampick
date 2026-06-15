@@ -20,7 +20,6 @@
 
 ### P0
 
-- [ ] 첫 Google/Kakao 소셜 로그인 세션 확인 실패 수정
 - [ ] 식단표 다운로드/저장 이미지 잘림 수정
 - [ ] 영수증 스캔 UX 개선
 
@@ -29,12 +28,10 @@
 - [ ] 홈 화면 아기 카드 아래 이유식 준비 가이드 추가
 - [ ] 홈 화면 상단 카피라이팅/디자인 일부 변경
 - [ ] 식단표 이미지/차트 구성 재설계
-- [ ] 이메일 회원가입 인증 흐름 추가
 - [ ] Kakao 소셜 인증 기준 정리
 
 ### P2
 
-- [ ] 아기 수정하기 기능 추가
 - [ ] 알레르기 관리 기능 구현
 - [ ] 유입 경로 질문 추가: `어느 경로로 이 앱을 알게됐나요?`
 - [ ] 랜딩페이지 손그림 이미지/보호자 이름/아기 이름 예시 정리
@@ -86,10 +83,29 @@
 - [x] 가족구성원 역할명 변경
   - 위치: `src/features/family/hooks/use-family-page.ts`, `src/lib/server/family-access.ts`
   - 범위: 선택지를 `배우자/가족/친구/도우미`로 변경하고 기존 할머니/할아버지/가족 구성원 라벨은 `가족`으로 표시
+- [x] 이메일 회원가입 인증 흐름 추가
+  - 위치: `src/app/api/auth/email-verification/*`, `src/app/api/auth/email-signup/route.ts`, `src/features/auth/ui/auth-form-view.tsx`
+  - 범위: 인증번호 요청/확인, 인증 토큰 검증 후 서버 회원가입, Resend 발송 env, Supabase 저장 SQL 문서 추가
+- [x] 아기 수정하기 기능 추가
+  - 위치: `src/app/children/page.tsx`, `src/features/children/hooks/use-children-page.ts`
+  - 범위: 아기 카드 탭으로 메인 아기 선택, 이름/개월 수 수정 바텀시트, 사진 변경 흐름 정리
+- [x] 첫 Google/Kakao 소셜 로그인 세션 확인 실패 수정
+  - 위치: `src/features/auth/hooks/use-auth-page.ts`, `src/features/auth/lib/auth-utils.ts`, `src/app/auth/page.tsx`
+  - 범위: OAuth 콜백 중복 교환 방지, 같은 브라우저 재로그인 오류 완화, auth 화면 hydration 보완
+- [x] 상단 고정 헤더 safe-area/겹침 보정
+  - 위치: `src/components/features/fridge/fridge-main-content.tsx`, `src/components/features/recipe/recipe-page.tsx`, `src/components/features/mypage/my-page.tsx`
+  - 범위: 냉장고/레시피북/마이페이지 상단 고정 영역과 본문 겹침 방지, 한글 제목 줄높이 보정
+- [x] 메뉴 추가 화면 상단 고정 및 선택 상태 개선
+  - 위치: `src/app/meal/edit/page.tsx`
+  - 범위: 메뉴 추가 헤더/검색/탭/필터 영역 고정, 목록만 스크롤, 선택 카드 전체 초록 배경 표시
+- [x] 메뉴 추가 최근검색어 로직 개선
+  - 위치: `src/features/meal/hooks/use-meal-edit-page.ts`, `src/app/meal/edit/page.tsx`
+  - 범위: Enter 의존 제거, 2글자 이상 검색어 자동 저장, 메뉴 기록 시 검색어 저장, 빈 최근검색어 영역 숨김
 
 ## 다음 작업 후보
 
-1. 아기 수정하기 기능 추가
-2. 유입 경로 질문 추가
-3. 첫 소셜 로그인 실패 원인 추적
-4. 식단표 이미지 저장 잘림 재현 및 수정
+1. 식단표 이미지 저장 잘림 재현 및 수정
+2. 영수증 스캔 UX 개선
+3. 홈 화면 아기 카드 아래 이유식 준비 가이드 추가
+4. 유입 경로 질문 추가
+5. 알레르기 관리 기능 구현

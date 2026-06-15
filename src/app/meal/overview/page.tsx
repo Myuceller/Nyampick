@@ -215,7 +215,7 @@ function MealOverviewContent() {
 
   return (
     <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white">
-      <div className="relative flex h-[68px] items-center justify-center px-4 pt-3">
+      <div className="relative flex h-[calc(68px+env(safe-area-inset-top))] items-center justify-center px-4 pt-[calc(12px+env(safe-area-inset-top))]">
         <button
           type="button"
           onClick={() => router.back()}
@@ -224,7 +224,7 @@ function MealOverviewContent() {
         >
           <ArrowLeft className="h-6 w-6" />
         </button>
-        <h1 className="text-[18px] font-extrabold text-[#202725]">식단 전체보기</h1>
+        <h1 className="text-[18px] font-extrabold leading-[1.45] text-[#202725]">식단 전체보기</h1>
       </div>
 
       <div className="grid grid-cols-2 border-b border-[#d9dddb]">

@@ -5,6 +5,7 @@ export function validateAuthForm(input: {
   email: string;
   password: string;
   confirmPassword?: string;
+  verificationToken?: string;
 }): string | null {
   const email = input.email.trim().toLowerCase();
   if (!email || !input.password.trim()) {
@@ -18,6 +19,9 @@ export function validateAuthForm(input: {
   }
   if (input.mode === "signup" && input.password !== input.confirmPassword) {
     return "비밀번호가 서로 일치하지 않습니다.";
+  }
+  if (input.mode === "signup" && !input.verificationToken) {
+    return "이메일 인증을 완료해 주세요.";
   }
   return null;
 }
