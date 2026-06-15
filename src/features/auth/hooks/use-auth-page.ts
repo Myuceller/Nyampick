@@ -29,6 +29,7 @@ import {
 
 const OAUTH_SESSION_WAIT_MS = 4_000;
 const OAUTH_SESSION_POLL_MS = 150;
+const EMAIL_VERIFICATION_COOLDOWN_SECONDS = 20;
 
 export function useAuthPage() {
   const router = useRouter();
@@ -41,6 +42,7 @@ export function useAuthPage() {
   const [verificationToken, setVerificationToken] = useState("");
   const [isRequestingVerification, setIsRequestingVerification] = useState(false);
   const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+  const [verificationRetryAfter, setVerificationRetryAfter] = useState(0);
   const [verificationNotice, setVerificationNotice] = useState<string | null>(null);
   const [devVerificationCode, setDevVerificationCode] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,6 +72,16 @@ export function useAuthPage() {
 
     return () => window.clearTimeout(timer);
   }, [screenMode]);
+
+  useEffect(() => {
+    if (verificationRetryAfter <= 0) return;
+
+    const timer = window.setInterval(() => {
+      setVerificationRetryAfter((current) => Math.max(0, current - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [verificationRetryAfter]);
 
   useEffect(() => {
     let active = true;
@@ -303,6 +315,10 @@ export function useAuthPage() {
     setVerificationNotice(null);
     setDevVerificationCode(null);
     setVerificationToken("");
+    if (verificationRetryAfter > 0) {
+      setErrorMessage(`인증 메일은 ${verificationRetryAfter}초 후 다시 요청할 수 있어요.`);
+      return;
+    }
     const normalizedEmail = normalizeAuthEmail(email);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       setErrorMessage("이메일 형식을 확인해주세요.");
@@ -319,11 +335,18 @@ export function useAuthPage() {
       const json = (await response.json().catch(() => ({}))) as {
         message?: string;
         devCode?: string;
+        retryAfterSeconds?: number;
       };
-      if (!response.ok) throw new Error(json.message ?? "인증 메일 발송에 실패했습니다.");
+      if (!response.ok) {
+        if (typeof json.retryAfterSeconds === "number") {
+          setVerificationRetryAfter(Math.max(0, json.retryAfterSeconds));
+        }
+        throw new Error(json.message ?? "인증 메일 발송에 실패했습니다.");
+      }
 
       setVerificationNotice(json.message ?? "인증 메일을 보냈어요.");
       setDevVerificationCode(json.devCode ?? null);
+      setVerificationRetryAfter(EMAIL_VERIFICATION_COOLDOWN_SECONDS);
     } catch (error) {
       setErrorMessage(toFriendlyAuthErrorMessage(error));
     } finally {
@@ -513,6 +536,7 @@ export function useAuthPage() {
     setVerificationToken("");
     setVerificationNotice(null);
     setDevVerificationCode(null);
+    setVerificationRetryAfter(0);
   };
 
   const setAuthVerificationCode = (value: string) => {
@@ -535,6 +559,7 @@ export function useAuthPage() {
     verificationToken,
     isRequestingVerification,
     isVerifyingEmail,
+    verificationRetryAfter,
     verificationNotice,
     devVerificationCode,
     isSubmitting,

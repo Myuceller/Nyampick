@@ -192,6 +192,18 @@ export function useFridgePage() {
     setSelectedReceiptIds(new Set());
   };
 
+  const openReceiptCamera = () => {
+    setIsAddPopupOpen(false);
+    setIsReceiptPopupOpen(true);
+    setReceiptStage("capture");
+    setReceiptScanPhase("uploading");
+    setReceiptScanId("");
+    setReceiptCandidates([]);
+    setSelectedReceiptIds(new Set());
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+    cameraInputRef.current?.click();
+  };
+
   const moveToReviewStage = () => {
     if (inputLines.length === 0) return;
     const selection = selectNewDraftIngredients({
@@ -451,6 +463,7 @@ export function useFridgePage() {
     openAddPopup,
     closeAddPopup,
     openReceiptPopup,
+    openReceiptCamera,
     moveToReviewStage,
     addDraftIngredients,
     handleReceiptFile,
