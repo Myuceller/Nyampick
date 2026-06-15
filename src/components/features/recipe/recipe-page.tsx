@@ -23,7 +23,7 @@ export function RecipePage() {
   const vm = useRecipePage();
 
   return (
-    <div className="min-h-[100dvh] bg-white pb-[116px] pt-[220px]">
+    <div className="min-h-[100dvh] bg-white pb-[116px] pt-[calc(228px+env(safe-area-inset-top))]">
       <div
         className="z-[60] w-full max-w-[480px] bg-white shadow-[0_1px_0_rgba(0,0,0,0.08)]"
         style={{
@@ -33,9 +33,9 @@ export function RecipePage() {
           transform: "translateX(-50%)",
         }}
       >
-        <div className="px-4 pb-3 pt-12">
+        <div className="px-4 pb-3 pt-[calc(48px+env(safe-area-inset-top))]">
           <div className="mb-6 flex items-center">
-            <h1 className="text-[24px] font-bold leading-[1.28] text-[#1f2423]">
+            <h1 className="py-0.5 text-[24px] font-bold leading-[1.32] text-[#1f2423]">
               레시피 북
             </h1>
           </div>

@@ -1,5 +1,5 @@
-const CACHE_NAME = "nyampick-v2";
-const RUNTIME_CACHE = "nyampick-runtime-v2";
+const CACHE_NAME = "nyampick-v3";
+const RUNTIME_CACHE = "nyampick-runtime-v3";
 const PRECACHE_URLS = [
   "/",
   "/manifest.webmanifest",
@@ -33,6 +33,19 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
+
+  // Always load pages from the network. Caching HTML can keep old auth screens
+  // and stale OAuth callback code alive after deploys.
+  if (event.request.mode === "navigate" || event.request.destination === "document") {
+    event.respondWith(
+      fetch(event.request).catch(async () => {
+        const fallback = await caches.match("/");
+        if (fallback) return fallback;
+        return Response.error();
+      })
+    );
+    return;
+  }
 
   // Never cache Next.js runtime assets/APIs; stale chunk caches break navigation.
   if (url.pathname.startsWith("/_next/") || url.pathname.startsWith("/api/")) {

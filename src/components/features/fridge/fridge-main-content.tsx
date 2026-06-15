@@ -16,9 +16,9 @@ interface FridgeMainContentProps {
 export function FridgeMainContent({ vm }: FridgeMainContentProps) {
   return (
     <>
-      <main className="flex flex-1 flex-col pt-[190px]">
+      <main className="flex flex-1 flex-col pt-[calc(238px+env(safe-area-inset-top))]">
         <div
-          className="z-[60] w-full max-w-[480px] border-b border-[#d3d7d5] bg-white px-4 pb-4 pt-12"
+          className="z-[60] w-full max-w-[480px] border-b border-[#d3d7d5] bg-white px-4 pb-4 pt-[calc(48px+env(safe-area-inset-top))]"
           style={{
             position: "fixed",
             top: 0,
@@ -27,7 +27,7 @@ export function FridgeMainContent({ vm }: FridgeMainContentProps) {
           }}
         >
           <div className="mb-6 flex items-center justify-between">
-            <h1 className="text-[24px] font-bold leading-[1.28] text-[#1f2725]">
+            <h1 className="py-0.5 text-[24px] font-bold leading-[1.32] text-[#1f2725]">
               내 냉장고
             </h1>
             <button

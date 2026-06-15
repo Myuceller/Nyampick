@@ -19,7 +19,7 @@ export default function FridgeEditPage() {
 
   return (
     <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white">
-      <div className="px-4 pb-3 pt-6">
+      <div className="px-4 pb-3 pt-[calc(24px+env(safe-area-inset-top))]">
         <div className="flex items-center justify-between">
           <button
             type="button"
@@ -29,7 +29,7 @@ export default function FridgeEditPage() {
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
-          <h1 className="text-[24px] font-bold leading-[1.28] text-[#1f2725]">냉장고 수정</h1>
+          <h1 className="py-0.5 text-[24px] font-bold leading-[1.32] text-[#1f2725]">냉장고 수정</h1>
           <span className="w-8" />
         </div>
 

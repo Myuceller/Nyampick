@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent, ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import type { AuthMode, SocialProvider } from "../lib/auth-utils";
 
@@ -10,6 +10,12 @@ interface AuthFormViewProps {
   email: string;
   password: string;
   confirmPassword: string;
+  verificationCode: string;
+  verificationToken: string;
+  isRequestingVerification: boolean;
+  isVerifyingEmail: boolean;
+  verificationNotice: string | null;
+  devVerificationCode: string | null;
   isBusy: boolean;
   isSubmitting: boolean;
   isSocialSubmitting: boolean;
@@ -22,6 +28,9 @@ interface AuthFormViewProps {
   onSetEmail: (value: string) => void;
   onSetPassword: (value: string) => void;
   onSetConfirmPassword: (value: string) => void;
+  onSetVerificationCode: (value: string) => void;
+  onRequestEmailVerification: () => void;
+  onVerifyEmailCode: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onSocialSignIn: (provider: "google" | "kakao") => void;
   onRetryProfileSeed: () => void;
@@ -92,6 +101,12 @@ export function AuthFormView({
   email,
   password,
   confirmPassword,
+  verificationCode,
+  verificationToken,
+  isRequestingVerification,
+  isVerifyingEmail,
+  verificationNotice,
+  devVerificationCode,
   isBusy,
   isSubmitting,
   isSocialSubmitting,
@@ -104,15 +119,15 @@ export function AuthFormView({
   onSetEmail,
   onSetPassword,
   onSetConfirmPassword,
+  onSetVerificationCode,
+  onRequestEmailVerification,
+  onVerifyEmailCode,
   onSubmit,
   onSocialSignIn,
   onRetryProfileSeed,
 }: AuthFormViewProps) {
   const isSignin = mode === "signin";
   const [toastMessage, setToastMessage] = useState("");
-  const [emailVerified, setEmailVerified] = useState(false);
-  const [verifyRequested, setVerifyRequested] = useState(false);
-  const [verificationCode, setVerificationCode] = useState("");
   const [agreeService, setAgreeService] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeAge, setAgreeAge] = useState(false);
@@ -122,6 +137,7 @@ export function AuthFormView({
   const requiredTermsReady = agreeService && agreePrivacy && agreeAge;
   const allTermsChecked = requiredTermsReady && agreeMarketing;
   const loginReady = email.trim().length > 0 && password.trim().length > 0;
+  const emailVerified = verificationToken.length > 0;
   const signupReady =
     emailVerified && password.trim().length > 0 && password === confirmPassword && requiredTermsReady;
   const isReady = isSignin ? loginReady : signupReady;
@@ -139,6 +155,11 @@ export function AuthFormView({
       setToastMessage((current) => (current === message ? "" : current));
     }, 1800);
   }
+
+  useEffect(() => {
+    if (!errorMessage) return;
+    showToast(errorMessage);
+  }, [errorMessage]);
 
   function getLocalValidationMessage() {
     if (isSignin) {
@@ -244,7 +265,6 @@ export function AuthFormView({
               `.env.local`에 `NEXT_PUBLIC_SUPABASE_ANON_KEY`를 추가해주세요.
             </AuthMessage>
           ) : null}
-          {errorMessage ? <AuthMessage tone="error">{errorMessage}</AuthMessage> : null}
           {noticeMessage ? <AuthMessage tone="info">{noticeMessage}</AuthMessage> : null}
           {canRetryProfileSeed ? (
             <button
@@ -282,31 +302,26 @@ export function AuthFormView({
                         id="auth-email"
                         type="email"
                         value={email}
-                        onChange={(value) => {
-                          onSetEmail(value);
-                          setEmailVerified(false);
-                        }}
+                        onChange={onSetEmail}
                         placeholder="example@email.com"
                         autoComplete="email"
                       />
                       <button
                         type="button"
-                        onClick={() => {
-                          setVerifyRequested(true);
-                          showToast("인증 메일을 보냈어요.");
-                        }}
+                        onClick={onRequestEmailVerification}
                         className="h-[50px] w-[92px] shrink-0 rounded-[15px] bg-[#57bf8e] text-[13px] font-extrabold text-white disabled:bg-[#cfd8d3]"
-                        disabled={isBusy}
+                        disabled={isBusy || isRequestingVerification}
                       >
-                        인증 요청
+                        {isRequestingVerification ? "발송 중" : "인증 요청"}
                       </button>
                     </div>
                     <p className="mt-1.5 text-[12px] font-medium leading-[1.55] text-[#8aa99a]">
                       비밀번호 찾기와 계정 복구에 필요해요.
                     </p>
-                    {verifyRequested ? (
+                    {verificationNotice ? (
                       <p className="mt-2 rounded-[12px] bg-[#e8f5ef] px-2.5 py-[9px] text-[12px] font-bold leading-[1.55] text-[#3fa876]">
-                        인증 메일을 보냈어요. 받은 메일의 인증번호를 입력해 주세요.
+                        {verificationNotice}
+                        {devVerificationCode ? ` 개발 인증번호: ${devVerificationCode}` : ""}
                       </p>
                     ) : null}
                   </>
@@ -326,21 +341,18 @@ export function AuthFormView({
                       id="auth-code"
                       type="text"
                       value={verificationCode}
-                      onChange={setVerificationCode}
+                      onChange={onSetVerificationCode}
                       placeholder="6자리 입력"
                       inputMode="numeric"
                       maxLength={6}
                     />
                     <button
                       type="button"
-                      onClick={() => {
-                        setEmailVerified(true);
-                        showToast("이메일 인증이 완료됐어요.");
-                      }}
-                      disabled={isBusy || verificationCode.trim().length === 0}
+                      onClick={onVerifyEmailCode}
+                      disabled={isBusy || isVerifyingEmail || verificationCode.trim().length === 0}
                       className="h-[50px] w-[92px] shrink-0 rounded-[15px] bg-[#e8f5ef] text-[13px] font-extrabold text-[#3fa876] disabled:opacity-60"
                     >
-                      확인
+                      {isVerifyingEmail ? "확인 중" : "확인"}
                     </button>
                   </div>
                   <p

@@ -14,13 +14,26 @@ test("validateAuthForm requires matching signup passwords", () => {
   );
 });
 
-test("validateAuthForm accepts matching signup passwords", () => {
+test("validateAuthForm requires signup email verification", () => {
   assert.equal(
     validateAuthForm({
       mode: "signup",
       email: "test@example.com",
       password: "password123",
       confirmPassword: "password123",
+    }),
+    "이메일 인증을 완료해 주세요."
+  );
+});
+
+test("validateAuthForm accepts verified signup input", () => {
+  assert.equal(
+    validateAuthForm({
+      mode: "signup",
+      email: "test@example.com",
+      password: "password123",
+      confirmPassword: "password123",
+      verificationToken: "verified-token",
     }),
     null
   );

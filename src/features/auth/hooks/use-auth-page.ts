@@ -14,6 +14,7 @@ import {
   SocialProvider,
   clearAuthCallbackParams,
   clearSocialProviderParam,
+  claimAuthCodeExchange,
   ensureProfileSeeded,
   getCanonicalSocialAuthUrl,
   getOAuthRedirectTo,
@@ -21,9 +22,13 @@ import {
   normalizeAuthEmail,
   readAuthCallbackParams,
   readSocialProviderParam,
+  releaseAuthCodeExchange,
   toFriendlyAuthErrorMessage,
   validateAuthForm,
 } from "../lib/auth-utils";
+
+const OAUTH_SESSION_WAIT_MS = 4_000;
+const OAUTH_SESSION_POLL_MS = 150;
 
 export function useAuthPage() {
   const router = useRouter();
@@ -32,6 +37,12 @@ export function useAuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationToken, setVerificationToken] = useState("");
+  const [isRequestingVerification, setIsRequestingVerification] = useState(false);
+  const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+  const [verificationNotice, setVerificationNotice] = useState<string | null>(null);
+  const [devVerificationCode, setDevVerificationCode] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSocialSubmitting, setIsSocialSubmitting] = useState(false);
   const [socialProvider, setSocialProvider] = useState<SocialProvider>(null);
@@ -119,6 +130,16 @@ export function useAuthPage() {
     };
 
     const syncScreenFromSession = async () => {
+      const waitForSession = async () => {
+        const startedAt = Date.now();
+        while (active && Date.now() - startedAt < OAUTH_SESSION_WAIT_MS) {
+          const { data } = await supabase.auth.getSession();
+          if (data.session) return data.session;
+          await new Promise((resolve) => window.setTimeout(resolve, OAUTH_SESSION_POLL_MS));
+        }
+        return null;
+      };
+
       if (typeof window !== "undefined") {
         if (isProcessingCallbackRef.current) return;
         isProcessingCallbackRef.current = true;
@@ -128,7 +149,19 @@ export function useAuthPage() {
         try {
           if (callback.authCode) {
             setLoadingPhase("oauth");
-            const { data, error } = await supabase.auth.exchangeCodeForSession(callback.authCode);
+            let shouldExchangeCode = claimAuthCodeExchange(callback.authCode);
+            if (!shouldExchangeCode) {
+              const session = await waitForSession();
+              if (session) {
+                await finalizeSession(session);
+                return;
+              }
+              shouldExchangeCode = true;
+            }
+
+            const { data, error } = shouldExchangeCode
+              ? await supabase.auth.exchangeCodeForSession(callback.authCode)
+              : { data: { session: null }, error: null };
             if (error) {
               if (!active) return;
               setErrorMessage(toFriendlyAuthErrorMessage(error));
@@ -137,6 +170,11 @@ export function useAuthPage() {
             }
             if (data.session) {
               await finalizeSession(data.session);
+              return;
+            }
+            const session = await waitForSession();
+            if (session) {
+              await finalizeSession(session);
               return;
             }
           } else if (callback.hashAccessToken && callback.hashRefreshToken) {
@@ -157,6 +195,9 @@ export function useAuthPage() {
             }
           }
         } finally {
+          if (callback.authCode) {
+            releaseAuthCodeExchange(callback.authCode);
+          }
           if (callback.hasCallback) clearAuthCallbackParams();
           isProcessingCallbackRef.current = false;
         }
@@ -196,7 +237,13 @@ export function useAuthPage() {
     setNoticeMessage(null);
     setCanRetryProfileSeed(false);
 
-    const validationMessage = validateAuthForm({ mode, email, password, confirmPassword });
+    const validationMessage = validateAuthForm({
+      mode,
+      email,
+      password,
+      confirmPassword,
+      verificationToken,
+    });
     if (validationMessage) {
       setErrorMessage(validationMessage);
       return;
@@ -222,25 +269,100 @@ export function useAuthPage() {
         return;
       }
 
-      const { data, error } = await supabase.auth.signUp({
+      const signupResponse = await fetch("/api/auth/email-signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: normalizeAuthEmail(email),
+          password,
+          verificationToken,
+        }),
+      });
+      const signupJson = (await signupResponse.json().catch(() => ({}))) as {
+        message?: string;
+      };
+      if (!signupResponse.ok) {
+        throw new Error(signupJson.message ?? "회원가입에 실패했습니다.");
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({
         email: normalizeAuthEmail(email),
         password,
-        options: {
-          data: {
-            onboarding_completed: false,
-          },
-        },
       });
       if (error) throw error;
-
-      if (!data.session) {
-        setNoticeMessage("회원가입이 완료되었습니다. 이메일 인증 후 다시 로그인해주세요.");
-        setMode("signin");
-      }
     } catch (error) {
       setErrorMessage(toFriendlyAuthErrorMessage(error));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const requestEmailVerification = async () => {
+    setErrorMessage(null);
+    setNoticeMessage(null);
+    setVerificationNotice(null);
+    setDevVerificationCode(null);
+    setVerificationToken("");
+    const normalizedEmail = normalizeAuthEmail(email);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setErrorMessage("이메일 형식을 확인해주세요.");
+      return;
+    }
+
+    try {
+      setIsRequestingVerification(true);
+      const response = await fetch("/api/auth/email-verification/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+      const json = (await response.json().catch(() => ({}))) as {
+        message?: string;
+        devCode?: string;
+      };
+      if (!response.ok) throw new Error(json.message ?? "인증 메일 발송에 실패했습니다.");
+
+      setVerificationNotice(json.message ?? "인증 메일을 보냈어요.");
+      setDevVerificationCode(json.devCode ?? null);
+    } catch (error) {
+      setErrorMessage(toFriendlyAuthErrorMessage(error));
+    } finally {
+      setIsRequestingVerification(false);
+    }
+  };
+
+  const verifyEmailCode = async () => {
+    setErrorMessage(null);
+    setVerificationToken("");
+    const normalizedEmail = normalizeAuthEmail(email);
+    if (!normalizedEmail || !verificationCode.trim()) {
+      setErrorMessage("이메일과 인증번호를 입력해주세요.");
+      return;
+    }
+
+    try {
+      setIsVerifyingEmail(true);
+      const response = await fetch("/api/auth/email-verification/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          code: verificationCode.trim(),
+        }),
+      });
+      const json = (await response.json().catch(() => ({}))) as {
+        message?: string;
+        verificationToken?: string;
+      };
+      if (!response.ok || !json.verificationToken) {
+        throw new Error(json.message ?? "이메일 인증에 실패했습니다.");
+      }
+      setVerificationToken(json.verificationToken);
+      setVerificationNotice(json.message ?? "이메일 인증이 완료됐어요.");
+    } catch (error) {
+      setErrorMessage(toFriendlyAuthErrorMessage(error));
+    } finally {
+      setIsVerifyingEmail(false);
     }
   };
 
@@ -374,16 +496,35 @@ export function useAuthPage() {
     void signInWithSocial(provider);
   }, [screenMode, isBusy, signInWithSocial]);
 
+  const setAuthEmail = (value: string) => {
+    setEmail(value);
+    setVerificationToken("");
+    setVerificationNotice(null);
+    setDevVerificationCode(null);
+  };
+
+  const setAuthVerificationCode = (value: string) => {
+    setVerificationCode(value);
+    setVerificationToken("");
+  };
+
   return {
     mode,
     setMode,
     screenMode,
     email,
-    setEmail,
+    setEmail: setAuthEmail,
     password,
     setPassword,
     confirmPassword,
     setConfirmPassword,
+    verificationCode,
+    setVerificationCode: setAuthVerificationCode,
+    verificationToken,
+    isRequestingVerification,
+    isVerifyingEmail,
+    verificationNotice,
+    devVerificationCode,
     isSubmitting,
     isSocialSubmitting,
     socialProvider,
@@ -395,6 +536,8 @@ export function useAuthPage() {
     canRetryProfileSeed,
     isBusy,
     onSubmit,
+    requestEmailVerification,
+    verifyEmailCode,
     completeOnboarding,
     signInWithSocial,
     retryProfileSeed,

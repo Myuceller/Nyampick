@@ -31,6 +31,8 @@ const AUTH_CALLBACK_KEYS = [
 ] as const;
 
 const SOCIAL_PROVIDER_PARAM = "social_provider";
+const AUTH_CODE_EXCHANGE_LOCK_PREFIX = "nyampick:auth-code-exchange:";
+const AUTH_CODE_EXCHANGE_LOCK_TTL_MS = 15_000;
 
 export interface AuthCallbackParams {
   authCode: string | null;
@@ -203,6 +205,31 @@ export function clearAuthCallbackParams() {
     "",
     `${currentUrl.pathname}${nextSearch ? `?${nextSearch}` : ""}`
   );
+}
+
+export function claimAuthCodeExchange(authCode: string) {
+  if (typeof window === "undefined") return true;
+
+  const storageKey = `${AUTH_CODE_EXCHANGE_LOCK_PREFIX}${authCode}`;
+  const now = Date.now();
+  const storedValue = window.sessionStorage.getItem(storageKey);
+  const startedAt = storedValue ? Number(storedValue) : 0;
+
+  if (
+    Number.isFinite(startedAt) &&
+    startedAt > 0 &&
+    now - startedAt < AUTH_CODE_EXCHANGE_LOCK_TTL_MS
+  ) {
+    return false;
+  }
+
+  window.sessionStorage.setItem(storageKey, String(now));
+  return true;
+}
+
+export function releaseAuthCodeExchange(authCode: string) {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem(`${AUTH_CODE_EXCHANGE_LOCK_PREFIX}${authCode}`);
 }
 
 export function normalizeAuthEmail(value: string) {

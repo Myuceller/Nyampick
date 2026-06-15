@@ -139,7 +139,7 @@ export default function GuardianProfilePage() {
 
   return (
     <main className="mx-auto min-h-[100dvh] w-full max-w-[480px] bg-white text-[#202725]">
-      <header className="relative flex h-[72px] items-center justify-center px-4">
+      <header className="relative flex h-[calc(72px+env(safe-area-inset-top))] items-center justify-center px-4 pt-[env(safe-area-inset-top)]">
         <button
           type="button"
           onClick={() => router.back()}
