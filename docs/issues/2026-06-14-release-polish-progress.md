@@ -76,6 +76,9 @@
 - [x] 회원탈퇴 준비중 처리 확인
   - 위치: `src/components/features/mypage/my-page.tsx`
   - 동작: 회원탈퇴 클릭 시 `회원탈퇴는 준비 중입니다.` toast 표시
+- [x] 회원탈퇴 실제 기능 구현
+  - 위치: `src/app/api/account/route.ts`, `src/lib/server/account-deletion.ts`, `src/components/features/mypage/my-page.tsx`
+  - 범위: `회원탈퇴` 확인 문구 입력 모달, 사용자 데이터 삭제, Supabase Auth 계정 삭제, 세션 정리 후 로그인 화면 이동
 - [x] 가족구성원 역할명 변경
   - 위치: `src/features/family/hooks/use-family-page.ts`, `src/lib/server/family-access.ts`
   - 범위: 선택지를 `배우자/가족/친구/도우미`로 변경하고 기존 할머니/할아버지/가족 구성원 라벨은 `가족`으로 표시
