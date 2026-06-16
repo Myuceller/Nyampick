@@ -3,7 +3,7 @@ export { validateAuthForm } from "./auth-form-validation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 export type AuthMode = "signin" | "signup";
-export type ScreenMode = "loading" | "form" | "onboarding" | "referral";
+export type ScreenMode = "loading" | "form" | "onboarding" | "referral" | "password-reset";
 export type SocialProvider = "google" | "kakao" | null;
 export type LoadingPhase =
   | "session"
@@ -26,6 +26,8 @@ const AUTH_CALLBACK_KEYS = [
   "expires_in",
   "expires_at",
   "token_type",
+  "type",
+  "reset_password",
   "sb",
   "social_provider",
 ] as const;
@@ -39,6 +41,7 @@ export interface AuthCallbackParams {
   hashAccessToken: string | null;
   hashRefreshToken: string | null;
   oauthError: string | null;
+  isPasswordRecovery: boolean;
   hasCallback: boolean;
 }
 
@@ -161,7 +164,7 @@ export async function ensureProfileSeeded(accessToken: string) {
 
     if (response.status === 409 && body.code === "DUPLICATE_EMAIL_ACCOUNT") {
       throw new FatalProfileSeedError(
-        body.message ?? "이미 같은 이메일로 가입된 계정이 있습니다. 기존 로그인 방식을 사용해주세요."
+        body.message ?? "이미 가입된 이메일입니다."
       );
     }
 
@@ -180,6 +183,9 @@ export function readAuthCallbackParams(): AuthCallbackParams {
   const authCode = currentUrl.searchParams.get("code");
   const hashAccessToken = hashParams.get("access_token");
   const hashRefreshToken = hashParams.get("refresh_token");
+  const hashType = hashParams.get("type");
+  const isPasswordRecovery =
+    currentUrl.searchParams.get("reset_password") === "1" || hashType === "recovery";
   const oauthError =
     currentUrl.searchParams.get("error_description") ??
     hashParams.get("error_description");
@@ -189,6 +195,7 @@ export function readAuthCallbackParams(): AuthCallbackParams {
     hashAccessToken,
     hashRefreshToken,
     oauthError,
+    isPasswordRecovery,
     hasCallback: Boolean(authCode || hashAccessToken || hashRefreshToken || oauthError),
   };
 }
@@ -256,7 +263,7 @@ export function toFriendlyAuthErrorMessage(error: unknown): string {
   }
 
   if (normalized.includes("user already registered")) {
-    return "이미 가입된 이메일입니다. 로그인으로 진행해주세요.";
+    return "이미 가입된 이메일입니다.";
   }
 
   if (normalized.includes("password should be at least")) {
@@ -295,7 +302,7 @@ export function toFriendlyAuthErrorMessage(error: unknown): string {
   }
 
   if (normalized.includes("duplicate_email_account")) {
-    return "이미 같은 이메일로 가입된 계정이 있습니다. 기존 로그인 방식을 사용해주세요.";
+    return "이미 가입된 이메일입니다.";
   }
 
   return raw;

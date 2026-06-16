@@ -38,10 +38,13 @@ export function useAuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [verificationToken, setVerificationToken] = useState("");
   const [isRequestingVerification, setIsRequestingVerification] = useState(false);
   const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+  const [isRequestingPasswordReset, setIsRequestingPasswordReset] = useState(false);
   const [verificationRetryAfter, setVerificationRetryAfter] = useState(0);
   const [verificationNotice, setVerificationNotice] = useState<string | null>(null);
   const [devVerificationCode, setDevVerificationCode] = useState<string | null>(null);
@@ -181,6 +184,12 @@ export function useAuthPage() {
               return;
             }
             if (data.session) {
+              if (callback.isPasswordRecovery) {
+                setCachedHasSession(true);
+                lastSessionRef.current = data.session;
+                setScreenMode("password-reset");
+                return;
+              }
               await finalizeSession(data.session);
               return;
             }
@@ -389,6 +398,35 @@ export function useAuthPage() {
     }
   };
 
+  const requestPasswordReset = async () => {
+    setErrorMessage(null);
+    setNoticeMessage(null);
+
+    const normalizedEmail = normalizeAuthEmail(email);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setErrorMessage("비밀번호를 재설정할 이메일을 입력해주세요.");
+      return;
+    }
+
+    try {
+      setIsRequestingPasswordReset(true);
+      const response = await fetch("/api/auth/password-reset/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+      const json = (await response.json().catch(() => ({}))) as { message?: string };
+      if (!response.ok) {
+        throw new Error(json.message ?? "비밀번호 재설정 메일 발송에 실패했습니다.");
+      }
+      setNoticeMessage(json.message ?? "비밀번호 재설정 메일을 보냈어요.");
+    } catch (error) {
+      setErrorMessage(toFriendlyAuthErrorMessage(error));
+    } finally {
+      setIsRequestingPasswordReset(false);
+    }
+  };
+
   const retryProfileSeed = async () => {
     setErrorMessage(null);
     setCanRetryProfileSeed(false);
@@ -452,6 +490,47 @@ export function useAuthPage() {
       router.replace(getAuthNextPath());
     } catch (error) {
       setErrorMessage(toFriendlyAuthErrorMessage(error));
+    }
+  };
+
+  const completePasswordReset = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setErrorMessage(null);
+    setNoticeMessage(null);
+
+    if (resetPassword.length < 8) {
+      setErrorMessage("비밀번호는 8자 이상으로 입력해주세요.");
+      return;
+    }
+    if (resetPassword !== resetConfirmPassword) {
+      setErrorMessage("비밀번호가 일치하지 않아요.");
+      return;
+    }
+
+    let supabase: ReturnType<typeof getSupabaseOrThrow>;
+    try {
+      supabase = getSupabaseOrThrow();
+    } catch {
+      setErrorMessage("Supabase 환경 변수가 누락되었습니다.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const { error } = await supabase.auth.updateUser({ password: resetPassword });
+      if (error) throw error;
+      await supabase.auth.signOut();
+      setCachedHasSession(false);
+      lastSessionRef.current = null;
+      setResetPassword("");
+      setResetConfirmPassword("");
+      setMode("signin");
+      setNoticeMessage("비밀번호가 변경됐어요. 새 비밀번호로 로그인해주세요.");
+      setScreenMode("form");
+    } catch (error) {
+      setErrorMessage(toFriendlyAuthErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -554,11 +633,16 @@ export function useAuthPage() {
     setPassword,
     confirmPassword,
     setConfirmPassword,
+    resetPassword,
+    setResetPassword,
+    resetConfirmPassword,
+    setResetConfirmPassword,
     verificationCode,
     setVerificationCode: setAuthVerificationCode,
     verificationToken,
     isRequestingVerification,
     isVerifyingEmail,
+    isRequestingPasswordReset,
     verificationRetryAfter,
     verificationNotice,
     devVerificationCode,
@@ -575,8 +659,10 @@ export function useAuthPage() {
     onSubmit,
     requestEmailVerification,
     verifyEmailCode,
+    requestPasswordReset,
     completeOnboarding,
     completeReferralSurvey,
+    completePasswordReset,
     signInWithSocial,
     retryProfileSeed,
     openFormScreen: () => setScreenMode("form"),

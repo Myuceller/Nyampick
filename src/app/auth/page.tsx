@@ -5,6 +5,7 @@ import { Onboarding } from "@/components/features/onboarding/onboarding";
 import { useAuthPage } from "@/features/auth/hooks/use-auth-page";
 import { AuthFormView } from "@/features/auth/ui/auth-form-view";
 import { AuthLoadingView } from "@/features/auth/ui/auth-loading-view";
+import { AuthPasswordResetView } from "@/features/auth/ui/auth-password-reset-view";
 import { ReferralSurveyView } from "@/features/auth/ui/referral-survey-view";
 import { getCachedHasSession } from "@/lib/auth-session-cache";
 
@@ -50,6 +51,20 @@ export default function AuthPage() {
     );
   }
 
+  if (vm.screenMode === "password-reset") {
+    return (
+      <AuthPasswordResetView
+        password={vm.resetPassword}
+        confirmPassword={vm.resetConfirmPassword}
+        isSubmitting={vm.isSubmitting}
+        errorMessage={vm.errorMessage}
+        onSetPassword={vm.setResetPassword}
+        onSetConfirmPassword={vm.setResetConfirmPassword}
+        onSubmit={vm.completePasswordReset}
+      />
+    );
+  }
+
   return (
     <AuthFormView
       mode={vm.mode}
@@ -60,6 +75,7 @@ export default function AuthPage() {
       verificationToken={vm.verificationToken}
       isRequestingVerification={vm.isRequestingVerification}
       isVerifyingEmail={vm.isVerifyingEmail}
+      isRequestingPasswordReset={vm.isRequestingPasswordReset}
       verificationRetryAfter={vm.verificationRetryAfter}
       verificationNotice={vm.verificationNotice}
       devVerificationCode={vm.devVerificationCode}
@@ -81,6 +97,9 @@ export default function AuthPage() {
       }}
       onVerifyEmailCode={() => {
         void vm.verifyEmailCode();
+      }}
+      onRequestPasswordReset={() => {
+        void vm.requestPasswordReset();
       }}
       onSubmit={vm.onSubmit}
       onSocialSignIn={(provider) => {

@@ -136,6 +136,27 @@ npm run build
 | 배포본 | `https://www.nyampick.kr/auth` | 100 | 95 | 100 | 66 | 805ms | 1.88s | 0 | 0ms | 805ms | 1.88s | 9ms |
 | 현재 작업본 | `http://localhost:3000/auth` | 98 | 95 | 100 | 66 | 760ms | 2.41s | 0 | 0ms | 760ms | 2.41s | 71ms |
 
+## 2026-06-16 로컬 Lighthouse
+
+측정일: 2026-06-16 KST  
+대상: `http://localhost:3000`  
+환경: 로컬 production build, Lighthouse CLI mobile, 비로그인 세션.
+
+| 요청 경로 | Final URL | Performance | Accessibility | Best Practices | SEO | FCP | LCP | CLS | TBT | Speed Index | TTFB |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `/landing` | `/landing` | 94 | 96 | 100 | 100 | 0.86s | 2.93s | 0 | 0ms | 3.22s | 455ms |
+| `/` | `/` | 95 | 96 | 100 | 100 | 0.89s | 2.83s | 0 | 0ms | 2.51s | 405ms |
+| `/fridge` | `/auth` | 90 | 96 | 100 | 69 | 0.89s | 3.20s | 0 | 0ms | 4.46s | 360ms |
+| `/recipe` | `/auth` | 88 | 96 | 100 | 69 | 1.35s | 3.38s | 0 | 0ms | 5.04s | 416ms |
+
+해석:
+
+| 항목 | 판단 |
+| --- | --- |
+| 공개 화면 | `/landing`, `/`는 94점 이상이고 TBT 0ms로 blocking은 낮다. |
+| 보호 라우트 | `/fridge`, `/recipe`는 비로그인 상태라 `/auth`로 redirect되어 보호 화면 자체 성능으로 보지 않는다. |
+| LCP | 모든 측정에서 LCP가 2.5s를 넘는 편이라, 다음 측정은 배포 로그인 세션 또는 auth 이미지/LCP 요소를 따로 봐야 한다. |
+
 해석:
 
 | 항목 | 판단 |

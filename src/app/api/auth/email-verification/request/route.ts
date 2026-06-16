@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { hasAuthUserWithEmail } from "@/lib/server/auth-users";
 import {
   createEmailVerificationCode,
   EmailVerificationRateLimitError,
@@ -16,6 +17,9 @@ export async function POST(request: Request) {
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ message: "이메일 형식을 확인해주세요." }, { status: 400 });
+    }
+    if (await hasAuthUserWithEmail(email)) {
+      return NextResponse.json({ message: "이미 가입된 이메일입니다." }, { status: 409 });
     }
 
     const verification = await createEmailVerificationCode(email);

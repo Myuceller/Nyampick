@@ -83,6 +83,12 @@
 - [x] 이메일 회원가입 인증 흐름 추가
   - 위치: `src/app/api/auth/email-verification/*`, `src/app/api/auth/email-signup/route.ts`, `src/features/auth/ui/auth-form-view.tsx`
   - 범위: 인증번호 요청/확인, 인증 토큰 검증 후 서버 회원가입, Resend 발송 env, Supabase 저장 SQL 문서 추가
+- [x] 회원가입 중복 이메일 차단
+  - 위치: `src/lib/server/auth-users.ts`, `src/app/api/auth/email-verification/request/route.ts`, `src/app/api/auth/email-signup/route.ts`
+  - 범위: 이미 가입된 이메일은 인증 메일 요청/회원가입 단계에서 `이미 가입된 이메일입니다.`로 차단
+- [x] 비밀번호 재설정 메일/변경 흐름 추가
+  - 위치: `src/app/api/auth/password-reset/request/route.ts`, `src/features/auth/hooks/use-auth-page.ts`, `src/features/auth/ui/auth-password-reset-view.tsx`
+  - 범위: 로그인 화면 비밀번호 찾기, Supabase reset 메일 발송, recovery 링크 진입 후 새 비밀번호 변경
 - [x] 아기 수정하기 기능 추가
   - 위치: `src/app/children/page.tsx`, `src/features/children/hooks/use-children-page.ts`
   - 범위: 아기 카드 탭으로 메인 아기 선택, 이름/개월 수 수정 바텀시트, 사진 변경 흐름 정리
