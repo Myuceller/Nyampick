@@ -45,10 +45,10 @@ export default function Page() {
 
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-[480px] flex-col bg-[#fdfefd] pb-24">
-      <div className="bg-[#f3f8f4] px-4 pb-4 pt-11">
+      <div className="bg-[#f3f8f4] px-4 pb-4 pt-[calc(44px+env(safe-area-inset-top))]">
         <p className="text-[14px] text-[#6f7875]">안녕하세요 👋</p>
         <PwaInstallPrompt className="mt-3" />
-        <h1 className="mt-2 mb-2 text-[24px] font-bold leading-[1.28] text-[#1f2725]">
+        <h1 className="mt-2 mb-2 py-0.5 text-[24px] font-bold leading-[1.32] text-[#1f2725]">
           {childName ? `${childName}의 식단` : "식단"}
         </h1>
 

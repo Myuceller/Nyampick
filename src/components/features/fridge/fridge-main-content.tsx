@@ -16,9 +16,9 @@ interface FridgeMainContentProps {
 export function FridgeMainContent({ vm }: FridgeMainContentProps) {
   return (
     <>
-      <main className="flex flex-1 flex-col pt-[190px]">
+      <main className="flex flex-1 flex-col pt-[calc(238px+env(safe-area-inset-top))]">
         <div
-          className="z-[60] w-full max-w-[480px] border-b border-[#d3d7d5] bg-white px-4 pb-4 pt-12"
+          className="z-[60] w-full max-w-[480px] border-b border-[#d3d7d5] bg-white px-4 pb-4 pt-[calc(48px+env(safe-area-inset-top))]"
           style={{
             position: "fixed",
             top: 0,
@@ -27,7 +27,7 @@ export function FridgeMainContent({ vm }: FridgeMainContentProps) {
           }}
         >
           <div className="mb-6 flex items-center justify-between">
-            <h1 className="text-[24px] font-bold leading-[1.28] text-[#1f2725]">
+            <h1 className="py-0.5 text-[24px] font-bold leading-[1.32] text-[#1f2725]">
               내 냉장고
             </h1>
             <button
@@ -94,7 +94,7 @@ export function FridgeMainContent({ vm }: FridgeMainContentProps) {
               <div className="mt-5 flex gap-2">
                 <button
                   type="button"
-                  onClick={vm.openReceiptPopup}
+                  onClick={vm.openReceiptCamera}
                   className="h-11 flex-1 rounded-xl border border-[#7bcaa3] bg-[#eef8f2] text-[14px] font-semibold text-[#2f7f59]"
                 >
                   영수증 스캔

@@ -155,7 +155,7 @@ export function MyPage() {
 
   return (
     <main className="flex-1 bg-white pb-12">
-      <div className="sticky top-0 z-30 border-b border-[#edf0ef] bg-white px-5 pb-4 pt-6">
+      <div className="sticky top-0 z-30 border-b border-[#edf0ef] bg-white px-5 pb-4 pt-[calc(24px+env(safe-area-inset-top))]">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -165,7 +165,7 @@ export function MyPage() {
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
-          <h1 className="text-[24px] font-bold leading-[1.28] text-[#202725]">
+          <h1 className="py-0.5 text-[24px] font-bold leading-[1.32] text-[#202725]">
             마이페이지
           </h1>
         </div>

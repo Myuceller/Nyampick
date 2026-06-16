@@ -30,15 +30,16 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     [pathname]
   );
   const currentPath = pathname ?? "/";
-  const [status, setStatus] = useState<GateStatus>(() => {
-    if (isPublicPath || getCachedHasSession()) return "ready";
-    return "checking";
-  });
+  const [status, setStatus] = useState<GateStatus>(isPublicPath ? "ready" : "checking");
 
   useEffect(() => {
     if (isPublicPath) {
       setStatus("ready");
       return;
+    }
+
+    if (getCachedHasSession()) {
+      setStatus("ready");
     }
 
     let active = true;

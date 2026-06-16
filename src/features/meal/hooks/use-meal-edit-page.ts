@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { authedFetch } from "@/lib/authed-fetch";
@@ -23,6 +23,9 @@ interface FridgeMenuItem {
   id: string;
   name: string;
 }
+
+const MIN_RECENT_SEARCH_LENGTH = 2;
+const RECENT_SEARCH_DEBOUNCE_MS = 700;
 
 export function useMealEditPage() {
   const router = useRouter();
@@ -79,6 +82,26 @@ export function useMealEditPage() {
   useEffect(() => {
     localStorage.setItem(RECENT_SEARCH_KEY, JSON.stringify(recentSearches));
   }, [recentSearches]);
+
+  const addRecentSearch = useCallback((term: string) => {
+    const value = term.trim();
+    if (value.length < MIN_RECENT_SEARCH_LENGTH) return;
+    setRecentSearches((prev) => {
+      const filtered = prev.filter((item) => item !== value);
+      return [value, ...filtered].slice(0, 8);
+    });
+  }, []);
+
+  useEffect(() => {
+    const query = search.trim();
+    if (query.length < MIN_RECENT_SEARCH_LENGTH) return;
+
+    const timer = window.setTimeout(() => {
+      addRecentSearch(query);
+    }, RECENT_SEARCH_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [addRecentSearch, search]);
 
   useEffect(() => {
     const loadSavedRecipes = async () => {
@@ -171,18 +194,10 @@ export function useMealEditPage() {
 
   const addSelectedMenus = () => {
     if (selectedNames.size === 0) return;
+    addRecentSearch(search);
     addMenusToTarget(Array.from(selectedNames));
     setSelectedNames(new Set());
     setSearch("");
-  };
-
-  const addRecentSearch = (term: string) => {
-    const value = term.trim();
-    if (!value) return;
-    setRecentSearches((prev) => {
-      const filtered = prev.filter((item) => item !== value);
-      return [value, ...filtered].slice(0, 8);
-    });
   };
 
   const goHome = () => router.push("/meal");

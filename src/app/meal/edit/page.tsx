@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { ArrowLeft, Plus, X } from "lucide-react";
+import { ArrowLeft, Check, Plus, X } from "lucide-react";
 import { AppButton } from "@/components/ui/app-button";
 import { AppSearchInput } from "@/components/ui/app-search-input";
 import type { MealEntry } from "@/lib/types";
@@ -42,10 +42,10 @@ function MealEditPageContent() {
   } = useMealEditPage();
 
   return (
-    <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-[#ffffff]">
+    <main className="mx-auto flex h-[100dvh] w-full max-w-[480px] flex-col overflow-hidden bg-[#ffffff]">
       {mode === "edit" ? (
         <>
-          <div className="px-4 pb-4 pt-12">
+          <div className="px-4 pb-4 pt-[calc(48px+env(safe-area-inset-top))]">
             <h1 className="whitespace-pre-line text-[24px] font-extrabold leading-[1.5] text-[#1f2725]">
               {parseDateLabel(date)}
             </h1>
@@ -144,116 +144,120 @@ function MealEditPageContent() {
         </>
       ) : (
         <>
-          <div className="flex items-center justify-between px-4 pb-2 pt-5">
-            <button
-              type="button"
-              onClick={() => setMode("edit")}
-              className="rounded-md p-1 text-[#1f2523] hover:bg-[#e6ece9]"
-            >
-              <ArrowLeft className="h-6 w-6" />
-            </button>
-            <h2 className="text-[18px] font-bold text-[#232a28]">메뉴 추가</h2>
-            <span className="w-7" />
-          </div>
+          <div className="shrink-0 border-b border-[#d2d8d6] bg-white pt-[env(safe-area-inset-top)]">
+            <div className="flex items-center justify-between px-4 pb-2 pt-5">
+              <button
+                type="button"
+                onClick={() => setMode("edit")}
+                className="rounded-md p-1 text-[#1f2523] hover:bg-[#e6ece9]"
+              >
+                <ArrowLeft className="h-6 w-6" />
+              </button>
+              <h2 className="text-[18px] font-bold leading-[1.45] text-[#232a28]">메뉴 추가</h2>
+              <span className="w-7" />
+            </div>
 
-          <div className="px-4">
-            <AppSearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder="레시피명, 큐브명으로 검색"
-              inputClassName="border-transparent bg-[#e7e9e8] text-[#232a28]"
-              iconClassName="text-[#8a9390]"
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  addRecentSearch(search);
-                }
-              }}
-            />
-          </div>
+            <div className="px-4">
+              <AppSearchInput
+                value={search}
+                onChange={setSearch}
+                placeholder="레시피명, 큐브명으로 검색"
+                inputClassName="border-transparent bg-[#e7e9e8] text-[#232a28]"
+                iconClassName="text-[#8a9390]"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    addRecentSearch(search);
+                  }
+                }}
+              />
+            </div>
 
-          <div className="px-4 pt-4">
-            <p className="text-[16px] text-[#7f8885]">최근 검색어</p>
-            <div className="mt-3 flex flex-wrap gap-2.5">
-              {recentSearches.map((tag) => (
+            {recentSearches.length > 0 ? (
+              <div className="px-4 pt-4">
+                <p className="text-[16px] text-[#7f8885]">최근 검색어</p>
+                <div className="mt-3 flex flex-wrap gap-2.5">
+                  {recentSearches.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setSearch(tag)}
+                      className="rounded-full bg-[#dfe5e3] px-3 py-1 text-[13px] text-[#51605a]"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className={cn(recentSearches.length > 0 ? "mt-10" : "mt-8", "px-4")}>
+              <div className="grid grid-cols-3 text-center">
                 <button
-                  key={tag}
                   type="button"
-                  onClick={() => setSearch(tag)}
-                  className="rounded-full bg-[#dfe5e3] px-3 py-1 text-[13px] text-[#51605a]"
+                  onClick={() => setMenuTab("freq")}
+                  className={cn(
+                    "pb-2 text-[18px] font-bold",
+                    menuTab === "freq"
+                      ? "border-b-2 border-[#57bf8e] text-[#232a28]"
+                      : "text-[#232a28]"
+                  )}
                 >
-                  {tag}
+                  자주 먹었어요
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMenuTab("fav")}
+                  className={cn(
+                    "pb-2 text-[18px] font-bold",
+                    menuTab === "fav"
+                      ? "border-b-2 border-[#57bf8e] text-[#232a28]"
+                      : "text-[#232a28]"
+                  )}
+                >
+                  즐겨찾기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMenuTab("manual")}
+                  className={cn(
+                    "pb-2 text-[18px] font-bold",
+                    menuTab === "manual"
+                      ? "border-b-2 border-[#57bf8e] text-[#232a28]"
+                      : "text-[#232a28]"
+                  )}
+                >
+                  직접 등록
+                </button>
+              </div>
+            </div>
+
+            <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 py-4">
+              {[
+                { key: "all", label: "전체" },
+                { key: "recipe", label: "내 레시피" },
+                { key: "ai", label: "AI 추천" },
+                { key: "fridge", label: "냉장고" },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() =>
+                    setMenuSource(item.key as "all" | "recipe" | "ai" | "fridge")
+                  }
+                  className={cn(
+                    "shrink-0 rounded-full border px-4 py-1.5 text-[16px] font-medium",
+                    menuSource === item.key
+                      ? "border-[#57bf8e] bg-[#57bf8e] text-white"
+                      : "border-[#c7cecb] text-[#6e7673]"
+                  )}
+                >
+                  {item.label}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="mt-10 border-b border-[#d2d8d6] px-4">
-            <div className="grid grid-cols-3 text-center">
-              <button
-                type="button"
-                onClick={() => setMenuTab("freq")}
-                className={cn(
-                  "pb-2 text-[18px] font-bold",
-                  menuTab === "freq"
-                    ? "border-b-2 border-[#57bf8e] text-[#232a28]"
-                    : "text-[#232a28]"
-                )}
-              >
-                자주 먹었어요
-              </button>
-              <button
-                type="button"
-                onClick={() => setMenuTab("fav")}
-                className={cn(
-                  "pb-2 text-[18px] font-bold",
-                  menuTab === "fav"
-                    ? "border-b-2 border-[#57bf8e] text-[#232a28]"
-                    : "text-[#232a28]"
-                )}
-              >
-                즐겨찾기
-              </button>
-              <button
-                type="button"
-                onClick={() => setMenuTab("manual")}
-                className={cn(
-                  "pb-2 text-[18px] font-bold",
-                  menuTab === "manual"
-                    ? "border-b-2 border-[#57bf8e] text-[#232a28]"
-                    : "text-[#232a28]"
-                )}
-              >
-                직접 등록
-              </button>
-            </div>
-          </div>
-
-          <div className="flex gap-2 px-4 pt-4">
-            {[
-              { key: "all", label: "전체" },
-              { key: "recipe", label: "내 레시피" },
-              { key: "ai", label: "AI 추천" },
-              { key: "fridge", label: "냉장고" },
-            ].map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() =>
-                  setMenuSource(item.key as "all" | "recipe" | "ai" | "fridge")
-                }
-                className={cn(
-                  "rounded-full border px-4 py-1.5 text-[16px] font-medium",
-                  menuSource === item.key
-                    ? "border-[#57bf8e] bg-[#57bf8e] text-white"
-                    : "border-[#c7cecb] text-[#6e7673]"
-                )}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex-1 overflow-y-auto px-4 pt-6">
+          <div className="flex-1 overflow-y-auto px-4 pt-4">
             {filteredMenus.length === 0 ? (
               <p className="py-8 text-center text-[16px] font-medium text-[#7f8885]">
                 {menuTab === "freq" ? "자주 먹은 메뉴가 없어요." : "표시할 메뉴가 없어요."}
@@ -263,36 +267,52 @@ function MealEditPageContent() {
                 {filteredMenus.map((menu) => {
                   const selected = selectedNames.has(menu);
                   return (
-                    <div
+                    <button
                       key={menu}
-                      className="flex items-center justify-between rounded-[12px] border border-[#d5dbd9] bg-white px-3.5 py-4"
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => {
+                        setSelectedNames((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(menu)) next.delete(menu);
+                          else next.add(menu);
+                          return next;
+                        });
+                      }}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-[12px] border px-3.5 py-4 text-left transition",
+                        selected
+                          ? "border-[#57bf8e] bg-[#e8f7ef] shadow-[inset_0_0_0_1px_rgba(87,191,142,0.45)]"
+                          : "border-[#d5dbd9] bg-white active:bg-[#f4f7f5]"
+                      )}
                     >
-                      <span className="text-[20px] text-[#232a28]">{menu}</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedNames((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(menu)) next.delete(menu);
-                            else next.add(menu);
-                            return next;
-                          });
-                        }}
+                      <span
                         className={cn(
-                          "flex h-7 w-7 items-center justify-center rounded-full text-white",
-                          selected ? "bg-[#57bf8e]" : "bg-[#dcefe6] text-[#79b79a]"
+                          "text-[20px] font-medium",
+                          selected ? "text-[#1f5f43]" : "text-[#232a28]"
                         )}
                       >
-                        <Plus className="h-5 w-5" />
-                      </button>
-                    </div>
+                        {menu}
+                      </span>
+                      <span
+                        className={cn(
+                          "flex h-8 w-8 items-center justify-center rounded-full",
+                          selected
+                            ? "bg-[#57bf8e] text-white"
+                            : "bg-[#dcefe6] text-[#68aa8a]"
+                        )}
+                        aria-hidden="true"
+                      >
+                        {selected ? <Check className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                      </span>
+                    </button>
                   );
                 })}
               </div>
             )}
           </div>
 
-          <div className="px-4 pb-4 pt-3">
+          <div className="shrink-0 bg-white px-4 pb-[calc(16px+env(safe-area-inset-bottom))] pt-3">
             <p className="mb-4 text-center text-sm text-[#97a09d]">
               현재 선택한 메뉴는 {MEAL_LABELS[targetMealType]}에 추가돼요
             </p>

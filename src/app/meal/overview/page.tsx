@@ -17,6 +17,8 @@ type TabKey = "today" | "week";
 
 const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
 const WEEK_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
+const SVG_FONT_FAMILY =
+  "Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', Arial, sans-serif";
 
 function parseDateKey(value: string | null) {
   if (!value) return new Date();
@@ -52,6 +54,7 @@ async function downloadPngFromSvg(svg: string, filename: string) {
   const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(svgBlob);
   try {
+    const size = getSvgSize(svg);
     const img = new Image();
     const loaded = new Promise<void>((resolve, reject) => {
       img.onload = () => resolve();
@@ -61,8 +64,11 @@ async function downloadPngFromSvg(svg: string, filename: string) {
     await loaded;
 
     const canvas = document.createElement("canvas");
-    canvas.width = img.width;
-    canvas.height = img.height;
+    const width = size.width || img.naturalWidth || img.width;
+    const height = size.height || img.naturalHeight || img.height;
+    if (!width || !height) throw new Error("이미지 크기를 확인하지 못했습니다.");
+    canvas.width = width;
+    canvas.height = height;
     const context = canvas.getContext("2d");
     if (!context) throw new Error("이미지를 저장하지 못했습니다.");
     context.fillStyle = "#ffffff";
@@ -79,6 +85,93 @@ async function downloadPngFromSvg(svg: string, filename: string) {
   }
 }
 
+function getSvgSize(svg: string) {
+  const viewBoxMatch = svg.match(/viewBox="0 0 (\d+) (\d+)"/);
+  if (viewBoxMatch) {
+    return {
+      width: Number.parseInt(viewBoxMatch[1], 10),
+      height: Number.parseInt(viewBoxMatch[2], 10),
+    };
+  }
+  const widthMatch = svg.match(/width="(\d+)"/);
+  const heightMatch = svg.match(/height="(\d+)"/);
+  return {
+    width: widthMatch ? Number.parseInt(widthMatch[1], 10) : 0,
+    height: heightMatch ? Number.parseInt(heightMatch[1], 10) : 0,
+  };
+}
+
+function wrapText(value: string, maxChars: number) {
+  const words = value.trim().split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = "";
+
+  words.forEach((word) => {
+    if (!current) {
+      current = word;
+      return;
+    }
+    const next = `${current} ${word}`;
+    if (next.length <= maxChars) {
+      current = next;
+      return;
+    }
+    lines.push(current);
+    current = word;
+  });
+
+  if (current) lines.push(current);
+
+  return lines.flatMap((line) => {
+    if (line.length <= maxChars) return [line];
+    const chunks: string[] = [];
+    for (let index = 0; index < line.length; index += maxChars) {
+      chunks.push(line.slice(index, index + maxChars));
+    }
+    return chunks;
+  });
+}
+
+function clampLines(lines: string[], maxLines: number) {
+  if (lines.length <= maxLines) return lines;
+  const visible = lines.slice(0, maxLines);
+  const last = visible[visible.length - 1] ?? "";
+  visible[visible.length - 1] = last.length > 1 ? `${last.slice(0, -1)}…` : "…";
+  return visible;
+}
+
+function buildSvgText(
+  content: string,
+  x: number,
+  y: number,
+  size: number,
+  weight = 500,
+  anchor = "middle"
+) {
+  return `<text x="${x}" y="${y}" text-anchor="${anchor}" font-family="${SVG_FONT_FAMILY}" font-size="${size}" font-weight="${weight}" fill="#202725">${escapeXml(content)}</text>`;
+}
+
+function buildCellText(
+  entries: MealEntry[],
+  x: number,
+  y: number,
+  maxChars: number,
+  maxLines: number,
+  lineHeight: number,
+  size: number
+) {
+  const wrapped = entries.flatMap((entry) => wrapText(cellLines([entry])[0] ?? "", maxChars));
+  const lines = clampLines(wrapped, maxLines);
+  if (lines.length === 0) return "";
+
+  return `<text x="${x}" y="${y}" text-anchor="start" font-family="${SVG_FONT_FAMILY}" font-size="${size}" font-weight="500" fill="#202725">${lines
+    .map(
+      (line, index) =>
+        `<tspan x="${x}" dy="${index === 0 ? 0 : lineHeight}">${escapeXml(line)}</tspan>`
+    )
+    .join("")}</text>`;
+}
+
 function buildWeeklySvg(weekDays: Date[], mealData: Record<string, DayMeals>) {
   const width = 900;
   const height = 1120;
@@ -92,28 +185,10 @@ function buildWeeklySvg(weekDays: Date[], mealData: Record<string, DayMeals>) {
   const tableHeight = headerHeight + rowHeight * 7;
   const border = "#707070";
 
-  const text = (
-    content: string,
-    x: number,
-    y: number,
-    size: number,
-    weight = 500,
-    anchor = "middle"
-  ) =>
-    `<text x="${x}" y="${y}" text-anchor="${anchor}" font-family="Arial, sans-serif" font-size="${size}" font-weight="${weight}" fill="#202725">${escapeXml(content)}</text>`;
-
-  const rowText = (lines: string[], x: number, y: number) =>
-    lines
-      .slice(0, 4)
-      .map((line, index) =>
-        text(line, x, y + index * 21, 19, 500, "start")
-      )
-      .join("");
-
   const lines: string[] = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
     `<rect width="100%" height="100%" fill="#ffffff"/>`,
-    text("일주일 식단표", width / 2, 155, 44, 800),
+    buildSvgText("일주일 식단표", width / 2, 155, 44, 800),
     `<rect x="${tableX}" y="${tableY}" width="${tableWidth}" height="${tableHeight}" rx="6" fill="#ffffff" stroke="${border}" stroke-width="1.5"/>`,
   ];
 
@@ -135,18 +210,55 @@ function buildWeeklySvg(weekDays: Date[], mealData: Record<string, DayMeals>) {
   lines.push(`<line x1="${tableX}" y1="${tableY + headerHeight}" x2="${tableX + tableWidth}" y2="${tableY + headerHeight}" stroke="${border}" stroke-width="1"/>`);
 
   MEAL_TYPES.forEach((type, index) => {
-    lines.push(text(MEAL_LABELS[type], tableX + dayColWidth + mealColWidth * index + mealColWidth / 2, tableY + 47, 19, 500));
+    lines.push(buildSvgText(MEAL_LABELS[type], tableX + dayColWidth + mealColWidth * index + mealColWidth / 2, tableY + 47, 19, 500));
   });
 
   weekDays.forEach((date, rowIndex) => {
     const dayMeals = mealData[formatDateKey(date)] ?? emptyDay(date);
     const rowTop = tableY + headerHeight + rowHeight * rowIndex;
-    lines.push(text(WEEK_LABELS[date.getDay()], tableX + dayColWidth / 2, rowTop + 63, 19, 700));
+    lines.push(buildSvgText(WEEK_LABELS[date.getDay()], tableX + dayColWidth / 2, rowTop + 63, 19, 700));
 
     MEAL_TYPES.forEach((type, colIndex) => {
       const x = tableX + dayColWidth + mealColWidth * colIndex + 25;
-      lines.push(rowText(cellLines(dayMeals[type]), x, rowTop + 42));
+      lines.push(buildCellText(dayMeals[type], x, rowTop + 36, 8, 4, 21, 18));
     });
+  });
+
+  lines.push("</svg>");
+  return lines.join("");
+}
+
+function buildTodaySvg(date: Date, dayMeals: DayMeals) {
+  const width = 900;
+  const height = 760;
+  const tableX = 50;
+  const tableY = 250;
+  const mealColWidth = 200;
+  const headerHeight = 78;
+  const rowHeight = 300;
+  const tableWidth = mealColWidth * 4;
+  const tableHeight = headerHeight + rowHeight;
+  const border = "#707070";
+  const dateLabel = `${date.getMonth() + 1}월 ${date.getDate()}일 ${WEEK_LABELS[date.getDay()]}요일`;
+
+  const lines: string[] = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
+    `<rect width="100%" height="100%" fill="#ffffff"/>`,
+    buildSvgText("오늘 식단표", width / 2, 130, 44, 800),
+    buildSvgText(dateLabel, width / 2, 180, 24, 600),
+    `<rect x="${tableX}" y="${tableY}" width="${tableWidth}" height="${tableHeight}" rx="6" fill="#ffffff" stroke="${border}" stroke-width="1.5"/>`,
+  ];
+
+  for (let index = 1; index < 4; index += 1) {
+    const x = tableX + mealColWidth * index;
+    lines.push(`<line x1="${x}" y1="${tableY}" x2="${x}" y2="${tableY + tableHeight}" stroke="${border}" stroke-width="1"/>`);
+  }
+  lines.push(`<line x1="${tableX}" y1="${tableY + headerHeight}" x2="${tableX + tableWidth}" y2="${tableY + headerHeight}" stroke="${border}" stroke-width="1"/>`);
+
+  MEAL_TYPES.forEach((type, index) => {
+    const cellX = tableX + mealColWidth * index;
+    lines.push(buildSvgText(MEAL_LABELS[type], cellX + mealColWidth / 2, tableY + 47, 20, 600));
+    lines.push(buildCellText(dayMeals[type], cellX + 25, tableY + headerHeight + 44, 9, 10, 25, 20));
   });
 
   lines.push("</svg>");
@@ -205,8 +317,12 @@ function MealOverviewContent() {
 
   const saveAsImage = async () => {
     try {
-      const svg = buildWeeklySvg(weekDays, mealData);
-      await downloadPngFromSvg(svg, `weekly-meals-${selectedDateKey}.png`);
+      const svg =
+        activeTab === "week"
+          ? buildWeeklySvg(weekDays, mealData)
+          : buildTodaySvg(selectedDate, selectedDayMeals);
+      const prefix = activeTab === "week" ? "weekly" : "daily";
+      await downloadPngFromSvg(svg, `${prefix}-meals-${selectedDateKey}.png`);
       toast.success("이미지를 저장했습니다.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "이미지 저장에 실패했습니다.");
@@ -215,7 +331,7 @@ function MealOverviewContent() {
 
   return (
     <main className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white">
-      <div className="relative flex h-[68px] items-center justify-center px-4 pt-3">
+      <div className="relative flex h-[calc(68px+env(safe-area-inset-top))] items-center justify-center px-4 pt-[calc(12px+env(safe-area-inset-top))]">
         <button
           type="button"
           onClick={() => router.back()}
@@ -224,7 +340,7 @@ function MealOverviewContent() {
         >
           <ArrowLeft className="h-6 w-6" />
         </button>
-        <h1 className="text-[18px] font-extrabold text-[#202725]">식단 전체보기</h1>
+        <h1 className="text-[18px] font-extrabold leading-[1.45] text-[#202725]">식단 전체보기</h1>
       </div>
 
       <div className="grid grid-cols-2 border-b border-[#d9dddb]">
