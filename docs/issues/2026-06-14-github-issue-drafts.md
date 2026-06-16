@@ -2,6 +2,9 @@
 
 GitHub App 권한 문제로 이슈 자동 생성이 실패해서, 아래 내용을 복사해 이슈로 등록한다.
 
+> 2026-06-16 현재 다수 항목은 구현 완료되어 로컬 진행표 기준으로 관리한다.
+> 새 GitHub Issue로 옮길 때는 `docs/issues/2026-06-14-release-polish-progress.md`의 Todo/Blocked만 우선 사용한다.
+
 ## 1. [P0] 첫 소셜 로그인 세션 확인 실패 수정
 
 ### 문제

@@ -11,28 +11,27 @@
 
 ## Doing
 
-- [ ] 랜딩/온보딩 이미지 정리
-  - 현재 브랜치: `feat/landing-cutout-animation`
-  - 내용: 흰 배경 GIF 대신 누끼 PNG 기반 이미지로 교체
-  - 확인 필요: 헤더/앱 아이콘까지 최종 이미지로 통일할지 별도 브랜치에서 처리
+- 없음
 
 ## Todo
 
 ### P0
 
 - [ ] 영수증 스캔 UX 개선
+  - 남은 범위: 촬영/선택 직후 안내, 분석 중 상태, 인식 결과 수정, 실패/재시도 흐름
 
 ### P1
 
 - [ ] 홈 화면 아기 카드 아래 이유식 준비 가이드 추가
 - [ ] 홈 화면 상단 카피라이팅/디자인 일부 변경
-- [ ] 식단표 이미지/차트 구성 재설계
 - [ ] Kakao 소셜 인증 기준 정리
+  - 목표: 이메일 동의항목, 본인인증 범위, Supabase provider scope 기준 문서화
 
 ### P2
 
 - [ ] 알레르기 관리 기능 구현
 - [ ] 랜딩페이지 손그림 이미지/보호자 이름/아기 이름 예시 정리
+- [ ] 식단표 이미지/차트 구성 재설계
 
 ## Blocked
 
@@ -89,6 +88,7 @@
 - [x] 비밀번호 재설정 메일/변경 흐름 추가
   - 위치: `src/app/api/auth/password-reset/request/route.ts`, `src/features/auth/hooks/use-auth-page.ts`, `src/features/auth/ui/auth-password-reset-view.tsx`
   - 범위: 로그인 화면 비밀번호 찾기, Supabase reset 메일 발송, recovery 링크 진입 후 새 비밀번호 변경
+  - 남은 일: 마이페이지 `비밀번호 변경` 버튼과 같은 흐름을 연결할지 별도 결정
 - [x] 아기 수정하기 기능 추가
   - 위치: `src/app/children/page.tsx`, `src/features/children/hooks/use-children-page.ts`
   - 범위: 아기 카드 탭으로 메인 아기 선택, 이름/개월 수 수정 바텀시트, 사진 변경 흐름 정리
@@ -113,11 +113,17 @@
 - [x] 메인 아이콘/앱 아이콘 최종 이미지로 통일
   - 위치: `public/icons/*`, `android/twa/app/src/main/res/mipmap-*`, `android/twa/app/src/main/res/drawable-*`, `android/twa/store_icon.png`
   - 범위: `public/main_app_icon.png`에서 체크무늬 배경을 제거한 `main_app_icon1.png` 생성 후 PWA/TWA 아이콘 리소스 재생성
+- [x] 배포 PR 자동화
+  - 위치: `package.json`, `scripts/create-release-pr.mjs`
+  - 사용: `npm run release:check`로 lint/test/build 검증, `npm run release:pr`로 `dev -> main` PR 생성
+  - 범위: `dev` 브랜치에서만 실행, 작업트리가 깨끗해야 진행, 이미 열린 릴리즈 PR이 있으면 재사용 안내
+- [x] 마이페이지 비밀번호 재설정 메일 발송 연결
+  - 위치: `src/app/mypage/profile/page.tsx`
+  - 범위: 로그인된 보호자 이메일로 Supabase 비밀번호 재설정 메일 발송, 요청 중 중복 클릭 방지, 성공/실패 toast 표시
 
 ## 다음 작업 후보
 
 1. 영수증 스캔 UX 개선
 2. 홈 화면 아기 카드 아래 이유식 준비 가이드 추가
 3. 알레르기 관리 기능 구현
-4. 식단표 이미지/차트 구성 재설계
-5. 랜딩페이지 손그림 이미지/보호자 이름/아기 이름 예시 정리
+4. 랜딩페이지 손그림 이미지/보호자 이름/아기 이름 예시 정리

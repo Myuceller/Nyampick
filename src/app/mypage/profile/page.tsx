@@ -44,6 +44,7 @@ export default function GuardianProfilePage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [isSavingName, setIsSavingName] = useState(false);
   const [isSavingPhoto, setIsSavingPhoto] = useState(false);
+  const [isRequestingPasswordReset, setIsRequestingPasswordReset] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -134,6 +135,34 @@ export default function GuardianProfilePage() {
     } finally {
       setIsSavingPhoto(false);
       if (photoInputRef.current) photoInputRef.current.value = "";
+    }
+  };
+
+  const requestPasswordReset = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      toast.error("비밀번호 재설정 메일을 보낼 이메일이 없습니다.");
+      return;
+    }
+
+    try {
+      setIsRequestingPasswordReset(true);
+      const res = await fetch("/api/auth/password-reset/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { message?: string };
+
+      if (!res.ok) {
+        throw new Error(json.message ?? "비밀번호 재설정 메일 발송에 실패했습니다.");
+      }
+
+      toast.success(json.message ?? "비밀번호 재설정 메일을 보냈어요.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "비밀번호 재설정 메일 발송에 실패했습니다.");
+    } finally {
+      setIsRequestingPasswordReset(false);
     }
   };
 
@@ -242,10 +271,11 @@ export default function GuardianProfilePage() {
             <h2 className="text-[23px] font-extrabold leading-[1.28]">계정 관리</h2>
             <button
               type="button"
-              onClick={() => toast.message("비밀번호 변경은 준비 중입니다.")}
-              className="mt-6 block py-3 text-left text-[16px] font-extrabold"
+              onClick={() => void requestPasswordReset()}
+              disabled={isRequestingPasswordReset}
+              className="mt-6 block py-3 text-left text-[16px] font-extrabold disabled:text-[#9ca3af]"
             >
-              비밀번호 변경
+              {isRequestingPasswordReset ? "재설정 메일 발송 중..." : "비밀번호 재설정 메일 받기"}
             </button>
           </section>
         </>
