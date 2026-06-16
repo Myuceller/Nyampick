@@ -30,7 +30,7 @@ export interface ReceiptCandidate {
   confidence: number;
 }
 
-export type ReceiptStage = "capture" | "scanning" | "result";
+export type ReceiptStage = "capture" | "scanning" | "result" | "error";
 export type ReceiptScanPhase = "uploading" | "analyzing" | "finalizing";
 export type AddPopupStage = "input" | "review";
 
@@ -71,6 +71,7 @@ export function useFridgePage() {
   const [selectedReceiptIds, setSelectedReceiptIds] = useState<Set<string>>(new Set());
   const [isConfirmingReceipt, setIsConfirmingReceipt] = useState(false);
   const [receiptScanProgress, setReceiptScanProgress] = useState(0);
+  const [receiptErrorMessage, setReceiptErrorMessage] = useState("");
   const albumInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -190,6 +191,7 @@ export function useFridgePage() {
     setReceiptScanId("");
     setReceiptCandidates([]);
     setSelectedReceiptIds(new Set());
+    setReceiptErrorMessage("");
   };
 
   const openReceiptCamera = () => {
@@ -200,6 +202,7 @@ export function useFridgePage() {
     setReceiptScanId("");
     setReceiptCandidates([]);
     setSelectedReceiptIds(new Set());
+    setReceiptErrorMessage("");
     if (cameraInputRef.current) cameraInputRef.current.value = "";
     cameraInputRef.current?.click();
   };
@@ -322,8 +325,8 @@ export function useFridgePage() {
 
       const candidates = scanJson.candidates ?? [];
       if (candidates.length === 0) {
-        toast.error("인식된 항목이 없습니다.");
-        setReceiptStage("capture");
+        setReceiptErrorMessage("인식된 항목이 없어요. 영수증 전체가 보이도록 다시 촬영해주세요.");
+        setReceiptStage("error");
         return;
       }
       setReceiptScanId(scanJson.scanId);
@@ -333,8 +336,8 @@ export function useFridgePage() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "영수증 스캔 처리에 실패했습니다.";
-      toast.error(message);
-      setReceiptStage("capture");
+      setReceiptErrorMessage(message);
+      setReceiptStage("error");
     } finally {
       if (analyzeTimer) {
         clearTimeout(analyzeTimer);
@@ -353,6 +356,7 @@ export function useFridgePage() {
     setReceiptScanId("");
     setReceiptCandidates([]);
     setSelectedReceiptIds(new Set());
+    setReceiptErrorMessage("");
   };
 
   const resetReceiptToCapture = () => {
@@ -360,6 +364,7 @@ export function useFridgePage() {
     setReceiptScanId("");
     setReceiptCandidates([]);
     setSelectedReceiptIds(new Set());
+    setReceiptErrorMessage("");
   };
 
   const toggleReceiptCandidate = (tempId: string) => {
@@ -371,14 +376,33 @@ export function useFridgePage() {
     });
   };
 
+  const updateReceiptCandidate = (
+    tempId: string,
+    patch: Partial<Pick<ReceiptCandidate, "name" | "category">>
+  ) => {
+    setReceiptCandidates((prev) =>
+      prev.map((candidate) =>
+        candidate.tempId === tempId ? { ...candidate, ...patch } : candidate
+      )
+    );
+  };
+
   const confirmSelectedReceiptItems = async () => {
     if (!receiptScanId) return;
     const selected = receiptCandidates
       .filter((candidate) => selectedReceiptIds.has(candidate.tempId))
-      .map((candidate) => ({ tempId: candidate.tempId }));
+      .map((candidate) => ({
+        tempId: candidate.tempId,
+        name: candidate.name.trim(),
+        category: candidate.category,
+      }));
 
     if (selected.length === 0) {
       toast.error("추가할 재료를 1개 이상 선택해주세요.");
+      return;
+    }
+    if (selected.some((candidate) => candidate.name.length === 0)) {
+      toast.error("선택한 재료명을 확인해주세요.");
       return;
     }
 
@@ -413,17 +437,17 @@ export function useFridgePage() {
 
   const receiptStageLabel =
     receiptScanPhase === "uploading"
-      ? "요청 전송중"
+      ? "사진 업로드 중"
       : receiptScanPhase === "analyzing"
-        ? "영수증 분석 중"
-        : "결과 정리중";
+        ? "재료 인식 중"
+        : "결과 정리 중";
 
   const receiptStageDescription =
     receiptScanPhase === "uploading"
-      ? "이미지를 업로드하고 있어요"
+      ? "선택한 사진을 안전하게 보내고 있어요."
       : receiptScanPhase === "analyzing"
-        ? "재료를 인식하고 있어요"
-        : "스캔 결과를 정리하고 있어요";
+        ? "영수증에서 식재료 이름만 골라내고 있어요."
+        : "추가하기 전에 고칠 수 있도록 정리하고 있어요.";
 
   const showEmptyFridgeCta = !isLoading && fridgeItems.length === 0;
 
@@ -452,9 +476,11 @@ export function useFridgePage() {
     receiptScanPhase,
     receiptScanId,
     receiptCandidates,
+    setReceiptCandidates,
     selectedReceiptIds,
     isConfirmingReceipt,
     receiptScanProgress,
+    receiptErrorMessage,
     albumInputRef,
     cameraInputRef,
     inputLines,
@@ -470,6 +496,7 @@ export function useFridgePage() {
     closeReceiptPopup,
     resetReceiptToCapture,
     toggleReceiptCandidate,
+    updateReceiptCandidate,
     confirmSelectedReceiptItems,
     receiptStageLabel,
     receiptStageDescription,
