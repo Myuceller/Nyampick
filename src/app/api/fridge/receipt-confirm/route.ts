@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     scanId?: string;
     selected?: Array<{
       tempId: string;
+      name?: string;
       category?: string;
       quantity?: string;
       expiresAt?: string;
@@ -41,6 +42,12 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    if (typeof item.name === "string" && item.name.trim().length === 0) {
+      return NextResponse.json(
+        { message: "name must not be empty" },
+        { status: 400 }
+      );
+    }
   }
 
   const session = getReceiptScanSession(body.scanId);
@@ -60,7 +67,10 @@ export async function POST(request: Request) {
         const picked = selectedMap.get(candidate.tempId)!;
         return addFridgeItemToDb({
           userId: scope.ownerUserId,
-          name: candidate.name,
+          name:
+            typeof picked.name === "string" && picked.name.trim().length > 0
+              ? picked.name.trim()
+              : candidate.name,
           category:
             picked.category && isFridgeCategory(picked.category)
               ? picked.category
