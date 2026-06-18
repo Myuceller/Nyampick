@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, ArrowLeft, X } from "lucide-react";
 import { toast } from "sonner";
 import { useMyPage } from "./my-page/use-my-page";
 
@@ -147,6 +148,8 @@ function MyPageSkeleton() {
 export function MyPage() {
   const vm = useMyPage();
   const router = useRouter();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const guardianName = vm.profileName.trim() || "보호자";
   const babyName = vm.babyName.trim() || "아기";
   const additionalChildCount = Math.max(0, vm.childCount - 1);
@@ -318,7 +321,12 @@ export function MyPage() {
               >
                 로그아웃
               </MenuButton>
-              <MenuButton onClick={() => toast.message("회원탈퇴는 준비 중입니다.")}>
+              <MenuButton
+                onClick={() => {
+                  setDeleteConfirmText("");
+                  setIsDeleteDialogOpen(true);
+                }}
+              >
                 회원탈퇴
               </MenuButton>
             </div>
@@ -331,6 +339,71 @@ export function MyPage() {
           ) : null}
         </>
       )}
+
+      {isDeleteDialogOpen ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#6b716e]/55 px-4 pb-[calc(16px+env(safe-area-inset-bottom))] pt-16">
+          <div className="w-full max-w-[480px] rounded-[24px] bg-white p-4 shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff3e0] text-[#f59e0b]">
+                  <AlertTriangle className="h-5 w-5" strokeWidth={2.4} />
+                </div>
+                <div>
+                  <h2 className="text-[20px] font-bold leading-[1.32] text-[#202725]">
+                    회원탈퇴
+                  </h2>
+                  <p className="mt-1 text-[14px] leading-[1.55] text-[#6f7875]">
+                    탈퇴하면 식단, 냉장고, 저장한 레시피와 가족 연동 정보가 삭제됩니다.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDeleteDialogOpen(false)}
+                disabled={vm.isDeletingAccount}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md active:bg-[#eef1ef] disabled:opacity-50"
+                aria-label="회원탈퇴 닫기"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-[16px] border border-[#f3d4d4] bg-[#fff8f8] p-3">
+              <p className="text-[14px] font-semibold leading-[1.55] text-[#bf5555]">
+                삭제된 데이터는 복구할 수 없습니다. 계속하려면 아래에
+                <span className="font-bold"> 회원탈퇴</span>를 입력해주세요.
+              </p>
+            </div>
+
+            <input
+              value={deleteConfirmText}
+              onChange={(event) => setDeleteConfirmText(event.target.value)}
+              placeholder="회원탈퇴"
+              disabled={vm.isDeletingAccount}
+              className="mt-4 h-[52px] w-full rounded-[14px] border border-[#d1d8d5] bg-[#f8f9f8] px-4 text-[17px] font-semibold leading-[1.55] outline-none placeholder:text-[#97a19e] focus:border-[#57bf8e] disabled:opacity-60"
+            />
+
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setIsDeleteDialogOpen(false)}
+                disabled={vm.isDeletingAccount}
+                className="h-12 rounded-2xl bg-[#e5e7e6] text-[16px] font-semibold text-[#7f8885] disabled:opacity-60"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => void vm.deleteAccount(deleteConfirmText)}
+                disabled={vm.isDeletingAccount || deleteConfirmText !== "회원탈퇴"}
+                className="h-12 rounded-2xl bg-[#ef4444] text-[16px] font-semibold text-white disabled:opacity-45"
+              >
+                {vm.isDeletingAccount ? "탈퇴 처리 중..." : "탈퇴하기"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

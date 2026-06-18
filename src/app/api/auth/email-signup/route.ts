@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { hasAuthUserWithEmail } from "@/lib/server/auth-users";
 import { verifyEmailVerificationToken } from "@/lib/server/email-verification";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
@@ -36,6 +37,9 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    if (await hasAuthUserWithEmail(email)) {
+      return NextResponse.json({ message: "이미 가입된 이메일입니다." }, { status: 409 });
+    }
 
     const supabase = getSupabaseAdmin();
     const { error } = await supabase.auth.admin.createUser({
@@ -51,7 +55,7 @@ export async function POST(request: Request) {
       const normalized = error.message.toLowerCase();
       if (normalized.includes("already") || normalized.includes("registered")) {
         return NextResponse.json(
-          { message: "이미 가입된 이메일입니다. 로그인으로 진행해주세요." },
+          { message: "이미 가입된 이메일입니다." },
           { status: 409 }
         );
       }

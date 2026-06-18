@@ -15,3 +15,7 @@
 | 2026-05-13 | deployed-auth-www | /mypage | 95 | 1.82 | 5.75 | 3 | current authenticated production |
 | 2026-05-13 | deployed-auth-www | /auth | 100 | 1.88 | 0.805 | 0 | current production auth page |
 | 2026-05-13 | local-current | /auth | 98 | 2.41 | 0.760 | 0 | current local production build |
+| 2026-06-16 | local-current | /landing | 94 | 2.93 | 3.22 | 0 | local production build, unauthenticated |
+| 2026-06-16 | local-current | / | 95 | 2.83 | 2.51 | 0 | local production build, unauthenticated |
+| 2026-06-16 | local-current | /fridge -> /auth | 90 | 3.20 | 4.46 | 0 | redirected to auth because no login session |
+| 2026-06-16 | local-current | /recipe -> /auth | 88 | 3.38 | 5.04 | 0 | redirected to auth because no login session |

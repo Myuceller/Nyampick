@@ -9,6 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "test:unit": "node --test tests/*.test.ts",
+    "release:check": "npm run lint && npm run test:unit && npm run build",
+    "release:pr": "node scripts/create-release-pr.mjs",
     "perf:report": "node scripts/performance-report.mjs",
     "perf:api": "node scripts/api-latency-benchmark.mjs",
     "ai:report": "node scripts/ai-performance-report.mjs",

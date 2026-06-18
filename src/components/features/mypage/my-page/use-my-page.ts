@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { setCachedHasSession } from "@/lib/auth-session-cache";
-import { authedJson } from "@/lib/authed-fetch";
+import { authedFetch, authedJson } from "@/lib/authed-fetch";
 import type { ChildrenResponseDto } from "@/lib/dto/children";
 import type { ProfileResponseDto } from "@/lib/dto/profile";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
@@ -25,6 +25,7 @@ export function useMyPage() {
   const [familyMemberCount, setFamilyMemberCount] = useState(0);
   const [familyAvatars, setFamilyAvatars] = useState<FamilyAvatarSummary[]>([]);
   const [error, setError] = useState<string>("");
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -83,6 +84,34 @@ export function useMyPage() {
     router.replace("/auth");
   };
 
+  const deleteAccount = async (confirmText: string) => {
+    try {
+      setIsDeletingAccount(true);
+      const response = await authedFetch("/api/account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmText }),
+      });
+      const json = (await response.json().catch(() => ({}))) as { message?: string };
+
+      if (!response.ok) {
+        throw new Error(json.message ?? "회원탈퇴 처리에 실패했습니다.");
+      }
+
+      const supabase = getSupabaseBrowser();
+      await supabase.auth.signOut().catch(() => {
+        // The auth user can already be deleted by the server.
+      });
+      setCachedHasSession(false);
+      toast.success(json.message ?? "회원탈퇴가 완료되었습니다.");
+      router.replace("/auth");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "회원탈퇴 처리에 실패했습니다.");
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
   return {
     loading,
     profileName,
@@ -94,7 +123,9 @@ export function useMyPage() {
     familyMemberCount,
     familyAvatars,
     error,
+    isDeletingAccount,
     logout,
+    deleteAccount,
     openGuardianProfilePage: () => router.push("/mypage/profile"),
     openChildrenPage: () => router.push("/children"),
     openFamilyPage: () => router.push("/family"),

@@ -11,28 +11,24 @@
 
 ## Doing
 
-- [ ] 랜딩/온보딩 이미지 정리
-  - 현재 브랜치: `feat/landing-cutout-animation`
-  - 내용: 흰 배경 GIF 대신 누끼 PNG 기반 이미지로 교체
-  - 확인 필요: 헤더/앱 아이콘까지 최종 이미지로 통일할지 별도 브랜치에서 처리
+- 없음
 
 ## Todo
 
 ### P0
 
-- [ ] 영수증 스캔 UX 개선
-
 ### P1
 
 - [ ] 홈 화면 아기 카드 아래 이유식 준비 가이드 추가
 - [ ] 홈 화면 상단 카피라이팅/디자인 일부 변경
-- [ ] 식단표 이미지/차트 구성 재설계
 - [ ] Kakao 소셜 인증 기준 정리
+  - 목표: 이메일 동의항목, 본인인증 범위, Supabase provider scope 기준 문서화
 
 ### P2
 
 - [ ] 알레르기 관리 기능 구현
 - [ ] 랜딩페이지 손그림 이미지/보호자 이름/아기 이름 예시 정리
+- [ ] 식단표 이미지/차트 구성 재설계
 
 ## Blocked
 
@@ -77,12 +73,22 @@
 - [x] 회원탈퇴 준비중 처리 확인
   - 위치: `src/components/features/mypage/my-page.tsx`
   - 동작: 회원탈퇴 클릭 시 `회원탈퇴는 준비 중입니다.` toast 표시
+- [x] 회원탈퇴 실제 기능 구현
+  - 위치: `src/app/api/account/route.ts`, `src/lib/server/account-deletion.ts`, `src/components/features/mypage/my-page.tsx`
+  - 범위: `회원탈퇴` 확인 문구 입력 모달, 사용자 데이터 삭제, Supabase Auth 계정 삭제, 세션 정리 후 로그인 화면 이동
 - [x] 가족구성원 역할명 변경
   - 위치: `src/features/family/hooks/use-family-page.ts`, `src/lib/server/family-access.ts`
   - 범위: 선택지를 `배우자/가족/친구/도우미`로 변경하고 기존 할머니/할아버지/가족 구성원 라벨은 `가족`으로 표시
 - [x] 이메일 회원가입 인증 흐름 추가
   - 위치: `src/app/api/auth/email-verification/*`, `src/app/api/auth/email-signup/route.ts`, `src/features/auth/ui/auth-form-view.tsx`
   - 범위: 인증번호 요청/확인, 인증 토큰 검증 후 서버 회원가입, Resend 발송 env, Supabase 저장 SQL 문서 추가
+- [x] 회원가입 중복 이메일 차단
+  - 위치: `src/lib/server/auth-users.ts`, `src/app/api/auth/email-verification/request/route.ts`, `src/app/api/auth/email-signup/route.ts`
+  - 범위: 이미 가입된 이메일은 인증 메일 요청/회원가입 단계에서 `이미 가입된 이메일입니다.`로 차단
+- [x] 비밀번호 재설정 메일/변경 흐름 추가
+  - 위치: `src/app/api/auth/password-reset/request/route.ts`, `src/features/auth/hooks/use-auth-page.ts`, `src/features/auth/ui/auth-password-reset-view.tsx`
+  - 범위: 로그인 화면 비밀번호 찾기, Supabase reset 메일 발송, recovery 링크 진입 후 새 비밀번호 변경
+  - 남은 일: 마이페이지 `비밀번호 변경` 버튼과 같은 흐름을 연결할지 별도 결정
 - [x] 아기 수정하기 기능 추가
   - 위치: `src/app/children/page.tsx`, `src/features/children/hooks/use-children-page.ts`
   - 범위: 아기 카드 탭으로 메인 아기 선택, 이름/개월 수 수정 바텀시트, 사진 변경 흐름 정리
@@ -107,11 +113,19 @@
 - [x] 메인 아이콘/앱 아이콘 최종 이미지로 통일
   - 위치: `public/icons/*`, `android/twa/app/src/main/res/mipmap-*`, `android/twa/app/src/main/res/drawable-*`, `android/twa/store_icon.png`
   - 범위: `public/main_app_icon.png`에서 체크무늬 배경을 제거한 `main_app_icon1.png` 생성 후 PWA/TWA 아이콘 리소스 재생성
+- [x] 배포 PR 자동화
+  - 위치: `package.json`, `scripts/create-release-pr.mjs`
+  - 사용: `npm run release:check`로 lint/test/build 검증, `npm run release:pr`로 `dev -> main` PR 생성
+  - 범위: `dev` 브랜치에서만 실행, 작업트리가 깨끗해야 진행, 이미 열린 릴리즈 PR이 있으면 재사용 안내
+- [x] 마이페이지 비밀번호 재설정 메일 발송 연결
+  - 위치: `src/app/mypage/profile/page.tsx`
+  - 범위: 로그인된 보호자 이메일로 Supabase 비밀번호 재설정 메일 발송, 요청 중 중복 클릭 방지, 성공/실패 toast 표시
+- [x] 영수증 스캔 UX 개선
+  - 위치: `src/components/features/fridge/receipt-scan-modal.tsx`, `src/features/fridge/hooks/use-fridge-page.ts`, `src/app/api/fridge/receipt-confirm/route.ts`
+  - 범위: 촬영/선택 안내 보강, 분석 중 단계 문구 개선, 실패 화면/재시도 추가, 인식 결과 재료명/종류 수정 후 추가
 
 ## 다음 작업 후보
 
-1. 영수증 스캔 UX 개선
-2. 홈 화면 아기 카드 아래 이유식 준비 가이드 추가
-3. 알레르기 관리 기능 구현
-4. 식단표 이미지/차트 구성 재설계
-5. 랜딩페이지 손그림 이미지/보호자 이름/아기 이름 예시 정리
+1. 홈 화면 아기 카드 아래 이유식 준비 가이드 추가
+2. 알레르기 관리 기능 구현
+3. 랜딩페이지 손그림 이미지/보호자 이름/아기 이름 예시 정리

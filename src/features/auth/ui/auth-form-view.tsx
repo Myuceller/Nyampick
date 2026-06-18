@@ -15,6 +15,7 @@ interface AuthFormViewProps {
   verificationToken: string;
   isRequestingVerification: boolean;
   isVerifyingEmail: boolean;
+  isRequestingPasswordReset: boolean;
   verificationRetryAfter: number;
   verificationNotice: string | null;
   devVerificationCode: string | null;
@@ -33,6 +34,7 @@ interface AuthFormViewProps {
   onSetVerificationCode: (value: string) => void;
   onRequestEmailVerification: () => void;
   onVerifyEmailCode: () => void;
+  onRequestPasswordReset: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onSocialSignIn: (provider: "google" | "kakao") => void;
   onRetryProfileSeed: () => void;
@@ -107,6 +109,7 @@ export function AuthFormView({
   verificationToken,
   isRequestingVerification,
   isVerifyingEmail,
+  isRequestingPasswordReset,
   verificationRetryAfter,
   verificationNotice,
   devVerificationCode,
@@ -125,6 +128,7 @@ export function AuthFormView({
   onSetVerificationCode,
   onRequestEmailVerification,
   onVerifyEmailCode,
+  onRequestPasswordReset,
   onSubmit,
   onSocialSignIn,
   onRetryProfileSeed,
@@ -438,10 +442,11 @@ export function AuthFormView({
                     </label>
                     <button
                       type="button"
-                      onClick={() => showToast("비밀번호 재설정 화면으로 이동해요.")}
+                      onClick={onRequestPasswordReset}
+                      disabled={isBusy || isRequestingPasswordReset}
                       className="text-[12px] font-extrabold leading-[1.55] text-[#57bf8e]"
                     >
-                      비밀번호 찾기
+                      {isRequestingPasswordReset ? "메일 발송 중" : "비밀번호 찾기"}
                     </button>
                   </div>
 
