@@ -4,10 +4,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AlertTriangle, ArrowLeft, X } from "lucide-react";
-import { toast } from "sonner";
 import { useMyPage } from "./my-page/use-my-page";
 
-const allergies = ["우유", "달걀"];
 const appVersion = "v1.0.0";
 
 function getInitial(value: string, fallback: string) {
@@ -241,15 +239,21 @@ export function MyPage() {
               <SectionTitle>알레르기 관리</SectionTitle>
               <button
                 type="button"
-                onClick={() => toast.message("알레르기 관리 화면은 준비 중입니다.")}
+                onClick={vm.openChildrenPage}
                 className="mt-5 block w-full text-left"
               >
                 <p className="text-[18px] font-semibold leading-[1.32] text-[#202725]">
                   {babyName}의 알레르기
                 </p>
-                <p className="mt-2 text-[17px] font-semibold text-[#ff3030]">
-                  {allergies.join(", ")}
-                </p>
+                {vm.babyAllergies.length > 0 ? (
+                  <p className="mt-2 text-[16px] font-semibold leading-[1.55] text-[#f59e0b]">
+                    {vm.babyAllergies.join(", ")}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-[16px] font-medium leading-[1.55] text-[#7c8782]">
+                    등록된 알레르기가 없습니다.
+                  </p>
+                )}
               </button>
             </section>
           </div>

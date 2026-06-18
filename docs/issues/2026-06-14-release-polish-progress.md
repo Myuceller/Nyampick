@@ -26,7 +26,6 @@
 
 ### P2
 
-- [ ] 알레르기 관리 기능 구현
 - [ ] 랜딩페이지 손그림 이미지/보호자 이름/아기 이름 예시 정리
 - [ ] 식단표 이미지/차트 구성 재설계
 
@@ -123,9 +122,13 @@
 - [x] 영수증 스캔 UX 개선
   - 위치: `src/components/features/fridge/receipt-scan-modal.tsx`, `src/features/fridge/hooks/use-fridge-page.ts`, `src/app/api/fridge/receipt-confirm/route.ts`
   - 범위: 촬영/선택 안내 보강, 분석 중 단계 문구 개선, 실패 화면/재시도 추가, 인식 결과 재료명/종류 수정 후 추가
+- [x] 알레르기 관리 기능 구현
+  - 위치: `src/app/children/page.tsx`, `src/features/children/hooks/use-children-page.ts`, `src/app/api/children/route.ts`, `src/lib/server/supabase-children.ts`, `src/components/features/mypage/my-page.tsx`, `docs/supabase-meals.sql`
+  - 범위: 아기 수정 바텀시트에서 알레르기 선택/직접 입력/삭제, 대표 아기 알레르기 마이페이지 표시, `child_profiles.allergies` 저장
+  - 배포 전 확인: Supabase SQL에서 `alter table public.child_profiles add column if not exists allergies text[] not null default '{}';` 적용 필요
 
 ## 다음 작업 후보
 
 1. 홈 화면 아기 카드 아래 이유식 준비 가이드 추가
-2. 알레르기 관리 기능 구현
-3. 랜딩페이지 손그림 이미지/보호자 이름/아기 이름 예시 정리
+2. 랜딩페이지 손그림 이미지/보호자 이름/아기 이름 예시 정리
+3. 식단표 이미지/차트 구성 재설계

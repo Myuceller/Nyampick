@@ -23,7 +23,7 @@ export default function FridgeEditPage() {
         <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={() => vm.router.push("/fridge")}
+            onClick={vm.requestExit}
             className="rounded-md p-1 text-[#1f2725]"
             aria-label="뒤로"
           >
@@ -38,6 +38,12 @@ export default function FridgeEditPage() {
           <br />
           꼭 눌러서 선택해보세요
         </p>
+
+        {vm.hasUnsavedChanges ? (
+          <div className="mt-4 rounded-[14px] border border-[#f4d7a1] bg-[#fff7e6] px-4 py-3 text-center text-[13px] font-semibold leading-[1.55] text-[#a16207]">
+            저장하지 않은 변경사항이 있어요.
+          </div>
+        ) : null}
 
         <AppSearchInput
           value={vm.keyword}
@@ -216,6 +222,16 @@ export default function FridgeEditPage() {
         description="선택한 재료가 모두 사라져요!"
         onCancel={() => vm.setShowBulkDeleteConfirm(false)}
         onConfirm={vm.applyBulkDelete}
+      />
+
+      <ConfirmModal
+        open={vm.showUnsavedExitConfirm}
+        title="수정 내용을 저장하지 않고 나갈까요?"
+        description="저장하지 않은 변경사항은 사라집니다."
+        cancelLabel="계속 수정"
+        confirmLabel="나가기"
+        onCancel={() => vm.setShowUnsavedExitConfirm(false)}
+        onConfirm={vm.confirmExitWithoutSaving}
       />
 
       <style jsx global>{`
