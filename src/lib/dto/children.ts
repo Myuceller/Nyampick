@@ -4,6 +4,8 @@ export interface ChildSummaryDto {
   monthsOld: number;
   isPrimary: boolean;
   photoUrl?: string;
+  allergies?: string[];
+  babyFoodStartedOn?: string | null;
 }
 
 export interface LinkedInfoDto {

@@ -13,6 +13,31 @@ function isValidImageDataUrl(value: string): boolean {
   return /^data:image\/(png|jpe?g|webp);base64,/i.test(value) && value.length <= 1_500_000;
 }
 
+function normalizeAllergies(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null;
+  const normalized = Array.from(
+    new Set(
+      value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0)
+    )
+  );
+  if (normalized.length > 20) return null;
+  if (normalized.some((item) => item.length > 30)) return null;
+  return normalized;
+}
+
+function normalizeDateInput(value: unknown): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return null;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return undefined;
+  const normalized = date.toISOString().slice(0, 10);
+  return normalized === value ? normalized : undefined;
+}
+
 export async function GET(request: Request) {
   const user = await getUserFromRequest(request);
   if (!user) {
@@ -97,6 +122,8 @@ export async function PATCH(request: Request) {
     monthsOld?: number;
     isPrimary?: boolean;
     photoUrl?: string | null;
+    allergies?: unknown;
+    babyFoodStartedOn?: unknown;
   };
 
   if (typeof body.id !== "string" || body.id.length === 0) {
@@ -115,6 +142,16 @@ export async function PATCH(request: Request) {
   ) {
     return NextResponse.json({ message: "invalid photoUrl" }, { status: 400 });
   }
+  const normalizedAllergies =
+    body.allergies === undefined ? undefined : normalizeAllergies(body.allergies);
+  if (body.allergies !== undefined && normalizedAllergies === null) {
+    return NextResponse.json({ message: "invalid allergies" }, { status: 400 });
+  }
+  const allergies = normalizedAllergies ?? undefined;
+  const babyFoodStartedOn = normalizeDateInput(body.babyFoodStartedOn);
+  if (body.babyFoodStartedOn !== undefined && babyFoodStartedOn === undefined) {
+    return NextResponse.json({ message: "invalid babyFoodStartedOn" }, { status: 400 });
+  }
 
   try {
     const scope = await getFamilyDataScope({ userId: user.id });
@@ -129,6 +166,8 @@ export async function PATCH(request: Request) {
       monthsOld: body.monthsOld,
       isPrimary: body.isPrimary,
       photoUrl: body.photoUrl === null ? null : body.photoUrl,
+      allergies,
+      babyFoodStartedOn,
     });
     if (!child) {
       return NextResponse.json({ message: "child not found" }, { status: 404 });

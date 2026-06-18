@@ -18,6 +18,7 @@ export function useHomePage() {
   const [childName, setChildName] = useState("");
   const [childMonthsOld, setChildMonthsOld] = useState<number | null>(null);
   const [childPhotoUrl, setChildPhotoUrl] = useState("");
+  const [babyFoodStartedOn, setBabyFoodStartedOn] = useState<string | null>(null);
   const [calendarMode, setCalendarMode] = useState<"weekly" | "monthly">("weekly");
 
   useEffect(() => {
@@ -27,7 +28,12 @@ export function useHomePage() {
         const summaryJson = await authedJson<{
           summary?: {
             meals?: Record<string, DayMeals>;
-            primaryChild?: { name: string; monthsOld: number; photoUrl?: string } | null;
+            primaryChild?: {
+              name: string;
+              monthsOld: number;
+              photoUrl?: string;
+              babyFoodStartedOn?: string | null;
+            } | null;
           };
         }>("/api/home/summary");
         baseData = summaryJson.summary?.meals ?? {};
@@ -36,10 +42,12 @@ export function useHomePage() {
           setChildName(primary.name);
           setChildMonthsOld(primary.monthsOld);
           setChildPhotoUrl(primary.photoUrl ?? "");
+          setBabyFoodStartedOn(primary.babyFoodStartedOn ?? null);
         } else {
           setChildName("");
           setChildMonthsOld(null);
           setChildPhotoUrl("");
+          setBabyFoodStartedOn(null);
         }
       } catch {
         baseData = {};
@@ -77,6 +85,7 @@ export function useHomePage() {
 
   return {
     calendarMode,
+    babyFoodStartedOn,
     childMonthsOld,
     childName,
     childPhotoUrl,

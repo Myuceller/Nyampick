@@ -14,8 +14,21 @@ import {
   MEAL_DOT_COLORS,
 } from "@/features/meal/lib/home-page-utils";
 
+function getBabyFoodDayLabel(startedOn: string | null) {
+  if (!startedOn) return "이유식 시작일 미설정";
+  const start = new Date(`${startedOn}T00:00:00`);
+  if (Number.isNaN(start.getTime())) return "이유식 시작일 미설정";
+  const today = new Date();
+  const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+  const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const diff = Math.floor((todayDay - startDay) / 86_400_000) + 1;
+  if (diff < 1) return "이유식 시작 예정";
+  return `이유식 시작 D+${diff}`;
+}
+
 export default function Page() {
   const {
+    babyFoodStartedOn,
     calendarMode,
     childMonthsOld,
     childName,
@@ -52,10 +65,10 @@ export default function Page() {
           {childName ? `${childName}의 식단` : "식단"}
         </h1>
 
-        <div className="mt-3 rounded-[22px] bg-[#fdfefd] px-4 py-4">
+        <div className="mt-3 rounded-[22px] bg-[#fdfefd] px-4 py-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative h-14 w-14 overflow-hidden rounded-[14px]">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-[18px]">
                 {childPhotoUrl ? (
                   <div
                     className="h-full w-full bg-cover bg-center"
@@ -66,24 +79,27 @@ export default function Page() {
                     src="/icon_main.png"
                     alt=""
                     fill
-                    sizes="56px"
+                    sizes="72px"
                     className="object-contain"
                   />
                 )}
               </div>
-              <div>
-                <p className="text-[16px] font-semibold leading-tight text-[#26302d]">
+              <div className="min-w-0">
+                <p className="truncate text-[18px] font-bold leading-[1.32] text-[#26302d]">
                   {childName || "이름 미설정"}
                 </p>
-                <p className="text-[14px] leading-tight text-[#77807d]">
+                <p className="mt-0.5 text-[15px] font-medium leading-[1.45] text-[#77807d]">
                   {childMonthsOld === null ? "개월 정보 미설정" : `생후 ${childMonthsOld}개월`}
+                </p>
+                <p className="mt-0.5 text-[14px] font-semibold leading-[1.45] text-[#57bf8e]">
+                  {getBabyFoodDayLabel(babyFoodStartedOn)}
                 </p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => router.push("/children")}
-              className="rounded-[12px] bg-[#57bf8e] px-4 py-2 text-[13px] font-semibold text-white"
+              className="ml-3 shrink-0 rounded-[12px] bg-[#57bf8e] px-4 py-2.5 text-[13px] font-semibold text-white"
             >
               아기 관리
             </button>

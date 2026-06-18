@@ -84,6 +84,7 @@ export function useFridgeEditPage() {
   const confirmRemoveItem = useFridgeEditStore((state) => state.confirmRemoveItem);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showUnsavedExitConfirm, setShowUnsavedExitConfirm] = useState(false);
   const cancelDeleteLabel = "취소하기";
   const bulkDeleteLabel = "선택한 재료 삭제";
   const longPressTimerRef = useRef<number | null>(null);
@@ -138,6 +139,8 @@ export function useFridgeEditPage() {
       }),
     [draftItems, initialMap]
   );
+
+  const hasUnsavedChanges = deletedIds.length > 0 || changedItems.length > 0;
 
   const filteredItems = useMemo(() => {
     const q = keyword.trim();
@@ -253,6 +256,20 @@ export function useFridgeEditPage() {
     }
   };
 
+  const requestExit = () => {
+    if (isSaving) return;
+    if (hasUnsavedChanges) {
+      setShowUnsavedExitConfirm(true);
+      return;
+    }
+    router.push("/fridge");
+  };
+
+  const confirmExitWithoutSaving = () => {
+    setShowUnsavedExitConfirm(false);
+    router.push("/fridge");
+  };
+
   return {
     router,
     keyword,
@@ -265,6 +282,9 @@ export function useFridgeEditPage() {
     editingQtySuffix,
     isLoading,
     isSaving,
+    hasUnsavedChanges,
+    showUnsavedExitConfirm,
+    setShowUnsavedExitConfirm,
     pendingDeleteItem,
     setPendingDeleteItem,
     isDeleteMode,
@@ -287,5 +307,7 @@ export function useFridgeEditPage() {
     requestRemoveItem,
     confirmRemoveItem,
     saveChanges,
+    requestExit,
+    confirmExitWithoutSaving,
   };
 }

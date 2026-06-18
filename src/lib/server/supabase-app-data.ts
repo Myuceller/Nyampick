@@ -769,6 +769,7 @@ export async function getHomeSummaryFromDb(
           name: primaryChild.name,
           monthsOld: primaryChild.monthsOld,
           photoUrl: primaryChild.photoUrl,
+          babyFoodStartedOn: primaryChild.babyFoodStartedOn ?? null,
         }
       : null,
   };
