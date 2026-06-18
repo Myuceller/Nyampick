@@ -7,18 +7,47 @@ import { getAppUrl } from "@/lib/app-url";
 import "./globals.css";
 
 const appUrl = getAppUrl();
+const brandName = "냠픽";
+const brandAlternateNames = ["Nyampick", "nyampick", "냠픽 Nyampick"];
+const brandDescription =
+  "냠픽(Nyampick)은 아이 식단 기록, 냉장고 재료 관리, 영수증 스캔, AI 유아식 레시피 추천을 한 번에 관리하는 모바일 식단 도우미입니다.";
+const brandJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "@id": `${appUrl}/#webapp`,
+  name: brandName,
+  alternateName: brandAlternateNames,
+  url: appUrl,
+  applicationCategory: "LifestyleApplication",
+  operatingSystem: "Web, Android",
+  inLanguage: "ko-KR",
+  description: brandDescription,
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "KRW",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: brandName,
+    alternateName: brandAlternateNames,
+    url: appUrl,
+  },
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "냠픽 | 아이 식단 기록과 냉장고 기반 AI 레시피 추천",
+    default: "냠픽 Nyampick | 아이 식단 기록과 냉장고 기반 AI 레시피 추천",
     template: "%s | 냠픽",
   },
-  description:
-    "아이 식단 기록, 냉장고 재료 관리, 영수증 스캔, AI 유아식 레시피 추천을 한 번에 관리하는 모바일 식단 도우미입니다.",
-  applicationName: "냠픽",
+  description: brandDescription,
+  applicationName: "냠픽 Nyampick",
   keywords: [
     "냠픽",
+    "Nyampick",
+    "nyampick",
+    "냠픽 Nyampick",
     "아이 식단",
     "아기 식단",
     "이유식",
@@ -35,20 +64,18 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "냠픽 | 아이 식단 기록과 냉장고 기반 AI 레시피 추천",
-    description:
-      "아이 식단 기록, 냉장고 재료 관리, 영수증 스캔, AI 유아식 레시피 추천을 모바일에서 관리하세요.",
+    title: "냠픽 Nyampick | 아이 식단 기록과 냉장고 기반 AI 레시피 추천",
+    description: brandDescription,
     url: "/",
-    siteName: "냠픽",
+    siteName: "냠픽 Nyampick",
     type: "website",
     locale: "ko_KR",
-    images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "냠픽" }],
+    images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "냠픽 Nyampick" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "냠픽 | 아이 식단 기록과 냉장고 기반 AI 레시피 추천",
-    description:
-      "아이 식단 기록, 냉장고 재료 관리, AI 유아식 레시피 추천을 한 번에 관리하세요.",
+    title: "냠픽 Nyampick | 아이 식단 기록과 냉장고 기반 AI 레시피 추천",
+    description: brandDescription,
     images: ["/og-image.svg"],
   },
   appleWebApp: {
@@ -80,6 +107,10 @@ export default function RootLayout({
   return (
     <html lang="ko" translate="no">
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(brandJsonLd) }}
+        />
         <PwaRegister />
         <AuthGate>{children}</AuthGate>
         <Toaster richColors position="top-center" />

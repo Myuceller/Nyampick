@@ -4,25 +4,25 @@ import type { Metadata } from "next";
 import { Sparkles } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "냠픽 - 아이 식단과 냉장고 관리",
+  title: "냠픽 Nyampick - 아이 식단과 냉장고 관리",
   description:
-    "아이 식단 기록, 냉장고 재료 관리, 영수증 스캔, AI 레시피 추천을 한 번에 관리하는 모바일 식단 도우미입니다.",
+    "냠픽(Nyampick)은 아이 식단 기록, 냉장고 재료 관리, 영수증 스캔, AI 레시피 추천을 한 번에 관리하는 모바일 식단 도우미입니다.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "냠픽 - 아이 식단과 냉장고 관리",
+    title: "냠픽 Nyampick - 아이 식단과 냉장고 관리",
     description:
-      "아기 식단 기록부터 냉장고 재료 관리까지 모바일에서 간편하게 정리하세요.",
+      "냠픽(Nyampick)에서 아기 식단 기록부터 냉장고 재료 관리까지 모바일로 간편하게 정리하세요.",
     url: "/",
     type: "website",
-    images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "냠픽" }],
+    images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "냠픽 Nyampick" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "냠픽 - 아이 식단과 냉장고 관리",
+    title: "냠픽 Nyampick - 아이 식단과 냉장고 관리",
     description:
-      "아기 식단 기록부터 냉장고 재료 관리까지 모바일에서 간편하게 정리하세요.",
+      "냠픽(Nyampick)에서 아기 식단 기록부터 냉장고 재료 관리까지 모바일로 간편하게 정리하세요.",
     images: ["/og-image.svg"],
   },
 };
