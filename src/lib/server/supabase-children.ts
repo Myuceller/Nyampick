@@ -9,6 +9,8 @@ export interface ChildProfile {
   monthsOld: number;
   isPrimary: boolean;
   photoUrl?: string;
+  allergies: string[];
+  babyFoodStartedOn?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,6 +22,8 @@ function toChildProfile(row: {
   months_old: number;
   is_primary: boolean;
   photo_url?: string | null;
+  allergies?: string[] | null;
+  baby_food_started_on?: string | null;
   created_at: string;
   updated_at: string;
 }): ChildProfile {
@@ -30,6 +34,8 @@ function toChildProfile(row: {
     monthsOld: row.months_old,
     isPrimary: row.is_primary,
     photoUrl: row.photo_url ?? undefined,
+    allergies: Array.isArray(row.allergies) ? row.allergies : [],
+    babyFoodStartedOn: row.baby_food_started_on ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -78,7 +84,7 @@ function isMissingColumnError(error: { code?: string; message?: string } | null 
 }
 
 const CHILD_SELECT_WITH_PHOTO =
-  "id,user_id,name,months_old,is_primary,photo_url,created_at,updated_at";
+  "id,user_id,name,months_old,is_primary,photo_url,allergies,baby_food_started_on,created_at,updated_at";
 const CHILD_SELECT_BASE = "id,user_id,name,months_old,is_primary,created_at,updated_at";
 
 export async function listChildrenFromDb(userId: string): Promise<ChildProfile[]> {
@@ -214,7 +220,14 @@ export async function addChildToDb(input: {
 export async function updateChildInDb(
   userId: string,
   childId: string,
-  patch: { name?: string; monthsOld?: number; isPrimary?: boolean; photoUrl?: string | null }
+  patch: {
+    name?: string;
+    monthsOld?: number;
+    isPrimary?: boolean;
+    photoUrl?: string | null;
+    allergies?: string[];
+    babyFoodStartedOn?: string | null;
+  }
 ): Promise<ChildProfile | null> {
   const supabase = getSupabaseAdmin();
   if (patch.isPrimary) {
@@ -224,11 +237,15 @@ export async function updateChildInDb(
       .eq("user_id", userId);
   }
 
-  const updatePatch: Record<string, string | number | boolean | null> = {};
+  const updatePatch: Record<string, string | number | boolean | string[] | null> = {};
   if (patch.name !== undefined) updatePatch.name = patch.name;
   if (patch.monthsOld !== undefined) updatePatch.months_old = patch.monthsOld;
   if (patch.isPrimary !== undefined) updatePatch.is_primary = patch.isPrimary;
   if (patch.photoUrl !== undefined) updatePatch.photo_url = patch.photoUrl;
+  if (patch.allergies !== undefined) updatePatch.allergies = patch.allergies;
+  if (patch.babyFoodStartedOn !== undefined) {
+    updatePatch.baby_food_started_on = patch.babyFoodStartedOn;
+  }
 
   const { data, error } = await supabase
     .from("child_profiles")
@@ -239,6 +256,12 @@ export async function updateChildInDb(
     .maybeSingle();
   if (error && isMissingColumnError(error) && patch.photoUrl !== undefined) {
     throw new Error("photo_url column is missing. Run docs/supabase-meals.sql migration.");
+  }
+  if (error && isMissingColumnError(error) && patch.allergies !== undefined) {
+    throw new Error("allergies column is missing. Run docs/supabase-meals.sql migration.");
+  }
+  if (error && isMissingColumnError(error) && patch.babyFoodStartedOn !== undefined) {
+    throw new Error("baby_food_started_on column is missing. Run docs/supabase-meals.sql migration.");
   }
   if (error && isMissingColumnError(error)) {
     const { data: fallbackData, error: fallbackError } = await supabase

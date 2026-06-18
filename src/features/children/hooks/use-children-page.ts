@@ -11,6 +11,8 @@ interface ChildProfile {
   monthsOld: number;
   isPrimary: boolean;
   photoUrl?: string;
+  allergies?: string[];
+  babyFoodStartedOn?: string | null;
 }
 
 export function useChildrenPage() {
@@ -25,6 +27,9 @@ export function useChildrenPage() {
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
   const [editingChildName, setEditingChildName] = useState("");
   const [editingChildMonthsOld, setEditingChildMonthsOld] = useState("0");
+  const [editingChildAllergies, setEditingChildAllergies] = useState<string[]>([]);
+  const [editingBabyFoodStartedOn, setEditingBabyFoodStartedOn] = useState("");
+  const [newAllergyInput, setNewAllergyInput] = useState("");
   const [isUpdatingChild, setIsUpdatingChild] = useState(false);
   const [updatingPhotoChildId, setUpdatingPhotoChildId] = useState<string | null>(null);
 
@@ -128,12 +133,39 @@ export function useChildrenPage() {
     setEditingChildId(child.id);
     setEditingChildName(child.name);
     setEditingChildMonthsOld(String(child.monthsOld));
+    setEditingChildAllergies(child.allergies ?? []);
+    setEditingBabyFoodStartedOn(child.babyFoodStartedOn ?? "");
+    setNewAllergyInput("");
   };
 
   const cancelEditChild = () => {
     setEditingChildId(null);
     setEditingChildName("");
     setEditingChildMonthsOld("0");
+    setEditingChildAllergies([]);
+    setEditingBabyFoodStartedOn("");
+    setNewAllergyInput("");
+  };
+
+  const toggleEditingAllergy = (allergy: string) => {
+    setEditingChildAllergies((current) =>
+      current.includes(allergy)
+        ? current.filter((item) => item !== allergy)
+        : [...current, allergy]
+    );
+  };
+
+  const addEditingAllergy = () => {
+    const allergy = newAllergyInput.trim();
+    if (!allergy) return;
+    if (allergy.length > 30) {
+      toast.error("알레르기 이름은 30자 이하로 입력해주세요.");
+      return;
+    }
+    setEditingChildAllergies((current) =>
+      current.includes(allergy) ? current : [...current, allergy]
+    );
+    setNewAllergyInput("");
   };
 
   const saveChildDetails = async () => {
@@ -153,7 +185,13 @@ export function useChildrenPage() {
       const res = await authedFetch("/api/children", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: editingChildId, name, monthsOld }),
+        body: JSON.stringify({
+          id: editingChildId,
+          name,
+          monthsOld,
+          allergies: editingChildAllergies,
+          babyFoodStartedOn: editingBabyFoodStartedOn || null,
+        }),
       });
       const json = (await res.json()) as { message?: string };
       if (!res.ok) throw new Error(json.message ?? "아기 정보 수정에 실패했습니다.");
@@ -193,6 +231,8 @@ export function useChildrenPage() {
     deleteChild,
     deletingChildId,
     editingChildId,
+    editingChildAllergies,
+    editingBabyFoodStartedOn,
     editingChildMonthsOld,
     editingChildName,
     isSubmitting,
@@ -203,14 +243,20 @@ export function useChildrenPage() {
     loading,
     newMonthsOld,
     newName,
+    newAllergyInput,
     router,
+    addEditingAllergy,
     saveChildDetails,
     saveChildPhoto,
+    setEditingChildAllergies,
+    setEditingBabyFoodStartedOn,
     setEditingChildMonthsOld,
     setEditingChildName,
+    setNewAllergyInput,
     setNewMonthsOld,
     setNewName,
     setPrimaryChild,
     startEditChild,
+    toggleEditingAllergy,
   };
 }

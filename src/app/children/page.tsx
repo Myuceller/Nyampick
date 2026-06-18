@@ -9,15 +9,18 @@ import { useChildrenPage } from "@/features/children/hooks/use-children-page";
 import { fileToResizedImageDataUrl } from "@/lib/client-image";
 import { cn } from "@/lib/utils";
 
-const allergySamples = [
-  ["우유", "달걀"],
-  ["갑각류", "열대과일"],
-  [],
+const allergyOptions = [
+  "우유",
+  "달걀",
+  "밀",
+  "대두",
+  "땅콩",
+  "견과류",
+  "생선",
+  "갑각류",
+  "복숭아",
+  "토마토",
 ];
-
-function getAllergies(index: number) {
-  return allergySamples[index] ?? [];
-}
 
 function Avatar({ photoUrl }: { photoUrl?: string }) {
   if (photoUrl) {
@@ -58,6 +61,8 @@ export default function ChildrenPage() {
     children,
     deleteChild,
     deletingChildId,
+    editingChildAllergies,
+    editingBabyFoodStartedOn,
     editingChildMonthsOld,
     editingChildId,
     editingChildName,
@@ -77,6 +82,12 @@ export default function ChildrenPage() {
     startEditChild,
     saveChildPhoto,
     updatingPhotoChildId,
+    newAllergyInput,
+    addEditingAllergy,
+    setNewAllergyInput,
+    setEditingChildAllergies,
+    setEditingBabyFoodStartedOn,
+    toggleEditingAllergy,
   } = useChildrenPage();
 
   const editingChild = children.find((child) => child.id === editingChildId) ?? null;
@@ -146,8 +157,8 @@ export default function ChildrenPage() {
             </div>
           ) : null}
 
-          {children.map((child, index) => {
-            const allergies = getAllergies(index);
+          {children.map((child) => {
+            const allergies = child.allergies ?? [];
             const isActionOpen = actionChildId === child.id;
             const canSelectChild = !linkedMode && !child.isPrimary;
 
@@ -206,10 +217,14 @@ export default function ChildrenPage() {
                       생후 {child.monthsOld}개월
                     </p>
                     {allergies.length > 0 ? (
-                      <p className="mt-1 text-[18px] font-medium text-[#ff3030]">
+                      <p className="mt-1 line-clamp-2 text-[15px] font-semibold leading-[1.55] text-[#f59e0b]">
                         알레르기: {allergies.join(", ")}
                       </p>
-                    ) : null}
+                    ) : (
+                      <p className="mt-1 text-[15px] font-medium leading-[1.55] text-[#8a9490]">
+                        등록된 알레르기 없음
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -286,7 +301,7 @@ export default function ChildrenPage() {
 
       {showAddForm ? (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/35 px-4">
-          <div className="mb-4 w-full max-w-[448px] rounded-[24px] bg-white p-5">
+          <div className="mb-4 max-h-[calc(100dvh-32px)] w-full max-w-[448px] overflow-y-auto rounded-[24px] bg-white p-5">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-[20px] font-extrabold text-[#202725]">아기 추가</h2>
               <button
@@ -327,7 +342,7 @@ export default function ChildrenPage() {
 
       {editingChild ? (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/35 px-4">
-          <div className="mb-4 w-full max-w-[448px] rounded-[24px] bg-white p-5">
+          <div className="mb-4 max-h-[calc(100dvh-32px)] w-full max-w-[448px] overflow-y-auto rounded-[24px] bg-white p-5">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-[20px] font-extrabold leading-[1.32] text-[#202725]">
                 아기 수정하기
@@ -390,16 +405,109 @@ export default function ChildrenPage() {
                   className="h-12 w-full rounded-xl border border-[#d5ddda] px-4 text-[16px] leading-[1.65] outline-none focus:border-[#57bf8e] focus:ring-4 focus:ring-[#57bf8e]/15"
                 />
               </label>
-              <button
-                type="button"
-                onClick={() => void saveChildDetails()}
-                disabled={isUpdatingChild}
-                className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#57bf8e] text-[16px] font-extrabold text-white disabled:opacity-60"
-              >
-                <Check className="h-5 w-5" />
-                {isUpdatingChild ? "저장 중..." : "수정 완료"}
-              </button>
+              <label className="block">
+                <span className="mb-2 block text-[13px] font-bold leading-[1.55] text-[#202725]">
+                  이유식 시작 날짜
+                </span>
+                <input
+                  value={editingBabyFoodStartedOn}
+                  onChange={(event) => setEditingBabyFoodStartedOn(event.target.value)}
+                  type="date"
+                  className="h-12 w-full rounded-xl border border-[#d5ddda] px-4 text-[16px] leading-[1.65] text-[#202725] outline-none focus:border-[#57bf8e] focus:ring-4 focus:ring-[#57bf8e]/15"
+                />
+                <span className="mt-1 block text-[12px] font-medium leading-[1.55] text-[#8a9490]">
+                  홈 화면에 이유식 시작 D+일수로 표시됩니다.
+                </span>
+              </label>
             </div>
+
+            <section className="mt-6 rounded-[18px] border border-[#e5e8ec] bg-white p-4">
+              <div>
+                <p className="text-[15px] font-bold leading-[1.55] text-[#202725]">
+                  알레르기
+                </p>
+                <p className="mt-1 text-[13px] font-medium leading-[1.55] text-[#6b7280]">
+                  아이에게 주의가 필요한 재료를 선택하거나 직접 추가해요.
+                </p>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {allergyOptions.map((allergy) => {
+                  const selected = editingChildAllergies.includes(allergy);
+                  return (
+                    <button
+                      key={allergy}
+                      type="button"
+                      onClick={() => toggleEditingAllergy(allergy)}
+                      className={cn(
+                        "rounded-full border px-3 py-2 text-[14px] font-bold leading-[1.4] transition",
+                        selected
+                          ? "border-[#57bf8e] bg-[#57bf8e] text-white"
+                          : "border-[#d5ddda] bg-white text-[#3b4440] active:bg-[#f0faf5]"
+                      )}
+                    >
+                      {allergy}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 flex gap-2">
+                <input
+                  value={newAllergyInput}
+                  onChange={(event) => setNewAllergyInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      addEditingAllergy();
+                    }
+                  }}
+                  placeholder="직접 입력"
+                  className="h-11 min-w-0 flex-1 rounded-xl border border-[#d5ddda] px-3 text-[15px] leading-[1.65] outline-none focus:border-[#57bf8e] focus:ring-4 focus:ring-[#57bf8e]/15"
+                />
+                <button
+                  type="button"
+                  onClick={addEditingAllergy}
+                  className="h-11 shrink-0 rounded-xl bg-[#202725] px-4 text-[14px] font-extrabold text-white"
+                >
+                  추가
+                </button>
+              </div>
+
+              {editingChildAllergies.length > 0 ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {editingChildAllergies.map((allergy) => (
+                    <button
+                      key={allergy}
+                      type="button"
+                      onClick={() =>
+                        setEditingChildAllergies((current) =>
+                          current.filter((item) => item !== allergy)
+                        )
+                      }
+                      className="flex items-center gap-1 rounded-full bg-[#fff7ed] px-3 py-2 text-[13px] font-bold leading-[1.4] text-[#c2410c]"
+                    >
+                      {allergy}
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 rounded-[14px] bg-[#f7f8f9] px-3 py-3 text-[13px] font-medium leading-[1.55] text-[#6b7280]">
+                  등록된 알레르기가 없으면 레시피와 식단을 일반 기준으로 확인합니다.
+                </p>
+              )}
+            </section>
+
+            <button
+              type="button"
+              onClick={() => void saveChildDetails()}
+              disabled={isUpdatingChild}
+              className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#57bf8e] text-[16px] font-extrabold text-white disabled:opacity-60"
+            >
+              <Check className="h-5 w-5" />
+              {isUpdatingChild ? "저장 중..." : "수정 완료"}
+            </button>
           </div>
         </div>
       ) : null}

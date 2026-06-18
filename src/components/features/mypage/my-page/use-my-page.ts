@@ -21,6 +21,7 @@ export function useMyPage() {
   const [babyName, setBabyName] = useState("");
   const [babyMonthsOld, setBabyMonthsOld] = useState("0");
   const [babyPhotoUrl, setBabyPhotoUrl] = useState("");
+  const [babyAllergies, setBabyAllergies] = useState<string[]>([]);
   const [childCount, setChildCount] = useState(0);
   const [familyMemberCount, setFamilyMemberCount] = useState(0);
   const [familyAvatars, setFamilyAvatars] = useState<FamilyAvatarSummary[]>([]);
@@ -59,6 +60,7 @@ export function useMyPage() {
             setBabyName(primary.name);
             setBabyMonthsOld(String(primary.monthsOld));
             setBabyPhotoUrl(primary.photoUrl ?? "");
+            setBabyAllergies(primary.allergies ?? []);
           }
         }
 
@@ -119,6 +121,7 @@ export function useMyPage() {
     babyName,
     babyMonthsOld,
     babyPhotoUrl,
+    babyAllergies,
     childCount,
     familyMemberCount,
     familyAvatars,
