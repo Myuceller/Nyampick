@@ -3,19 +3,19 @@ import Link from "next/link";
 import { ArrowLeft, CalendarDays, ChefHat, Refrigerator } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "서비스 소개",
+  title: "냠픽 Nyampick 서비스 소개",
   description:
-    "냠픽은 아이 식단 기록, 냉장고 재료 관리, AI 유아식 레시피 추천을 연결해 매일의 식사 준비를 돕는 모바일 서비스입니다.",
+    "냠픽(Nyampick)은 아이 식단 기록, 냉장고 재료 관리, AI 유아식 레시피 추천을 연결해 매일의 식사 준비를 돕는 모바일 서비스입니다.",
   alternates: {
     canonical: "/about",
   },
   openGraph: {
-    title: "냠픽 서비스 소개",
+    title: "냠픽 Nyampick 서비스 소개",
     description:
-      "아이 식단 기록부터 냉장고 재료 기반 AI 레시피 추천까지 한 번에 관리하세요.",
+      "냠픽(Nyampick)에서 아이 식단 기록부터 냉장고 재료 기반 AI 레시피 추천까지 한 번에 관리하세요.",
     url: "/about",
     type: "website",
-    images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "냠픽" }],
+    images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "냠픽 Nyampick" }],
   },
 };
 
