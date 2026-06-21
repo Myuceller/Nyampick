@@ -725,9 +725,18 @@ function SocialButtons({
           className="flex h-[52px] w-[52px] items-center justify-center rounded-[18px] border border-[#d4ede0] bg-white shadow-[0_2px_10px_rgba(87,191,142,0.06)] transition active:scale-[0.96] active:bg-[#f8fffb] disabled:opacity-60"
           aria-label={isSignin ? "카카오로 로그인" : "카카오로 시작하기"}
         >
-          <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[#fee500] text-[13px] font-black text-[#191600]">
-            {isSocialSubmitting && socialProvider === "kakao" ? "..." : "K"}
-          </span>
+          {isSocialSubmitting && socialProvider === "kakao" ? (
+            <span className="text-[13px] font-black text-[#191600]">...</span>
+          ) : (
+            <Image
+              src="/kakaotalk_icon.png"
+              alt=""
+              width={26}
+              height={26}
+              className="h-[26px] w-[26px] object-contain"
+              aria-hidden="true"
+            />
+          )}
         </button>
         <button
           type="button"
@@ -736,9 +745,18 @@ function SocialButtons({
           className="flex h-[52px] w-[52px] items-center justify-center rounded-[18px] border border-[#d4ede0] bg-white shadow-[0_2px_10px_rgba(87,191,142,0.06)] transition active:scale-[0.96] active:bg-[#f8fffb] disabled:opacity-60"
           aria-label={isSignin ? "Google로 로그인" : "Google로 시작하기"}
         >
-          <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[#d8dde3] bg-white text-[13px] font-black text-[#4285f4]">
-            {isSocialSubmitting && socialProvider === "google" ? "..." : "G"}
-          </span>
+          {isSocialSubmitting && socialProvider === "google" ? (
+            <span className="text-[13px] font-black text-[#4285f4]">...</span>
+          ) : (
+            <Image
+              src="/google_icon.png"
+              alt=""
+              width={26}
+              height={26}
+              className="h-[26px] w-[26px] object-contain"
+              aria-hidden="true"
+            />
+          )}
         </button>
         <button
           type="button"
