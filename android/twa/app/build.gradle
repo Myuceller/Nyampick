@@ -27,11 +27,11 @@ def twaManifest = [
     name: '냠픽', // The application name.
     launcherName: '냠픽', // The name shown on the Android Launcher.
     themeColor: '#57BF8E', // The color used for the status bar.
-    themeColorDark: '#000000', // The color used for the dark status bar.
-    navigationColor: '#000000', // The color used for the navigation bar.
-    navigationColorDark: '#000000', // The color used for the dark navbar.
-    navigationDividerColor: '#000000', // The navbar divider color.
-    navigationDividerColorDark: '#000000', // The dark navbar divider color.
+    themeColorDark: '#57BF8E', // The color used for the dark status bar.
+    navigationColor: '#FDFEFD', // The color used for the navigation bar.
+    navigationColorDark: '#FDFEFD', // The color used for the dark navbar.
+    navigationDividerColor: '#E5E8EC', // The navbar divider color.
+    navigationDividerColorDark: '#E5E8EC', // The dark navbar divider color.
     backgroundColor: '#FDFEFD', // The color used for the splash screen background.
     enableNotifications: true, // Set to true to enable notification delegation.
     // Every shortcut must include the following fields:

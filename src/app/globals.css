@@ -79,6 +79,7 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     --background: 140 30% 97%;
     --foreground: 150 10% 15%;
     --card: 0 0% 100%;
@@ -129,12 +130,21 @@
     display: none;
   }
   html {
+    color-scheme: light;
+    background: #f7f8f9;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
   body {
     @apply bg-background text-foreground;
+    background-color: #f7f8f9;
+    color: #1a1d1f;
     overflow-x: hidden;
+  }
+  input,
+  textarea,
+  select {
+    color-scheme: light;
   }
   button {
     -webkit-tap-highlight-color: transparent;

@@ -1,8 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import { CalendarDays } from "lucide-react";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import {
+  BabyFoodGuideBanner,
+  BabyFoodGuideSheet,
+} from "@/components/features/meal/baby-food-guide";
 import { MealList } from "@/components/features/meal/meal-list";
 import { HomeSkeleton } from "@/components/features/meal/home-skeleton";
 import { PwaInstallPrompt } from "@/components/layout/pwa-install-prompt";
@@ -27,6 +32,7 @@ function getBabyFoodDayLabel(startedOn: string | null) {
 }
 
 export default function Page() {
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const {
     babyFoodStartedOn,
     calendarMode,
@@ -105,6 +111,8 @@ export default function Page() {
             </button>
           </div>
         </div>
+
+        <BabyFoodGuideBanner onOpen={() => setIsGuideOpen(true)} />
 
         <div className="mt-4 rounded-[22px] bg-[#fdfefd] px-4 py-4">
           <div className="mb-3 flex items-center justify-between">
@@ -249,6 +257,7 @@ export default function Page() {
       />
 
       <BottomNav />
+      <BabyFoodGuideSheet open={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
     </div>
   );
 }

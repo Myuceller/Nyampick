@@ -34,6 +34,49 @@
 - [ ] 식단표 이미지/차트 구성 재설계
   - 사유: Notion 식단표 레퍼런스 확인 필요
 
+## 릴리즈 개선 묶음 요약
+
+### 인증/계정
+
+- 소셜 로그인 첫 진입 실패를 줄이기 위해 OAuth 콜백 중복 처리와 redirect origin 흐름을 정리했다.
+- 이메일 회원가입 인증번호 요청/확인/가입 흐름을 추가했다.
+- 이미 가입된 이메일은 인증 요청과 가입 단계에서 차단하도록 정리했다.
+- 비밀번호 재설정 메일 발송과 recovery 링크 기반 새 비밀번호 변경 흐름을 추가했다.
+- 마이페이지 보호자 프로필에서 로그인된 이메일로 비밀번호 재설정 메일을 보낼 수 있게 연결했다.
+- 회원탈퇴 확인 모달, 사용자 데이터 삭제, Supabase Auth 계정 삭제, 세션 정리 흐름을 구현했다.
+
+### 주요 사용자 흐름
+
+- 아기 관리에서 아기 카드 탭으로 대표 아기를 선택하고, 이름/개월 수/사진을 수정할 수 있게 했다.
+- 이유식 시작 날짜와 D+ 표시를 홈 아기 카드에 연결했다.
+- 알레르기 선택/직접 입력/삭제를 아기 수정 흐름에 넣고, 마이페이지 대표 아기 알레르기 표시와 연결했다.
+- 영수증 스캔 UX를 촬영/선택 안내, 분석 중 문구, 실패/재시도, 결과 수정 후 추가 흐름으로 정리했다.
+- 메뉴 추가 화면의 상단 컨트롤 고정, 선택 카드 전체 표시, 최근검색어 저장 기준을 개선했다.
+- 식단표 이미지 저장 시 잘림을 줄이고, 오늘/주간 탭별 저장 이미지를 분리했다.
+
+### UI/디자인/모바일 완성도
+
+- 냉장고/레시피북/마이페이지 상단 sticky 영역을 정리하고 safe-area 겹침을 보정했다.
+- 전역 스크롤바 숨김과 가로 overflow 방지를 적용했다.
+- 로그인/회원가입 화면을 목업 기반으로 냠픽 디자인에 맞게 교체했다.
+- 회원가입 화면에 이용약관/개인정보 필수 동의 UI와 약관 보기 모달을 추가했다.
+- 온보딩 완료 후 유입 경로 설문을 추가하고 `user_metadata.referral_source`에 저장했다.
+- 가족 역할 선택지를 `배우자/가족/친구/도우미`로 정리했다.
+- PWA/TWA 앱 아이콘과 스플래시 리소스를 손그림 누끼 아이콘으로 통일했다.
+
+### 배포/운영
+
+- `release:check`, `release:pr` 명령어로 dev 검증 후 main PR을 만드는 배포 PR 자동화 스크립트를 추가했다.
+- SEO에서 `냠픽`과 `Nyampick`을 같은 브랜드로 인식하도록 메타데이터/JSON-LD를 보강했다.
+
+### 현재 브랜치에서 추가 정리
+
+- OS 다크모드 때문에 앱 바깥/배경이 검게 보이는 문제를 막기 위해 웹 전역을 라이트 모드로 고정했다.
+- Android TWA의 dark status/navigation 색상을 검정에서 냠픽 라이트 팔레트로 바꿨다.
+- `main_app_icon1.png` 투명 원본을 기준으로 웹 아이콘, Android launcher icon, maskable icon, splash 이미지를 다시 생성했다.
+- Android adaptive icon XML을 투명 배경 + foreground 아이콘 구조로 단순화했다.
+- 다크모드 토글은 시도했지만 내부 화면의 고정 색상 대응 범위가 커서 이번 브랜치에서는 롤백했다.
+
 ## Done
 
 - [x] 출시 전 개선 항목을 문서화함
@@ -126,6 +169,10 @@
   - 위치: `src/app/children/page.tsx`, `src/features/children/hooks/use-children-page.ts`, `src/app/api/children/route.ts`, `src/lib/server/supabase-children.ts`, `src/components/features/mypage/my-page.tsx`, `docs/supabase-meals.sql`
   - 범위: 아기 수정 바텀시트에서 알레르기 선택/직접 입력/삭제, 대표 아기 알레르기 마이페이지 표시, `child_profiles.allergies` 저장
   - 배포 전 확인: Supabase SQL에서 `alter table public.child_profiles add column if not exists allergies text[] not null default '{}';` 적용 필요
+- [x] 라이트 모드 고정 및 Android TWA 아이콘/색상 정리
+  - 위치: `src/app/globals.css`, `android/twa/twa-manifest.json`, `android/twa/app/build.gradle`, `android/twa/app/src/main/res/*`
+  - 범위: OS 다크모드 자동 반전 방지, TWA dark status/navigation 색상 라이트 팔레트 적용, `main_app_icon1.png` 기반 launcher/maskable/splash 리소스 재생성
+  - 검증: `npm run lint`, `npm run build`, `./gradlew assembleDebug`, 에뮬레이터 APK 재설치
 
 ## 다음 작업 후보
 
