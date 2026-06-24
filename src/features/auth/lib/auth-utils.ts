@@ -168,6 +168,12 @@ export async function ensureProfileSeeded(accessToken: string) {
       );
     }
 
+    if (response.status === 400 && body.code === "KAKAO_EMAIL_REQUIRED") {
+      throw new FatalProfileSeedError(
+        body.message ?? "카카오 계정에서 이메일 제공에 동의해 주세요."
+      );
+    }
+
     const message = body.message ?? "프로필 초기화에 실패했습니다.";
     if (response.status >= 500 || response.status === 429) {
       throw new RecoverableProfileSeedError(message);
@@ -303,6 +309,13 @@ export function toFriendlyAuthErrorMessage(error: unknown): string {
 
   if (normalized.includes("duplicate_email_account")) {
     return "이미 가입된 이메일입니다.";
+  }
+
+  if (
+    normalized.includes("kakao_email_required") ||
+    raw.includes("카카오 계정에서 이메일 제공")
+  ) {
+    return "카카오 계정에서 이메일 제공에 동의해 주세요.";
   }
 
   return raw;
