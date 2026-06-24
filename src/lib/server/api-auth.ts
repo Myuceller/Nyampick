@@ -1,4 +1,5 @@
 import type { User } from "@supabase/supabase-js";
+import { readAuthUserEmail } from "@/features/auth/lib/social-profile";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
 const AUTH_CACHE_TTL_MS = 60_000;
@@ -39,33 +40,10 @@ function setCachedUser(token: string, user: User) {
   });
 }
 
-function readEmailFromUser(user: User): string | undefined {
-  const direct = user.email?.trim().toLowerCase();
-  if (direct) return direct;
-
-  const metadata = user.user_metadata as
-    | Record<string, unknown>
-    | undefined;
-  const fromMetadata = metadata?.email;
-  if (typeof fromMetadata === "string" && fromMetadata.trim().length > 0) {
-    return fromMetadata.trim().toLowerCase();
-  }
-
-  const kakaoAccount = metadata?.kakao_account as
-    | Record<string, unknown>
-    | undefined;
-  const kakaoEmail = kakaoAccount?.email;
-  if (typeof kakaoEmail === "string" && kakaoEmail.trim().length > 0) {
-    return kakaoEmail.trim().toLowerCase();
-  }
-
-  return undefined;
-}
-
 async function resolveCanonicalUserIdByEmail(
   user: User
 ): Promise<string> {
-  const email = readEmailFromUser(user);
+  const email = readAuthUserEmail(user)?.toLowerCase();
   if (!email) return user.id;
 
   const cached = EMAIL_CANONICAL_CACHE.get(email);

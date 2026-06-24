@@ -173,6 +173,10 @@
   - 위치: `src/app/globals.css`, `android/twa/twa-manifest.json`, `android/twa/app/build.gradle`, `android/twa/app/src/main/res/*`
   - 범위: OS 다크모드 자동 반전 방지, TWA dark status/navigation 색상 라이트 팔레트 적용, `main_app_icon1.png` 기반 launcher/maskable/splash 리소스 재생성
   - 검증: `npm run lint`, `npm run build`, `./gradlew assembleDebug`, 에뮬레이터 APK 재설치
+- [x] 인증/가입/온보딩 잔여 기준 정리
+  - 위치: `src/constants/terms.ts`, `src/constants/referral.ts`, `src/features/auth/lib/auth-terms.ts`, `src/features/auth/lib/social-profile.ts`, `src/features/auth/ui/auth-form-view.tsx`, `src/features/auth/ui/referral-survey-view.tsx`, `src/app/api/profile/route.ts`, `docs/kakao-social-auth-scope.md`, `tests/auth-polish.test.ts`
+  - 범위: 약관 본문 상수 분리, 필수 약관 검증 유틸화, 유입 경로 선택지 정리, 카카오 이메일 누락 안내, 카카오 소셜 로그인 수신 정보와 본인인증 한계 문서화
+  - DB 변경: 없음. 유입 경로는 Supabase Auth `user_metadata.referral_source`에 저장
 
 ## 다음 작업 후보
 
