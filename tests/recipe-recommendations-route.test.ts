@@ -134,6 +134,7 @@ test("recommendation route redacts logs and returns correlation IDs", () => {
   assert.match(logBlock, /ingredientCount/);
   assert.match(routeSource, /X-Correlation-ID/);
   assert.match(routeSource, /Cache-Control/);
+  assert.match(routeSource, /classifyRecipeAiFailure\(cause\)/);
   assert.doesNotMatch(routeSource, /instanceof Error\s*\?\s*\w+\.message/);
   assert.doesNotMatch(routeSource, /catch\s*\(\s*error\s*\)/);
 });

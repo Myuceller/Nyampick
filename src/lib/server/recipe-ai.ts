@@ -26,15 +26,22 @@ export {
 } from "@/lib/ai/recipe-quality-gate.ts";
 export { parseRecommendations } from "@/lib/ai/recipe-response-parser.ts";
 
+export class RecipeAiConfigurationError extends Error {
+  constructor() {
+    super("Recipe AI server configuration is missing");
+    this.name = "RecipeAiConfigurationError";
+  }
+}
+
 export async function generateRecipeRecommendationsWithOpenAI(
   input: GenerateRecipeInput
 ): Promise<AiRecipeGenerationResult> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is missing");
+    throw new RecipeAiConfigurationError();
   }
 
-  const model = process.env.OPENAI_MODEL ?? "gpt-4.1-mini";
+  const model = process.env.OPENAI_MODEL?.trim() || "gpt-4.1-mini";
   const client = new OpenAI({
     apiKey,
     ...RECIPE_MODEL_CLIENT_OPTIONS,

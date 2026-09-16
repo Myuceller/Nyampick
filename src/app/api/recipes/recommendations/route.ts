@@ -8,6 +8,7 @@ import {
   type RecipeRecommendationApiErrorCode,
 } from "@/lib/server/recipe-recommendation-request";
 import { generateRecipeRecommendationsWithOpenAI } from "@/lib/server/recipe-ai";
+import { classifyRecipeAiFailure } from "@/lib/server/recipe-ai-diagnostics";
 import {
   consumeAiAttempt,
   consumeUserDailyTokenBudget,
@@ -72,8 +73,12 @@ function safelyRegisterAiSuccess(userId: string) {
   }
 }
 
-function logInternalFailure(correlationId: string, phase: string) {
-  console.error("[ai.recipe.failure]", { correlationId, phase });
+function logInternalFailure(
+  correlationId: string,
+  phase: string,
+  diagnostic?: ReturnType<typeof classifyRecipeAiFailure>
+) {
+  console.error("[ai.recipe.failure]", { correlationId, phase, ...diagnostic });
 }
 
 export async function POST(request: Request) {
@@ -209,9 +214,9 @@ export async function POST(request: Request) {
       200,
       correlationId
     );
-  } catch {
+  } catch (cause) {
     safelyRegisterAiFailure(user.id);
-    logInternalFailure(correlationId, "generation");
+    logInternalFailure(correlationId, "generation", classifyRecipeAiFailure(cause));
     return publicErrorResponse("AI_RECOMMENDATION_UNAVAILABLE", correlationId);
   }
 }
