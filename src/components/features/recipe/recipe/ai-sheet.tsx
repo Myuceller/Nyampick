@@ -8,6 +8,7 @@ import {
 import { useEffect, useState } from "react";
 import { AppSearchInput } from "@/components/ui/app-search-input";
 import { cn } from "@/lib/utils";
+import { MAX_RECIPE_RECOMMENDATION_INGREDIENTS } from "@/lib/dto/recipe";
 import type { AiGenerationStage } from "./use-recipe-page";
 import { FridgeSection, GeneratedRecipe } from "./types";
 
@@ -242,7 +243,7 @@ export function AiSheet({
                   <span className="text-[15px] font-bold text-[#1f2523]">전체 선택</span>
                 </div>
                 <span className="text-[15px] font-medium text-[#1f2523]">
-                  {selectedIngredientCount}개 선택됨
+                  {selectedIngredientCount}/{MAX_RECIPE_RECOMMENDATION_INGREDIENTS}개 선택됨
                 </span>
               </button>
 

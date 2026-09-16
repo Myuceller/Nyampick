@@ -25,7 +25,17 @@ import {
   releaseAuthCodeExchange,
   toFriendlyAuthErrorMessage,
   validateAuthForm,
-} from "../lib/auth-utils";
+} from "@/features/auth/lib/auth-utils";
+import {
+  clearPendingRegistrationConsent,
+  createRegistrationConsentAttempt,
+  getPendingRegistrationConsent,
+  isRequiredRegistrationConsentAccepted,
+  recordRegistrationConsent,
+  RegistrationConsentSubmissionError,
+  savePendingRegistrationConsent,
+  type RegistrationConsentInput,
+} from "@/features/auth/lib/registration-consent";
 
 const OAUTH_SESSION_WAIT_MS = 4_000;
 const OAUTH_SESSION_POLL_MS = 150;
@@ -61,7 +71,34 @@ export function useAuthPage() {
   const isFinalizingSessionRef = useRef(false);
   const autoStartedSocialRef = useRef(false);
   const lastSessionRef = useRef<Session | null>(null);
+  const pendingRegistrationConsentRef = useRef<string | null>(null);
   const isBusy = isSubmitting || isSocialSubmitting;
+
+  const recordPendingRegistrationConsent = useCallback(async (session: Session) => {
+    const pending = getPendingRegistrationConsent(
+      readAuthCallbackParams().registrationAttempt
+    );
+    if (pending) pendingRegistrationConsentRef.current = pending.attemptId;
+    const attemptId = pendingRegistrationConsentRef.current;
+    if (!attemptId) return;
+
+    try {
+      await recordRegistrationConsent(session.access_token, attemptId);
+      clearPendingRegistrationConsent();
+      pendingRegistrationConsentRef.current = null;
+    } catch (error) {
+      if (
+        error instanceof RegistrationConsentSubmissionError &&
+        error.status !== undefined &&
+        error.status < 500
+      ) {
+        throw new FatalProfileSeedError(error.message);
+      }
+      throw new RecoverableProfileSeedError(
+        error instanceof Error ? error.message : "약관 동의를 저장하지 못했습니다."
+      );
+    }
+  }, []);
 
   useEffect(() => {
     if (screenMode !== "loading") {
@@ -101,6 +138,7 @@ export function useAuthPage() {
     const finalizeSession = async (session: Session | null) => {
       if (!active) return;
       if (!session) {
+        pendingRegistrationConsentRef.current = null;
         setCachedHasSession(false);
         setLoadingPhase("session");
         if (hasAuthNextPath()) {
@@ -116,6 +154,7 @@ export function useAuthPage() {
       setLoadingPhase("profile");
 
       try {
+        await recordPendingRegistrationConsent(session);
         await ensureProfileSeeded(session.access_token);
       } catch (error) {
         if (active) {
@@ -250,9 +289,12 @@ export function useAuthPage() {
       active = false;
       listener.data.subscription.unsubscribe();
     };
-  }, [router]);
+  }, [recordPendingRegistrationConsent, router]);
 
-  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (
+    event: FormEvent<HTMLFormElement>,
+    consent?: RegistrationConsentInput
+  ) => {
     event.preventDefault();
     setErrorMessage(null);
     setNoticeMessage(null);
@@ -267,6 +309,10 @@ export function useAuthPage() {
     });
     if (validationMessage) {
       setErrorMessage(validationMessage);
+      return;
+    }
+    if (mode === "signup" && !isRequiredRegistrationConsentAccepted(consent)) {
+      setErrorMessage("필수 약관에 동의해 주세요.");
       return;
     }
 
@@ -297,6 +343,7 @@ export function useAuthPage() {
           email: normalizeAuthEmail(email),
           password,
           verificationToken,
+          consent,
         }),
       });
       const signupJson = (await signupResponse.json().catch(() => ({}))) as {
@@ -436,7 +483,8 @@ export function useAuthPage() {
       return;
     }
     setLoadingPhase("profile");
-    await ensureProfileSeeded(session.access_token)
+    await recordPendingRegistrationConsent(session)
+      .then(() => ensureProfileSeeded(session.access_token))
       .then(() => {
         if (session.user.user_metadata?.onboarding_completed === true) {
           setCachedHasSession(true);
@@ -474,6 +522,7 @@ export function useAuthPage() {
 
     setErrorMessage(null);
     setCanRetryProfileSeed(false);
+    setIsSubmitting(true);
     try {
       const { error } = await supabase.auth.updateUser({
         data: {
@@ -490,6 +539,8 @@ export function useAuthPage() {
       router.replace(getAuthNextPath());
     } catch (error) {
       setErrorMessage(toFriendlyAuthErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -534,17 +585,18 @@ export function useAuthPage() {
     }
   };
 
-  const signInWithSocial = useCallback(async (provider: "google" | "kakao") => {
+  const signInWithSocial = useCallback(async (
+    provider: "google" | "kakao",
+    consent?: RegistrationConsentInput,
+    existingRegistrationAttempt?: string
+  ) => {
     setErrorMessage(null);
     setNoticeMessage(null);
     setCanRetryProfileSeed(false);
     let didStartRedirect = false;
 
-    const canonicalAuthUrl = getCanonicalSocialAuthUrl(provider);
-    if (canonicalAuthUrl) {
-      setIsSocialSubmitting(true);
-      setSocialProvider(provider);
-      window.location.assign(canonicalAuthUrl);
+    if (consent && !isRequiredRegistrationConsentAccepted(consent)) {
+      setErrorMessage("필수 약관에 동의해 주세요.");
       return;
     }
 
@@ -556,10 +608,27 @@ export function useAuthPage() {
       return;
     }
 
+    let registrationAttempt: string | undefined;
     try {
       setIsSocialSubmitting(true);
       setSocialProvider(provider);
-      const redirectTo = getOAuthRedirectTo();
+      registrationAttempt = existingRegistrationAttempt ?? (consent
+        ? await createRegistrationConsentAttempt(provider, consent)
+        : undefined);
+      if (registrationAttempt && !existingRegistrationAttempt) {
+        savePendingRegistrationConsent(registrationAttempt);
+      }
+      const canonicalAuthUrl = getCanonicalSocialAuthUrl(provider);
+      if (canonicalAuthUrl) {
+        const destination = new URL(canonicalAuthUrl);
+        if (registrationAttempt) {
+          destination.searchParams.set("registration_attempt", registrationAttempt);
+        }
+        didStartRedirect = true;
+        window.location.assign(destination.toString());
+        return;
+      }
+      const redirectTo = getOAuthRedirectTo(registrationAttempt);
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
@@ -593,6 +662,7 @@ export function useAuthPage() {
       setErrorMessage(toFriendlyAuthErrorMessage(error));
     } finally {
       if (!didStartRedirect) {
+        if (registrationAttempt) clearPendingRegistrationConsent();
         setIsSocialSubmitting(false);
         setSocialProvider(null);
       }
@@ -606,8 +676,10 @@ export function useAuthPage() {
     if (!provider) return;
 
     autoStartedSocialRef.current = true;
+    const registrationAttempt = readAuthCallbackParams().registrationAttempt ?? undefined;
+    if (registrationAttempt) pendingRegistrationConsentRef.current = registrationAttempt;
     clearSocialProviderParam();
-    void signInWithSocial(provider);
+    void signInWithSocial(provider, undefined, registrationAttempt);
   }, [screenMode, isBusy, signInWithSocial]);
 
   const setAuthEmail = (value: string) => {

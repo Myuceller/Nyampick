@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { LEGAL_EFFECTIVE_DATE_KOREAN } from "@/lib/legal-policy";
 
 const contactEmail = "kwdonggyu@gmail.com";
 
@@ -101,7 +102,7 @@ export default function TermsPage() {
 
       <h1 className="mt-10 text-[24px] font-extrabold">이용약관</h1>
       <p className="mt-4 text-[14px] leading-relaxed text-[#65716d]">
-        시행일: 2026년 5월 3일
+        시행일: {LEGAL_EFFECTIVE_DATE_KOREAN}
         <br />
         운영자: Don · 문의:{" "}
         <a className="font-bold text-[#2f9569]" href={`mailto:${contactEmail}`}>

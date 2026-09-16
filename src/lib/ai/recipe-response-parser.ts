@@ -8,7 +8,27 @@ interface JsonObject {
   [key: string]: JsonValue;
 }
 
-const aiRecipeResponseSchema = z.object({
+const generatedRecipeSchema = z
+  .object({
+    title: z.string(),
+    subtitle: z.string(),
+    taste: z.enum(["좋아해요", "보통이에요", "싫어해요"]),
+    ingredients: z.array(z.string()),
+    steps: z.array(z.string()),
+  })
+  .strict();
+
+/**
+ * Schema sent to the model. Source fields are intentionally absent because a
+ * model-generated URL is not a verified citation and must not be shown as one.
+ */
+export const aiGeneratedRecipeResponseSchema = z
+  .object({
+    recipes: z.array(generatedRecipeSchema),
+  })
+  .strict();
+
+const legacyAiRecipeResponseSchema = z.object({
   recipes: z.array(
     z.object({
       title: z.string(),
@@ -21,6 +41,9 @@ const aiRecipeResponseSchema = z.object({
     })
   ),
 });
+
+type LegacyRecipe = z.infer<typeof legacyAiRecipeResponseSchema>["recipes"][number];
+type GeneratedRecipe = z.infer<typeof aiGeneratedRecipeResponseSchema>["recipes"][number];
 
 function stripCodeFence(text: string) {
   return text.replace(/^```(?:json)?\s*/i, "").replace(/```$/i, "").trim();
@@ -53,12 +76,19 @@ export function parseRecommendations(
     throw new Error("AI 응답 형식이 올바르지 않습니다.");
   }
 
-  const result = aiRecipeResponseSchema.safeParse(parsed);
+  const result = legacyAiRecipeResponseSchema.safeParse(parsed);
   if (!result.success) {
     throw new Error("AI 응답 스키마가 올바르지 않습니다.");
   }
 
-  return result.data.recipes
+  return normalizeRecommendationItems(result.data.recipes, { requireSource });
+}
+
+function normalizeRecommendationItems(
+  recipes: Array<LegacyRecipe | GeneratedRecipe>,
+  options: { requireSource: boolean }
+) {
+  return recipes
     .map((item) => {
       const title = item.title.trim();
       const subtitle = item.subtitle.trim();
@@ -70,8 +100,8 @@ export function parseRecommendations(
         .map((v) => v.trim())
         .filter((v) => v.length > 0)
         .slice(0, 5);
-      const sourceName = item.source_name.trim();
-      const sourceUrl = item.source_url.trim();
+      const sourceName = "source_name" in item ? item.source_name.trim() : "";
+      const sourceUrl = "source_url" in item ? item.source_url.trim() : "";
       const hasValidSource = sourceName.length > 0 && isValidHttpUrl(sourceUrl);
 
       return normalizeRecipeQuality({
@@ -90,6 +120,15 @@ export function parseRecommendations(
         item.subtitle.length > 0 &&
         item.ingredients.length >= 3 &&
         item.steps.length > 0 &&
-        (!requireSource || Boolean(item.sourceName && item.sourceUrl))
+        (!options.requireSource || Boolean(item.sourceName && item.sourceUrl))
     );
+}
+
+export function parseGeneratedRecommendations(value: unknown): AiRecipeRecommendation[] {
+  const result = aiGeneratedRecipeResponseSchema.safeParse(value);
+  if (!result.success) {
+    throw new Error("AI 응답 스키마가 올바르지 않습니다.");
+  }
+
+  return normalizeRecommendationItems(result.data.recipes, { requireSource: false });
 }

@@ -1,9 +1,6 @@
 import type { User } from "@supabase/supabase-js";
+import { hasCompletedRegistrationOrLegacyProfile } from "@/lib/server/registration-consent";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
-
-const AUTH_CACHE_TTL_MS = 60_000;
-const TOKEN_USER_CACHE = new Map<string, { user: User; expiresAt: number }>();
-const EMAIL_CANONICAL_CACHE = new Map<string, { userId: string; expiresAt: number }>();
 
 export class AuthProviderUnavailableError extends Error {
   constructor(message = "auth provider unavailable") {
@@ -22,84 +19,19 @@ function isNetworkAuthErrorMessage(message: string): boolean {
   );
 }
 
-function getCachedUser(token: string) {
-  const cached = TOKEN_USER_CACHE.get(token);
-  if (!cached) return null;
-  if (Date.now() >= cached.expiresAt) {
-    TOKEN_USER_CACHE.delete(token);
-    return null;
-  }
-  return cached.user;
-}
-
-function setCachedUser(token: string, user: User) {
-  TOKEN_USER_CACHE.set(token, {
-    user,
-    expiresAt: Date.now() + AUTH_CACHE_TTL_MS,
-  });
-}
-
-function readEmailFromUser(user: User): string | undefined {
-  const direct = user.email?.trim().toLowerCase();
-  if (direct) return direct;
-
-  const metadata = user.user_metadata as
-    | Record<string, unknown>
-    | undefined;
-  const fromMetadata = metadata?.email;
-  if (typeof fromMetadata === "string" && fromMetadata.trim().length > 0) {
-    return fromMetadata.trim().toLowerCase();
-  }
-
-  const kakaoAccount = metadata?.kakao_account as
-    | Record<string, unknown>
-    | undefined;
-  const kakaoEmail = kakaoAccount?.email;
-  if (typeof kakaoEmail === "string" && kakaoEmail.trim().length > 0) {
-    return kakaoEmail.trim().toLowerCase();
-  }
-
-  return undefined;
-}
-
-async function resolveCanonicalUserIdByEmail(
-  user: User
-): Promise<string> {
-  const email = readEmailFromUser(user);
-  if (!email) return user.id;
-
-  const cached = EMAIL_CANONICAL_CACHE.get(email);
-  if (cached && Date.now() < cached.expiresAt) {
-    return cached.userId;
-  }
-
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("user_profile")
-    .select("id")
-    .ilike("email", email)
-    .order("id", { ascending: true })
-    .limit(1);
-  if (error) throw error;
-
-  const rows = data as Array<{ id: string }> | null;
-  const canonical = rows?.[0]?.id ?? user.id;
-  EMAIL_CANONICAL_CACHE.set(email, {
-    userId: canonical,
-    expiresAt: Date.now() + AUTH_CACHE_TTL_MS,
-  });
-  return canonical;
-}
-
-export async function getUserFromRequest(request: Request): Promise<User | null> {
+/**
+ * Returns the Supabase identity represented by the bearer token exactly as it
+ * was authenticated. Never substitute an id based on email: separate OAuth
+ * identities can share an email, and doing so would cross account boundaries.
+ */
+export async function getAuthenticatedUserFromRequest(
+  request: Request
+): Promise<User | null> {
   const authHeader = request.headers.get("authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
 
   const token = authHeader.slice("Bearer ".length).trim();
   if (!token) return null;
-
-  const cached = getCachedUser(token);
-  if (cached) return cached;
 
   const supabase = getSupabaseAdmin();
   let data: { user: User | null } | null = null;
@@ -127,12 +59,21 @@ export async function getUserFromRequest(request: Request): Promise<User | null>
   }
   if (!data?.user) return null;
 
-  const canonicalUserId = await resolveCanonicalUserIdByEmail(data.user);
-  const effectiveUser =
-    canonicalUserId === data.user.id
-      ? data.user
-      : ({ ...data.user, id: canonicalUserId } as User);
+  return data.user;
+}
 
-  setCachedUser(token, effectiveUser);
-  return effectiveUser;
+/**
+ * Normal data APIs require a completed registration. The profile route opts in
+ * to pending registrations so it can finish the consented first-login flow.
+ * Pre-rollout accounts remain available only when a profile exists for the
+ * exact authenticated user id; email is never used as an ownership key.
+ */
+export async function getUserFromRequest(
+  request: Request,
+  options?: { allowPendingRegistration?: boolean }
+): Promise<User | null> {
+  const user = await getAuthenticatedUserFromRequest(request);
+  if (!user || options?.allowPendingRegistration) return user;
+
+  return (await hasCompletedRegistrationOrLegacyProfile(user)) ? user : null;
 }

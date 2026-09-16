@@ -38,6 +38,31 @@ test("evaluateRecipe passes a sourced baby-friendly recipe with allergy caution"
   assert.equal(result.reasons.length, 0);
 });
 
+test("evaluateRecipe does not require a source for generated recipe evaluation by default", () => {
+  const result = evaluateRecipe(
+    {
+      ...baseCase,
+      checks: {
+        minIngredientUtilization: baseCase.checks.minIngredientUtilization,
+        awkwardPairs: baseCase.checks.awkwardPairs,
+        requireBabyFriendlyTone: baseCase.checks.requireBabyFriendlyTone,
+        requireCookingSteps: baseCase.checks.requireCookingSteps,
+        avoidAllergyPush: baseCase.checks.avoidAllergyPush,
+      },
+    },
+    [
+      "계란 두부 애호박을 활용한 부드러운 유아식입니다.",
+      "1. 애호박은 잘게 다지고 두부는 으깨요.",
+      "2. 계란은 완전히 익혀서 소량씩 반응을 확인해요.",
+      "3. 아이가 먹기 좋게 한 김 식혀 완성해요.",
+    ].join("\n")
+  );
+
+  assert.equal(result.passed, true);
+  assert.equal(result.details.hasSource, false);
+  assert.ok(!result.reasons.includes("출처 또는 참고 문구가 없습니다."));
+});
+
 test("evaluateRecipe penalizes awkward pairs and missing safeguards", () => {
   const result = evaluateRecipe(
     {

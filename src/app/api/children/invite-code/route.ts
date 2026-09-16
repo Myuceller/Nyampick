@@ -11,6 +11,7 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => ({}))) as {
     expiresInDays?: number;
+    rotate?: unknown;
   };
 
   if (
@@ -21,6 +22,9 @@ export async function POST(request: Request) {
       { message: "expiresInDays must be a positive integer" },
       { status: 400 }
     );
+  }
+  if (body.rotate !== undefined && typeof body.rotate !== "boolean") {
+    return NextResponse.json({ message: "rotate must be a boolean" }, { status: 400 });
   }
 
   try {
@@ -34,6 +38,7 @@ export async function POST(request: Request) {
     const { code, expiresAt } = await createFamilyInviteCode({
       ownerUserId: scope.ownerUserId,
       expiresInDays: body.expiresInDays,
+      rotate: body.rotate === true,
     });
     return NextResponse.json({ code, expiresAt }, { status: 201 });
   } catch (error) {

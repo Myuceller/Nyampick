@@ -1,5 +1,12 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import { createRecommendationId, type RecipeRecommendationDto } from "@nyampick/contracts/recipe";
 import { getUserFromRequest } from "@/lib/server/api-auth";
+import {
+  getPublicRecipeRecommendationError,
+  validateRecipeRecommendationRequest,
+  type RecipeRecommendationApiErrorCode,
+} from "@/lib/server/recipe-recommendation-request";
 import { generateRecipeRecommendationsWithOpenAI } from "@/lib/server/recipe-ai";
 import {
   consumeAiAttempt,
@@ -9,10 +16,7 @@ import {
   registerAiSuccess,
 } from "@/lib/server/rate-limit";
 
-interface RecommendationsRequestBody {
-  ingredients?: string[];
-  limit?: number;
-}
+const CORRELATION_ID_HEADER = "X-Correlation-ID";
 
 function getNonZeroReasons(reasons: Record<string, number>) {
   return Object.fromEntries(
@@ -20,57 +24,104 @@ function getNonZeroReasons(reasons: Record<string, number>) {
   );
 }
 
+function jsonWithCorrelation(
+  payload: Record<string, unknown>,
+  status: number,
+  correlationId: string,
+  retryAfterSeconds?: number
+) {
+  const response = NextResponse.json(
+    { ...payload, correlationId },
+    { status }
+  );
+  response.headers.set(CORRELATION_ID_HEADER, correlationId);
+  response.headers.set("Cache-Control", "no-store");
+  if (retryAfterSeconds && retryAfterSeconds > 0) {
+    response.headers.set("Retry-After", String(Math.ceil(retryAfterSeconds)));
+  }
+  return response;
+}
+
+function publicErrorResponse(
+  code: RecipeRecommendationApiErrorCode,
+  correlationId: string,
+  retryAfterSeconds?: number
+) {
+  const error = getPublicRecipeRecommendationError(code);
+  return jsonWithCorrelation(
+    { code: error.code, message: error.message },
+    error.status,
+    correlationId,
+    retryAfterSeconds
+  );
+}
+
+function safelyRegisterAiFailure(userId: string) {
+  try {
+    registerAiFailure({ userId, action: "recipes" });
+  } catch {
+    // Failure accounting must never replace the stable public API response.
+  }
+}
+
+function safelyRegisterAiSuccess(userId: string) {
+  try {
+    registerAiSuccess({ userId, action: "recipes" });
+  } catch {
+    // A completed recommendation should still be returned if bookkeeping fails.
+  }
+}
+
+function logInternalFailure(correlationId: string, phase: string) {
+  console.error("[ai.recipe.failure]", { correlationId, phase });
+}
+
 export async function POST(request: Request) {
-  const user = await getUserFromRequest(request);
+  const correlationId = randomUUID();
+
+  let user: Awaited<ReturnType<typeof getUserFromRequest>>;
+  try {
+    user = await getUserFromRequest(request);
+  } catch {
+    logInternalFailure(correlationId, "authentication");
+    return publicErrorResponse("AUTH_SERVICE_UNAVAILABLE", correlationId);
+  }
+
   if (!user) {
-    return NextResponse.json({ message: "unauthorized" }, { status: 401 });
+    return publicErrorResponse("UNAUTHORIZED", correlationId);
   }
 
-  const body = (await request.json().catch(() => ({}))) as RecommendationsRequestBody;
-
-  if (!Array.isArray(body.ingredients)) {
-    return NextResponse.json(
-      { message: "ingredients must be an array" },
-      { status: 400 }
-    );
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return publicErrorResponse("INVALID_JSON", correlationId);
   }
 
-  const ingredients = body.ingredients
-    .filter((v): v is string => typeof v === "string")
-    .map((v) => v.trim())
-    .filter((v) => v.length > 0)
-    .slice(0, 20);
+  const validation = validateRecipeRecommendationRequest(body);
+  if (!validation.ok) {
+    return publicErrorResponse(validation.code, correlationId);
+  }
+  const { ingredients, limit } = validation.value;
 
-  if (ingredients.length === 0) {
-    return NextResponse.json(
-      { message: "at least one ingredient is required" },
-      { status: 400 }
-    );
+  let rateResult: ReturnType<typeof consumeAiAttempt>;
+  try {
+    rateResult = consumeAiAttempt({
+      userId: user.id,
+      ip: getClientIp(request),
+      action: "recipes",
+    });
+  } catch {
+    logInternalFailure(correlationId, "attempt_limit");
+    return publicErrorResponse("AI_RECOMMENDATION_UNAVAILABLE", correlationId);
   }
 
-  const limit =
-    typeof body.limit === "number" && Number.isFinite(body.limit)
-      ? Math.max(1, Math.min(10, Math.floor(body.limit)))
-      : 3;
-
-  const ip = getClientIp(request);
-  const rateResult = consumeAiAttempt({
-    userId: user.id,
-    ip,
-    action: "recipes",
-  });
   if (!rateResult.allowed) {
-    const response = NextResponse.json(
-      {
-        message:
-          rateResult.message ?? "요청이 많아 잠시 제한되었습니다. 잠시 후 다시 시도해주세요.",
-      },
-      { status: 429 }
+    return publicErrorResponse(
+      "AI_RATE_LIMITED",
+      correlationId,
+      rateResult.retryAfterSeconds
     );
-    if (rateResult.retryAfterSeconds) {
-      response.headers.set("Retry-After", String(rateResult.retryAfterSeconds));
-    }
-    return response;
   }
 
   try {
@@ -81,35 +132,57 @@ export async function POST(request: Request) {
     });
     const latencyMs = Date.now() - startedAt;
 
-    const budgetResult = consumeUserDailyTokenBudget({
-      userId: user.id,
-      tokens: result.usage.totalTokens,
-    });
-    if (!budgetResult.allowed) {
-      registerAiFailure({ userId: user.id, action: "recipes" });
-      const response = NextResponse.json(
-        {
-          message:
-            budgetResult.message ??
-            "오늘 사용 가능한 AI 토큰 예산을 모두 사용했습니다. 내일 다시 시도해주세요.",
-        },
-        { status: 429 }
-      );
-      if (budgetResult.retryAfterSeconds) {
-        response.headers.set("Retry-After", String(budgetResult.retryAfterSeconds));
-      }
-      return response;
+    if (!Array.isArray(result.recommendations) || result.recommendations.length === 0) {
+      safelyRegisterAiFailure(user.id);
+      logInternalFailure(correlationId, "empty_result");
+      return publicErrorResponse("AI_RECOMMENDATION_UNAVAILABLE", correlationId);
     }
 
-    registerAiSuccess({ userId: user.id, action: "recipes" });
-    const logPayload = {
+    const totalTokens = result.usage?.totalTokens;
+    if (!Number.isSafeInteger(totalTokens) || totalTokens < 0) {
+      safelyRegisterAiFailure(user.id);
+      logInternalFailure(correlationId, "invalid_usage");
+      return publicErrorResponse("AI_RECOMMENDATION_UNAVAILABLE", correlationId);
+    }
+
+    const recommendations: RecipeRecommendationDto[] = result.recommendations
+      .slice(0, limit)
+      .map((recipe, index) => {
+        const candidate = {
+          title: recipe.title,
+          subtitle: recipe.subtitle,
+          taste: recipe.taste,
+          ingredients: recipe.ingredients,
+          steps: recipe.steps,
+          sourceName: recipe.sourceName,
+          sourceUrl: recipe.sourceUrl,
+        };
+        return { id: createRecommendationId(candidate, index), ...candidate };
+      });
+
+    const budgetResult = consumeUserDailyTokenBudget({
       userId: user.id,
-      normalizedIngredients: result.quality.normalizedIngredients,
+      tokens: totalTokens,
+    });
+    if (!budgetResult.allowed) {
+      // The model completed successfully; a local budget denial is not an AI failure.
+      safelyRegisterAiSuccess(user.id);
+      return publicErrorResponse(
+        "AI_TOKEN_BUDGET_EXCEEDED",
+        correlationId,
+        budgetResult.retryAfterSeconds
+      );
+    }
+
+    safelyRegisterAiSuccess(user.id);
+    const logPayload = {
+      correlationId,
+      ingredientCount: ingredients.length,
       requestedLimit: limit,
-      recommendationCount: result.recommendations.length,
+      recommendationCount: recommendations.length,
       fallbackUsed: result.fallbackUsed,
       latencyMs,
-      totalTokens: result.usage.totalTokens,
+      totalTokens,
       strictCandidateCount: result.quality.strictCandidateCount,
       fallbackCandidateCount: result.quality.fallbackCandidateCount,
       readyCount: result.quality.readyCount,
@@ -122,20 +195,23 @@ export async function POST(request: Request) {
       console.info("[ai.recipe.quality]", logPayload);
     }
 
-    return NextResponse.json({
-      recommendations: result.recommendations,
-      usage: result.usage,
-      metrics: {
-        latencyMs,
-        fallbackUsed: result.fallbackUsed,
-        parseSuccess: true,
-        recommendationCount: result.recommendations.length,
+    return jsonWithCorrelation(
+      {
+        recommendations,
+        usage: result.usage,
+        metrics: {
+          latencyMs,
+          fallbackUsed: result.fallbackUsed,
+          parseSuccess: true,
+          recommendationCount: recommendations.length,
+        },
       },
-    });
-  } catch (error) {
-    registerAiFailure({ userId: user.id, action: "recipes" });
-    const message =
-      error instanceof Error ? error.message : "failed to generate recommendations";
-    return NextResponse.json({ message }, { status: 500 });
+      200,
+      correlationId
+    );
+  } catch {
+    safelyRegisterAiFailure(user.id);
+    logInternalFailure(correlationId, "generation");
+    return publicErrorResponse("AI_RECOMMENDATION_UNAVAILABLE", correlationId);
   }
 }

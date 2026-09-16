@@ -1,8 +1,10 @@
 import { randomUUID } from "crypto";
 import type { MealType } from "@/lib/types";
-import { getAllMealsFromDb, getMealsByDateFromDb } from "@/lib/server/supabase-meals";
+import { getAllMealsFromDb, getMealsByDateFromDb, getMealsByDateRangeFromDb } from "@/lib/server/supabase-meals";
+import { getHomeSummaryMealRange } from "@/lib/meal-date-range";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { listChildrenFromDb } from "@/lib/server/supabase-children";
+import type { RecipeDetailsDto } from "@nyampick/contracts/recipe";
 
 export type FridgeCategory =
   | "fruit"
@@ -33,8 +35,37 @@ export interface SavedRecipe {
   favorite: boolean;
   link?: string;
   memo?: string;
+  recipeData?: RecipeDetailsDto;
   createdAt: string;
   updatedAt: string;
+}
+
+function mapSavedRecipeRow(row: {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  taste?: "좋아해요" | "보통이에요" | "싫어해요" | null;
+  source: "ai" | "manual";
+  favorite?: boolean | null;
+  link?: string | null;
+  memo?: string | null;
+  recipe_data?: RecipeDetailsDto | null;
+  created_at: string;
+  updated_at: string;
+}): SavedRecipe {
+  return {
+    id: row.id,
+    title: row.title,
+    subtitle: row.subtitle ?? undefined,
+    taste: row.taste ?? undefined,
+    source: row.source,
+    favorite: Boolean(row.favorite),
+    link: row.link ?? undefined,
+    memo: row.memo ?? undefined,
+    recipeData: row.recipe_data ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
 export interface UserProfile {
@@ -167,7 +198,7 @@ function todayKey(): string {
   return `${y}-${m}-${day}`;
 }
 
-function guessFridgeCategory(name: string): FridgeCategory {
+export function guessFridgeCategory(name: string): FridgeCategory {
   const n = name.toLowerCase();
   if (["사과", "바나나", "딸기", "토마토", "apple", "banana"].some((k) => n.includes(k))) {
     return "fruit";
@@ -205,10 +236,6 @@ function classifyNutritionBucket(name: string): "carb" | "protein" | "fat" | "ot
     return "fat";
   }
   return "other";
-}
-
-function isCubeItemName(name: string): boolean {
-  return name.includes("큐브");
 }
 
 export function isFridgeCategory(
@@ -311,7 +338,7 @@ export async function listFridgeItemsFromDb(
     id: row.id,
     name: row.name,
     category: row.category,
-    quantity: isCubeItemName(row.name) ? row.quantity ?? undefined : undefined,
+    quantity: row.quantity ?? undefined,
     expiresAt: row.expires_at ?? undefined,
     addedAt: row.added_at,
     source: row.source,
@@ -332,7 +359,7 @@ export async function addFridgeItemToDb(input: {
     user_id: input.userId,
     name: input.name,
     category: input.category ?? guessFridgeCategory(input.name),
-    quantity: isCubeItemName(input.name) ? input.quantity ?? null : null,
+    quantity: input.quantity?.trim() || null,
     expires_at: input.expiresAt ?? null,
     source: input.source ?? "manual",
   };
@@ -347,7 +374,7 @@ export async function addFridgeItemToDb(input: {
     id: data.id,
     name: data.name,
     category: data.category,
-    quantity: isCubeItemName(data.name) ? data.quantity ?? undefined : undefined,
+    quantity: data.quantity ?? undefined,
     expiresAt: data.expires_at ?? undefined,
     addedAt: data.added_at,
     source: data.source,
@@ -357,7 +384,7 @@ export async function addFridgeItemToDb(input: {
 export async function updateFridgeItemInDb(
   userId: string,
   id: string,
-  patch: Partial<Pick<FridgeItem, "name" | "category" | "quantity" | "expiresAt">>
+  patch: Partial<Omit<Pick<FridgeItem, "name" | "category" | "quantity" | "expiresAt">, "expiresAt">> & { expiresAt?: string | null }
 ): Promise<FridgeItem | null> {
   const supabase = getSupabaseAdmin();
   const { data: currentItem, error: currentItemError } = await supabase
@@ -369,13 +396,10 @@ export async function updateFridgeItemInDb(
   if (currentItemError) throw currentItemError;
   if (!currentItem) return null;
 
-  const nextName = patch.name ?? currentItem.name;
-  const quantityForPatch = isCubeItemName(nextName) ? patch.quantity : null;
-
   const updatePatch: Record<string, string | null | undefined> = {
     name: patch.name,
     category: patch.category,
-    quantity: quantityForPatch,
+    quantity: patch.quantity,
     expires_at: patch.expiresAt,
   };
   Object.keys(updatePatch).forEach((key) => {
@@ -395,7 +419,7 @@ export async function updateFridgeItemInDb(
       id: data.id,
       name: data.name,
       category: data.category,
-      quantity: isCubeItemName(data.name) ? data.quantity ?? undefined : undefined,
+      quantity: data.quantity ?? undefined,
       expiresAt: data.expires_at ?? undefined,
       addedAt: data.added_at,
       source: data.source,
@@ -417,7 +441,7 @@ export async function updateFridgeItemInDb(
     id: data.id,
     name: data.name,
     category: data.category,
-    quantity: isCubeItemName(data.name) ? data.quantity ?? undefined : undefined,
+    quantity: data.quantity ?? undefined,
     expiresAt: data.expires_at ?? undefined,
     addedAt: data.added_at,
     source: data.source,
@@ -441,25 +465,14 @@ export async function listSavedRecipesFromDb(userId: string): Promise<SavedRecip
   const { data, error } = await supabase
     .from("saved_recipes")
     .select(
-      "id,user_id,title,subtitle,taste,source,favorite,link,memo,created_at,updated_at"
+      "id,user_id,title,subtitle,taste,source,favorite,link,memo,recipe_data,created_at,updated_at"
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
 
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    title: row.title,
-    subtitle: row.subtitle ?? undefined,
-    taste: row.taste ?? undefined,
-    source: row.source,
-    favorite: Boolean(row.favorite),
-    link: row.link ?? undefined,
-    memo: row.memo ?? undefined,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  })) as SavedRecipe[];
+  return (data ?? []).map(mapSavedRecipeRow);
 }
 
 export async function addSavedRecipeToDb(input: {
@@ -471,6 +484,7 @@ export async function addSavedRecipeToDb(input: {
   favorite?: boolean;
   link?: string;
   memo?: string;
+  recipeData?: RecipeDetailsDto;
 }): Promise<SavedRecipe> {
   const supabase = getSupabaseAdmin();
 
@@ -484,6 +498,7 @@ export async function addSavedRecipeToDb(input: {
     favorite: input.favorite ?? false,
     link: input.link ?? null,
     memo: input.memo ?? null,
+    recipe_data: input.recipeData ?? null,
     updated_at: nowIso(),
   };
 
@@ -491,38 +506,34 @@ export async function addSavedRecipeToDb(input: {
     .from("saved_recipes")
     .insert(payload)
     .select(
-      "id,user_id,title,subtitle,taste,source,favorite,link,memo,created_at,updated_at"
+      "id,user_id,title,subtitle,taste,source,favorite,link,memo,recipe_data,created_at,updated_at"
     )
     .single();
 
   if (error) throw error;
 
-  return {
-    id: data.id,
-    title: data.title,
-    subtitle: data.subtitle ?? undefined,
-    taste: data.taste ?? undefined,
-    source: data.source,
-    favorite: Boolean(data.favorite),
-    link: data.link ?? undefined,
-    memo: data.memo ?? undefined,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
-  } as SavedRecipe;
+  return mapSavedRecipeRow(data);
 }
 
 export async function updateSavedRecipeInDb(
   userId: string,
   id: string,
   patch: Partial<
-    Pick<SavedRecipe, "title" | "subtitle" | "taste" | "favorite" | "link" | "memo">
+    Pick<SavedRecipe, "title" | "subtitle" | "taste" | "favorite" | "link" | "memo" | "recipeData">
   >
 ): Promise<SavedRecipe | null> {
   const supabase = getSupabaseAdmin();
 
   const updatePatch: Record<
     string,
-    string | boolean | null | undefined | "좋아해요" | "보통이에요" | "싫어해요"
+    | string
+    | boolean
+    | RecipeDetailsDto
+    | null
+    | undefined
+    | "좋아해요"
+    | "보통이에요"
+    | "싫어해요"
   > = {
     title: patch.title,
     subtitle: patch.subtitle,
@@ -530,6 +541,7 @@ export async function updateSavedRecipeInDb(
     favorite: patch.favorite,
     link: patch.link,
     memo: patch.memo,
+    recipe_data: patch.recipeData,
     updated_at: nowIso(),
   };
   Object.keys(updatePatch).forEach((key) => {
@@ -542,25 +554,14 @@ export async function updateSavedRecipeInDb(
     .eq("user_id", userId)
     .eq("id", id)
     .select(
-      "id,user_id,title,subtitle,taste,source,favorite,link,memo,created_at,updated_at"
+      "id,user_id,title,subtitle,taste,source,favorite,link,memo,recipe_data,created_at,updated_at"
     )
     .maybeSingle();
 
   if (error) throw error;
   if (!data) return null;
 
-  return {
-    id: data.id,
-    title: data.title,
-    subtitle: data.subtitle ?? undefined,
-    taste: data.taste ?? undefined,
-    source: data.source,
-    favorite: Boolean(data.favorite),
-    link: data.link ?? undefined,
-    memo: data.memo ?? undefined,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
-  } as SavedRecipe;
+  return mapSavedRecipeRow(data);
 }
 
 export async function deleteSavedRecipeInDb(
@@ -743,7 +744,7 @@ export async function getHomeSummaryFromDb(
   const today = todayKey();
   const [todayMeals, allMeals, fridgeItems, children] = await Promise.all([
     getMealsByDateFromDb(userId, today),
-    getAllMealsFromDb(userId),
+    getMealsByDateRangeFromDb(userId, getHomeSummaryMealRange(today)),
     listFridgeItemsFromDb(userId),
     listChildrenFromDb(userId),
   ]);

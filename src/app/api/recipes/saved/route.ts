@@ -10,9 +10,10 @@ import {
   listSavedRecipesFromDb,
   updateSavedRecipeInDb,
 } from "@/lib/server/supabase-app-data";
+import { isCompleteAiRecipeDetails, normalizeRecipeDetails } from "@nyampick/contracts/recipe";
 
 function normalizeSavedRecipeError(
-  error: Error | string | { message?: string } | null | undefined,
+  error: Error | string | { code?: string; message?: string } | null | undefined,
   fallback: string
 ) {
   let message = fallback;
@@ -34,6 +35,17 @@ function normalizeSavedRecipeError(
       status: 503,
       message:
         "saved_recipes 테이블이 없습니다. docs/supabase-meals.sql 마이그레이션을 먼저 실행해주세요.",
+    };
+  }
+
+  if (
+    (typeof error === "object" && error !== null && "code" in error && error.code === "42703") ||
+    (message.includes("recipe_data") && message.includes("column"))
+  ) {
+    return {
+      status: 503,
+      message:
+        "AI 레시피 상세 저장소가 준비되지 않았습니다. docs/supabase-meals.sql 마이그레이션을 먼저 실행해주세요.",
     };
   }
 
@@ -67,7 +79,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ items });
   } catch (error) {
     const normalized = normalizeSavedRecipeError(
-      error as Error | string | { message?: string } | null,
+      error as Error | string | { code?: string; message?: string } | null,
       "failed to fetch saved recipes"
     );
     return NextResponse.json(
@@ -99,6 +111,7 @@ export async function POST(request: Request) {
     favorite?: boolean;
     link?: string;
     memo?: string;
+    recipeData?: unknown;
   };
 
   const title = typeof body.title === "string" ? body.title.trim() : "";
@@ -107,6 +120,13 @@ export async function POST(request: Request) {
   }
 
   const source = body.source === "ai" ? "ai" : "manual";
+  const recipeData = normalizeRecipeDetails(body.recipeData);
+  if (body.recipeData !== undefined && !recipeData) {
+    return NextResponse.json({ message: "recipeData must be an object" }, { status: 400 });
+  }
+  if (source === "ai" && !isCompleteAiRecipeDetails(recipeData)) {
+    return NextResponse.json({ message: "AI recipe ingredients and steps are required" }, { status: 400 });
+  }
 
   try {
     const scope = await getFamilyDataScope({ userId: user.id });
@@ -119,12 +139,13 @@ export async function POST(request: Request) {
       favorite: Boolean(body.favorite),
       link: typeof body.link === "string" ? body.link.trim() : undefined,
       memo: typeof body.memo === "string" ? body.memo.trim() : undefined,
+      recipeData,
     });
 
     return NextResponse.json({ item }, { status: 201 });
   } catch (error) {
     const normalized = normalizeSavedRecipeError(
-      error as Error | string | { message?: string } | null,
+      error as Error | string | { code?: string; message?: string } | null,
       "failed to save recipe"
     );
     return NextResponse.json(
@@ -156,10 +177,15 @@ export async function PATCH(request: Request) {
     favorite?: boolean;
     link?: string;
     memo?: string;
+    recipeData?: unknown;
   };
 
   if (typeof body.id !== "string" || body.id.length === 0) {
     return NextResponse.json({ message: "id is required" }, { status: 400 });
+  }
+  const recipeData = normalizeRecipeDetails(body.recipeData);
+  if (body.recipeData !== undefined && !recipeData) {
+    return NextResponse.json({ message: "recipeData must be an object" }, { status: 400 });
   }
 
   try {
@@ -172,6 +198,7 @@ export async function PATCH(request: Request) {
       favorite: typeof body.favorite === "boolean" ? body.favorite : undefined,
       link: typeof body.link === "string" ? body.link.trim() : undefined,
       memo: typeof body.memo === "string" ? body.memo.trim() : undefined,
+      recipeData,
     });
 
     if (!item) {
@@ -181,7 +208,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ item });
   } catch (error) {
     const normalized = normalizeSavedRecipeError(
-      error as Error | string | { message?: string } | null,
+      error as Error | string | { code?: string; message?: string } | null,
       "failed to update recipe"
     );
     return NextResponse.json(
@@ -220,7 +247,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     const normalized = normalizeSavedRecipeError(
-      error as Error | string | { message?: string } | null,
+      error as Error | string | { code?: string; message?: string } | null,
       "failed to delete recipe"
     );
     return NextResponse.json(

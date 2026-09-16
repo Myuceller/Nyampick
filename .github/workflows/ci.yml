@@ -35,9 +35,18 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/mobile/package-lock.json
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Install mobile dependencies
+        run: npm ci --prefix apps/mobile
+
+      - name: Cross-platform checks
+        run: npm run platform:check
 
       - name: Lint
         run: npm run lint

@@ -44,6 +44,8 @@ export default function AuthPage() {
   if (vm.screenMode === "referral") {
     return (
       <ReferralSurveyView
+        errorMessage={vm.errorMessage}
+        isSubmitting={vm.isSubmitting}
         onComplete={(source) => {
           void vm.completeReferralSurvey(source);
         }}
@@ -102,8 +104,8 @@ export default function AuthPage() {
         void vm.requestPasswordReset();
       }}
       onSubmit={vm.onSubmit}
-      onSocialSignIn={(provider) => {
-        void vm.signInWithSocial(provider);
+      onSocialSignIn={(provider, consent) => {
+        void vm.signInWithSocial(provider, consent);
       }}
       onRetryProfileSeed={() => {
         void vm.retryProfileSeed();

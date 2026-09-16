@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/server/api-auth";
 import { extractReceiptItemsWithOpenAI } from "@/lib/server/receipt-ocr";
 import {
-  createReceiptScanSession,
-  getReceiptScanSession,
-} from "@/lib/server/meal-api-store";
+  createPersistentReceiptScanSession,
+  getPersistentReceiptScanSession,
+  ReceiptScanSessionStorageError,
+} from "@/lib/server/receipt-scan-sessions";
 import {
   consumeAiAttempt,
   getClientIp,
@@ -83,12 +84,28 @@ export async function POST(request: Request) {
     registerAiSuccess({ userId: user.id, action: "ocr" });
   }
 
-  const session = createReceiptScanSession(sourceText);
+  let session;
+  try {
+    session = await createPersistentReceiptScanSession({
+      userId: user.id,
+      rawText: sourceText ?? "",
+    });
+  } catch (error) {
+    const message =
+      error instanceof ReceiptScanSessionStorageError
+        ? error.message
+        : "영수증 분석 결과를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.";
+    return NextResponse.json(
+      { message },
+      { status: error instanceof ReceiptScanSessionStorageError ? 503 : 500 }
+    );
+  }
 
   return NextResponse.json(
     {
       scanId: session.id,
       createdAt: session.createdAt,
+      expiresAt: session.expiresAt,
       candidates: session.candidates,
       message:
         "영수증 스캔 후보를 반환했습니다. 선택한 항목만 /api/fridge/receipt-confirm 로 확정하세요.",
@@ -110,10 +127,23 @@ export async function GET(request: Request) {
     return NextResponse.json({ message: "scanId is required" }, { status: 400 });
   }
 
-  const session = getReceiptScanSession(scanId);
-  if (!session) {
-    return NextResponse.json({ message: "scan session not found" }, { status: 404 });
+  let result;
+  try {
+    result = await getPersistentReceiptScanSession({ scanId, userId: user.id });
+  } catch (error) {
+    const message =
+      error instanceof ReceiptScanSessionStorageError
+        ? error.message
+        : "영수증 분석 결과를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
+    return NextResponse.json(
+      { message },
+      { status: error instanceof ReceiptScanSessionStorageError ? 503 : 500 }
+    );
+  }
+  if (result.status !== "available") {
+    const status = result.status === "already_confirmed" ? 409 : result.status === "expired" ? 410 : 404;
+    return NextResponse.json({ message: `scan session ${result.status.replace("_", " ")}` }, { status });
   }
 
-  return NextResponse.json(session);
+  return NextResponse.json(result.session);
 }

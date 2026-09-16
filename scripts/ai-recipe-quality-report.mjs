@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { normalizeIngredientList } from "../src/lib/ai/ingredient-normalize.ts";
 import { evaluateRecipeQuality } from "../src/lib/ai/recipe-quality-gate.ts";
 
@@ -25,10 +26,45 @@ function formatRate(value) {
   return `${Math.round(value * 100)}%`;
 }
 
+function formatOptionalRate(value) {
+  return typeof value === "number" ? formatRate(value) : "N/A";
+}
+
+function formatSourceRate(value, requireSource = true) {
+  return requireSource ? formatRate(value) : "N/A";
+}
+
 function average(values) {
   const nums = values.filter((value) => typeof value === "number" && Number.isFinite(value));
   if (nums.length === 0) return null;
   return nums.reduce((sum, value) => sum + value, 0) / nums.length;
+}
+
+function sum(values) {
+  return values.reduce(
+    (total, value) => total + (typeof value === "number" && Number.isFinite(value) ? value : 0),
+    0,
+  );
+}
+
+function percentile(values, probability) {
+  const nums = values
+    .filter((value) => typeof value === "number" && Number.isFinite(value))
+    .sort((left, right) => left - right);
+  if (nums.length === 0) return null;
+  return nums[Math.max(0, Math.ceil(nums.length * probability) - 1)];
+}
+
+function formatMilliseconds(value) {
+  return typeof value === "number" && Number.isFinite(value) ? `${Math.round(value)}ms` : "N/A";
+}
+
+function formatCountRate(count, total) {
+  return `${count} (${formatRate(total > 0 ? count / total : null)})`;
+}
+
+function escapeMarkdownCell(value) {
+  return String(value ?? "-").replaceAll("|", "\\|").replaceAll(/\r?\n/g, " ");
 }
 
 function isValidHttpUrl(value) {
@@ -116,16 +152,20 @@ function normalizeHistoryRecipe(recipe) {
   };
 }
 
-function countRejectReasons(recommendations, evalCase, limit) {
+function countRejectReasons(recommendations, evalCase, limit, requireSource) {
   const counts = Object.fromEntries(knownRejectReasons.map((reason) => [reason, 0]));
   let readyCount = 0;
   let rejectedCount = 0;
 
   for (const recipe of recommendations) {
-    const result = evaluateRecipeQuality(normalizeHistoryRecipe(recipe), {
-      ingredients: evalCase?.ingredients ?? [],
-      limit,
-    });
+    const result = evaluateRecipeQuality(
+      normalizeHistoryRecipe(recipe),
+      {
+        ingredients: evalCase?.ingredients ?? [],
+        limit,
+      },
+      { requireSource }
+    );
     if (result.ready) {
       readyCount += 1;
       continue;
@@ -152,7 +192,9 @@ function getEvalGaps(row) {
   if ((row.ingredientUtilization ?? 0) < (row.minIngredientUtilization ?? 0.6)) {
     gaps.push("low_ingredient_use");
   }
-  if ((row.sourceValidityRate ?? 0) < 0.9) gaps.push("invalid_source");
+  if (row.requireSource && (row.sourceValidityRate ?? 0) < 0.9) {
+    gaps.push("invalid_source");
+  }
   if ((row.awkwardPairViolations ?? 0) > 0) gaps.push("awkward_pair");
   if ((row.forbiddenClaimViolations ?? 0) > 0) gaps.push("forbidden_claim");
   if (row.cautionTonePass === false) gaps.push("missing_caution_tone");
@@ -165,12 +207,12 @@ function formatEvalGaps(row) {
   return gaps.length > 0 ? gaps.join(", ") : "-";
 }
 
-function evaluateEntry(entry, evalCase) {
+export function evaluateEntry(entry, evalCase) {
   const recommendations = Array.isArray(entry.recommendations) ? entry.recommendations : [];
   const checks = evalCase?.checks ?? {};
-  const requireSource = checks.requireSource !== false;
+  const requireSource = checks.requireSource === true;
   const limit = Number(entry.limit ?? evalCase?.limit ?? recommendations.length ?? 0);
-  const rejectReasons = countRejectReasons(recommendations, evalCase, limit);
+  const rejectReasons = countRejectReasons(recommendations, evalCase, limit, requireSource);
   const validCount = recommendations.filter((recipe) => isValidRecipe(recipe, requireSource)).length;
   const validRecommendationRate = limit > 0 ? Math.min(1, validCount / limit) : null;
 
@@ -186,7 +228,9 @@ function evaluateEntry(entry, evalCase) {
     .map((recipe) => recipe?.source_url ?? recipe?.sourceUrl)
     .filter((value) => typeof value === "string" && value.trim().length > 0);
   const sourceValidityRate =
-    recommendations.length > 0 ? sourceUrls.filter(isValidHttpUrl).length / recommendations.length : null;
+    requireSource && recommendations.length > 0
+      ? sourceUrls.filter(isValidHttpUrl).length / recommendations.length
+      : null;
 
   const awkwardPairs = Array.isArray(checks.awkwardPairs) ? checks.awkwardPairs : [];
   const forbiddenClaims = Array.isArray(checks.forbiddenClaims) ? checks.forbiddenClaims : [];
@@ -206,25 +250,40 @@ function evaluateEntry(entry, evalCase) {
   }, 0);
   const requiredTermRate = getRequiredTermRate(joinedText, checks);
   const cautionTonePass = checks.requireCautionTone ? includesAny(joinedText, cautionTerms) : true;
-  const safetyRate =
-    awkwardPairViolations === 0 && forbiddenClaimViolations === 0 && cautionTonePass ? 1 : 0;
+  const safetyPass =
+    awkwardPairViolations === 0 && forbiddenClaimViolations === 0 && cautionTonePass;
+  // No output is an availability/validity failure, not evidence of safe content.
+  // Keep the displayed safety dimension N/A while quality scoring still receives 0.
+  const safetyRate = recommendations.length > 0 ? (safetyPass ? 1 : 0) : null;
 
-  const qualityScore =
-    (validRecommendationRate ?? 0) * 0.35 +
-    (ingredientUtilization ?? 0) * 0.2 +
-    (sourceValidityRate ?? 0) * 0.2 +
-    safetyRate * 0.15 +
-    requiredTermRate * 0.1;
+  const qualityComponents = [
+    { value: validRecommendationRate ?? 0, weight: 0.35 },
+    { value: ingredientUtilization ?? 0, weight: 0.2 },
+    { value: safetyRate ?? 0, weight: 0.15 },
+    { value: requiredTermRate, weight: 0.1 },
+  ];
+  if (requireSource) {
+    qualityComponents.push({ value: sourceValidityRate ?? 0, weight: 0.2 });
+  }
+  const totalQualityWeight = qualityComponents.reduce((sum, component) => sum + component.weight, 0);
+  const qualityScore = recommendations.length === 0
+    ? 0
+    : qualityComponents.reduce(
+        (sum, component) => sum + component.value * component.weight,
+        0
+      ) / totalQualityWeight;
 
   return {
     ...entry,
     expected: evalCase?.expected ?? "",
+    requireSource,
     validRecommendationRate,
     ingredientUtilization,
     sourceValidityRate,
     awkwardPairViolations,
     forbiddenClaimViolations,
     cautionTonePass,
+    safetyRate,
     requiredTermRate,
     minIngredientUtilization: checks.minIngredientUtilization ?? 0.6,
     rejectReasonCounts: rejectReasons.counts,
@@ -234,7 +293,7 @@ function evaluateEntry(entry, evalCase) {
     pass:
       (validRecommendationRate ?? 0) >= 0.9 &&
       (ingredientUtilization ?? 0) >= (checks.minIngredientUtilization ?? 0.6) &&
-      (sourceValidityRate ?? 0) >= 0.9 &&
+      (!requireSource || (sourceValidityRate ?? 0) >= 0.9) &&
       awkwardPairViolations === 0 &&
       forbiddenClaimViolations === 0 &&
       cautionTonePass &&
@@ -295,7 +354,116 @@ function latestRowsByCase(rows) {
   return [...latest.values()];
 }
 
-function buildMarkdown(cases, evaluatedRows) {
+export function getLatestModelComparison(evaluatedRows) {
+  const groups = new Map();
+  evaluatedRows.forEach((row, index) => {
+    if (typeof row.runLabel !== "string" || !row.runLabel.trim() || !row.model) return;
+    const current = groups.get(row.runLabel) ?? { runLabel: row.runLabel, rows: [], lastIndex: index };
+    current.rows.push(row);
+    current.lastIndex = index;
+    groups.set(row.runLabel, current);
+  });
+
+  return [...groups.values()]
+    .filter((group) => new Set(group.rows.map((row) => row.model)).size > 1)
+    .sort((left, right) => right.lastIndex - left.lastIndex)[0] ?? null;
+}
+
+export function summarizeComparisonModel(rows) {
+  const total = rows.length;
+  const failureCount = rows.filter((row) => row.ok === false).length;
+  const fallbackCount = rows.filter((row) => row.fallbackUsed === true).length;
+  const latencies = rows.map((row) => row.latencyMs);
+  return {
+    total,
+    passRate: total > 0 ? rows.filter((row) => row.pass).length / total : null,
+    qualityScore: average(rows.map((row) => row.qualityScore)),
+    validRecommendationRate: average(rows.map((row) => row.validRecommendationRate)),
+    ingredientUtilization: average(rows.map((row) => row.ingredientUtilization)),
+    safetyRate: average(rows.map((row) => row.safetyRate)),
+    failureCount,
+    fallbackCount,
+    latencyAverageMs: average(latencies),
+    latencyP50Ms: percentile(latencies, 0.5),
+    latencyP95Ms: percentile(latencies, 0.95),
+    inputTokens: sum(rows.map((row) => row.inputTokens)),
+    outputTokens: sum(rows.map((row) => row.outputTokens)),
+    totalTokens: sum(rows.map((row) => row.totalTokens)),
+  };
+}
+
+function formatPairedResult(row) {
+  if (!row) return "missing";
+  const status = row.ok === false ? "API fail" : row.pass ? "pass" : "fail";
+  const fallback = row.fallbackUsed ? "; fallback" : "";
+  return `${status}; Q ${formatRate(row.qualityScore)}; V ${formatRate(row.validRecommendationRate)}; I ${formatRate(row.ingredientUtilization)}; S ${formatOptionalRate(row.safetyRate)}; ${formatMilliseconds(row.latencyMs)}; ${row.totalTokens ?? 0} tok${fallback}`;
+}
+
+export function buildModelComparisonMarkdown(evaluatedRows) {
+  const comparison = getLatestModelComparison(evaluatedRows);
+  if (!comparison) return "";
+
+  const models = [...new Set(comparison.rows.map((row) => row.model))].sort();
+  const summaries = models.map((model) => ({
+    model,
+    summary: summarizeComparisonModel(comparison.rows.filter((row) => row.model === model)),
+  }));
+  const summaryRows = summaries
+    .map(({ model, summary }) =>
+      `| ${escapeMarkdownCell(model)} | ${summary.total} | ${formatRate(summary.passRate)} | ${formatRate(summary.qualityScore)} | ${formatRate(summary.validRecommendationRate)} | ${formatRate(summary.ingredientUtilization)} | ${formatOptionalRate(summary.safetyRate)} | ${formatCountRate(summary.failureCount, summary.total)} | ${formatCountRate(summary.fallbackCount, summary.total)} | ${formatMilliseconds(summary.latencyAverageMs)} | ${formatMilliseconds(summary.latencyP50Ms)} | ${formatMilliseconds(summary.latencyP95Ms)} | ${summary.inputTokens} | ${summary.outputTokens} | ${summary.totalTokens} |`
+    )
+    .join("\n");
+
+  const paired = new Map();
+  for (const row of comparison.rows) {
+    const repeat = Number.isInteger(row.repeat) ? row.repeat : 1;
+    const key = `${row.caseId ?? "unknown"}\u0000${repeat}`;
+    const group = paired.get(key) ?? { caseId: row.caseId ?? "unknown", repeat, rows: new Map() };
+    group.rows.set(row.model, row);
+    paired.set(key, group);
+  }
+  const completePairs = [...paired.values()].filter((group) =>
+    models.every((model) => group.rows.has(model)),
+  );
+  const pairedHeader = `| Case | Repeat | ${models.map(escapeMarkdownCell).join(" | ")} |`;
+  const pairedDivider = `| --- | ---: | ${models.map(() => "---").join(" | ")} |`;
+  const pairedRows = completePairs.length > 0
+    ? completePairs
+        .map((group) =>
+          `| ${escapeMarkdownCell(group.caseId)} | ${group.repeat} | ${models.map((model) => escapeMarkdownCell(formatPairedResult(group.rows.get(model)))).join(" | ")} |`
+        )
+        .join("\n")
+    : `| - | - | ${models.map(() => "missing").join(" | ")} |`;
+  const caseCount = new Set(comparison.rows.map((row) => row.caseId)).size;
+  const repeatCount = Math.max(0, ...comparison.rows.map((row) => Number(row.repeat) || 1));
+
+  return `## Model A/B Comparison
+
+Run label: \`${escapeMarkdownCell(comparison.runLabel)}\`
+
+Models are reported by separate dimensions; this report deliberately does not calculate a subjective combined winner score. Token columns are observed Responses API usage, not credential values or estimated cost.
+
+- Cases: ${caseCount}
+- Repeats: ${repeatCount}
+- Complete paired samples: ${completePairs.length}
+
+### Model Summary
+
+| Model | Samples | Pass | Quality | Valid | Ingredient | Safety | API failures | Fallbacks | Latency avg | p50 | p95 | Input tok total | Output tok total | All tok total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+${summaryRows}
+
+### Paired Case Comparison
+
+Each row compares the same golden-set case and repeat. Q=quality, V=valid recommendations, I=ingredient utilization, S=safety.
+
+${pairedHeader}
+${pairedDivider}
+${pairedRows}
+`;
+}
+
+export function buildMarkdown(cases, evaluatedRows) {
   const generatedAt = new Date().toISOString();
   const latestRows = latestRowsByCase(evaluatedRows);
   const measuredCaseIds = new Set(latestRows.map((row) => row.caseId));
@@ -303,11 +471,12 @@ function buildMarkdown(cases, evaluatedRows) {
   const summary = summarize(latestRows);
   const rejectReasonSummary = summarizeRejectReasons(latestRows);
   const evalGapSummary = summarizeEvalGaps(latestRows);
+  const modelComparison = buildModelComparisonMarkdown(evaluatedRows);
 
   const caseRows = cases
     .map(
       (item) =>
-        `| ${item.caseId} | ${JSON.stringify(item.ingredients)} | ${item.expected} | ${Math.round((item.checks?.minIngredientUtilization ?? 0.6) * 100)}% | ${item.checks?.requireSource === false ? "no" : "yes"} |`,
+        `| ${item.caseId} | ${JSON.stringify(item.ingredients)} | ${item.expected} | ${Math.round((item.checks?.minIngredientUtilization ?? 0.6) * 100)}% | ${item.checks?.requireSource === true ? "yes" : "no"} |`,
     )
     .join("\n");
 
@@ -319,7 +488,7 @@ function buildMarkdown(cases, evaluatedRows) {
           .reverse()
           .map(
             (row) =>
-              `| ${row.createdAt ?? row.date ?? "TBD"} | ${row.caseId ?? "-"} | ${formatRate(row.qualityScore)} | ${formatRate(row.validRecommendationRate)} | ${formatRate(row.ingredientUtilization)} | ${formatRate(row.sourceValidityRate)} | ${row.awkwardPairViolations ?? 0} | ${row.forbiddenClaimViolations ?? 0} | ${formatTopReasons(row.rejectReasonCounts)} | ${formatEvalGaps(row)} | ${row.pass ? "pass" : "fail"} |`,
+              `| ${row.createdAt ?? row.date ?? "TBD"} | ${row.caseId ?? "-"} | ${formatRate(row.qualityScore)} | ${formatRate(row.validRecommendationRate)} | ${formatRate(row.ingredientUtilization)} | ${formatSourceRate(row.sourceValidityRate, row.requireSource)} | ${row.awkwardPairViolations ?? 0} | ${row.forbiddenClaimViolations ?? 0} | ${formatTopReasons(row.rejectReasonCounts)} | ${formatEvalGaps(row)} | ${row.pass ? "pass" : "fail"} |`,
           )
           .join("\n");
 
@@ -340,12 +509,15 @@ Sources:
 - \`docs/ai-recipe-quality-history.json\`
 
 Summary is calculated from the latest measured run for each case.
+Source validity is scored only for cases that explicitly opt into verified-source checks; generated recommendation cases show N/A.
+
+${modelComparison}
 
 ## Summary
 
 | Total cases | Measured cases | Pending cases | Pass rate | Quality score | Valid recommendations | Ingredient utilization | Source validity | Awkward violations | Forbidden claims |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| ${cases.length} | ${summary.total} | ${pendingCases.length} | ${formatRate(summary.passRate)} | ${formatRate(summary.qualityScore)} | ${formatRate(summary.validRecommendationRate)} | ${formatRate(summary.ingredientUtilization)} | ${formatRate(summary.sourceValidityRate)} | ${summary.awkwardPairViolations} | ${summary.forbiddenClaimViolations} |
+| ${cases.length} | ${summary.total} | ${pendingCases.length} | ${formatRate(summary.passRate)} | ${formatRate(summary.qualityScore)} | ${formatRate(summary.validRecommendationRate)} | ${formatRate(summary.ingredientUtilization)} | ${formatSourceRate(summary.sourceValidityRate, summary.sourceValidityRate !== null)} | ${summary.awkwardPairViolations} | ${summary.forbiddenClaimViolations} |
 
 ## Quality Gate Reason Summary
 
@@ -389,11 +561,16 @@ ${resultRows}
 `;
 }
 
-const cases = await readJsonArray(casesPath);
-const caseMap = new Map(cases.map((item) => [item.caseId, item]));
-const history = await readJsonArray(historyPath);
-const evaluatedRows = history.map((entry) => evaluateEntry(entry, caseMap.get(entry.caseId)));
+export async function main() {
+  const cases = await readJsonArray(casesPath);
+  const caseMap = new Map(cases.map((item) => [item.caseId, item]));
+  const history = await readJsonArray(historyPath);
+  const evaluatedRows = history.map((entry) => evaluateEntry(entry, caseMap.get(entry.caseId)));
 
-await mkdir(path.dirname(reportPath), { recursive: true });
-await writeFile(reportPath, buildMarkdown(cases, evaluatedRows));
-process.stdout.write(`Wrote ${path.relative(root, reportPath)}\n`);
+  await mkdir(path.dirname(reportPath), { recursive: true });
+  await writeFile(reportPath, buildMarkdown(cases, evaluatedRows));
+  process.stdout.write(`Wrote ${path.relative(root, reportPath)}\n`);
+}
+
+const invokedPath = process.argv[1] ? pathToFileURL(path.resolve(process.argv[1])).href : "";
+if (import.meta.url === invokedPath) await main();

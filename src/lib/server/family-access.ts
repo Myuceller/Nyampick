@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { createHmac, randomBytes, randomUUID } from "crypto";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
 interface InviteCodeRow {
@@ -44,8 +44,52 @@ export interface FamilyMemberSummary {
   linkedAt?: string;
 }
 
+const INVITE_JOIN_RATE_LIMIT_RPC = "consume_family_invite_join_attempt";
+
+export class FamilyInviteRateLimitError extends Error {
+  constructor(readonly retryAfterSeconds: number) {
+    super("가족 코드 확인 요청이 많아요. 잠시 후 다시 시도해주세요.");
+    this.name = "FamilyInviteRateLimitError";
+  }
+}
+
+export class FamilyInviteRateLimitStorageError extends Error {
+  constructor() {
+    super("가족 코드 보호 설정이 필요합니다. 운영 환경을 확인해주세요.");
+    this.name = "FamilyInviteRateLimitStorageError";
+  }
+}
+
+function hashInviteAttemptKey(value: string) {
+  const secret = process.env.FAMILY_INVITE_RATE_LIMIT_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) throw new FamilyInviteRateLimitStorageError();
+  return createHmac("sha256", secret).update(value).digest("hex");
+}
+
+export async function consumeFamilyInviteJoinAttempt(input: { guestUserId: string; ip: string }) {
+  const { data, error } = await getSupabaseAdmin().rpc(INVITE_JOIN_RATE_LIMIT_RPC, {
+    p_key_hash: hashInviteAttemptKey(`${input.guestUserId}:${input.ip}`),
+  });
+  if (error) {
+    const message = error.message?.toLowerCase() ?? "";
+    if (error.code === "42P01" || error.code === "42883" || message.includes("does not exist") || message.includes(INVITE_JOIN_RATE_LIMIT_RPC)) {
+      throw new FamilyInviteRateLimitStorageError();
+    }
+    throw error;
+  }
+  const result = Array.isArray(data) ? data[0] : data;
+  if (!result || typeof result !== "object" || !("allowed" in result)) throw new FamilyInviteRateLimitStorageError();
+  if (result.allowed !== true) {
+    throw new FamilyInviteRateLimitError(
+      typeof result.retry_after_seconds === "number" ? Math.max(1, Math.ceil(result.retry_after_seconds)) : 60
+    );
+  }
+}
+
 function makeInviteCode(): string {
-  return randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase();
+  // 96 bits of entropy. Hex keeps the code easy to enter and avoids ambiguous
+  // base64 characters while making online guessing infeasible.
+  return randomBytes(12).toString("hex").toUpperCase();
 }
 
 function normalizeRelationshipLabel(value?: string): string {
@@ -78,6 +122,7 @@ async function getPrimaryChildIdForOwner(ownerUserId: string): Promise<string | 
 export async function createFamilyInviteCode(input: {
   ownerUserId: string;
   expiresInDays?: number;
+  rotate?: boolean;
 }): Promise<{ code: string; expiresAt: string }> {
   const supabase = getSupabaseAdmin();
   const expiresInDays = Math.min(Math.max(input.expiresInDays ?? 7, 1), 30);
@@ -94,7 +139,7 @@ export async function createFamilyInviteCode(input: {
     .limit(1)
     .maybeSingle();
   if (existingError) throw existingError;
-  if (existing) {
+  if (existing && !input.rotate) {
     return {
       code: (existing as InviteCodeRow).code,
       expiresAt: (existing as InviteCodeRow).expires_at,
@@ -111,11 +156,20 @@ export async function createFamilyInviteCode(input: {
     .limit(1)
     .maybeSingle();
   if (legacyExistingError) throw legacyExistingError;
-  if (legacyExisting) {
+  if (legacyExisting && !input.rotate) {
     return {
       code: (legacyExisting as InviteCodeRow).code,
       expiresAt: (legacyExisting as InviteCodeRow).expires_at,
     };
+  }
+
+  if (input.rotate) {
+    const { error: revokeError } = await supabase
+      .from("child_invite_codes")
+      .update({ revoked_at: nowIso })
+      .eq("owner_user_id", input.ownerUserId)
+      .is("revoked_at", null);
+    if (revokeError) throw revokeError;
   }
 
   const code = makeInviteCode();

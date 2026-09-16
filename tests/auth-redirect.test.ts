@@ -35,6 +35,9 @@ test("sanitizeAuthNextPath allows only internal non-auth paths", () => {
   assert.equal(sanitizeAuthNextPath(null), "/meal");
   assert.equal(sanitizeAuthNextPath("https://example.com/fridge"), "/meal");
   assert.equal(sanitizeAuthNextPath("//example.com/fridge"), "/meal");
+  assert.equal(sanitizeAuthNextPath("/\\evil.example"), "/meal");
+  assert.equal(sanitizeAuthNextPath("/%5Cevil.example"), "/meal");
+  assert.equal(sanitizeAuthNextPath("/%2F%2Fevil.example"), "/meal");
   assert.equal(sanitizeAuthNextPath("/auth?next=/fridge"), "/meal");
 });
 

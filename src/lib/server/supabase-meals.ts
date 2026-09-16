@@ -86,6 +86,29 @@ export async function getAllMealsFromDb(
   return rowsToMealsMap((data ?? []) as MealRow[]);
 }
 
+export async function getMealsByDateRangeFromDb(
+  userId: string,
+  range: { from: string; to: string },
+  childId?: string
+): Promise<Record<string, DayMeals>> {
+  await ensureMealSeedData(userId);
+  const supabase = getSupabaseAdmin();
+  let query = supabase
+    .from("meal_entries")
+    .select("id,user_id,child_id,date,meal_type,menu_name,quantity,memo,reaction")
+    .eq("user_id", userId)
+    .gte("date", range.from)
+    .lte("date", range.to);
+
+  if (childId) {
+    query = query.eq("child_id", childId);
+  }
+
+  const { data, error } = await query.order("date", { ascending: false });
+  if (error) throw error;
+  return rowsToMealsMap((data ?? []) as MealRow[]);
+}
+
 export async function getMealsByDateFromDb(
   userId: string,
   date: string,

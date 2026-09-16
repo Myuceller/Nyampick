@@ -3,10 +3,12 @@ import { toast } from "sonner";
 import { authedFetch, authedJson } from "@/lib/authed-fetch";
 import type { ApiMessageResponseDto } from "@/lib/dto/common";
 import type { FridgeItemsResponseDto } from "@/lib/dto/fridge";
-import type {
-  RecommendationsResponseDto,
-  SavedRecipeMutationResponseDto,
-  SavedRecipesResponseDto,
+import {
+  MAX_RECIPE_RECOMMENDATION_INGREDIENT_LENGTH,
+  MAX_RECIPE_RECOMMENDATION_INGREDIENTS,
+  type RecommendationsResponseDto,
+  type SavedRecipeMutationResponseDto,
+  type SavedRecipesResponseDto,
 } from "@/lib/dto/recipe";
 import { SECTION_META, SECTION_ORDER, sectionFromItem } from "./constants";
 import {
@@ -23,6 +25,26 @@ import {
   TabKey,
   TasteLevel,
 } from "./types";
+
+/*
+ * Keep selection rules at the client boundary as well as the API boundary so
+ * users never wait for an AI request that the server is guaranteed to reject.
+ */
+function addIngredientIdsWithinLimit(current: Set<string>, ids: string[]) {
+  const next = new Set(current);
+  let limitReached = false;
+
+  for (const id of ids) {
+    if (next.has(id)) continue;
+    if (next.size >= MAX_RECIPE_RECOMMENDATION_INGREDIENTS) {
+      limitReached = true;
+      break;
+    }
+    next.add(id);
+  }
+
+  return { limitReached, next };
+}
 
 export type AiGenerationStage = "requesting" | "analyzing" | "finalizing";
 
@@ -285,39 +307,54 @@ export function useRecipePage() {
   };
 
   const toggleSelectAllDisplayed = () => {
-    setSelectedIngredientIds((prev) => {
-      const next = new Set(prev);
-      if (isAllDisplayedSelected) {
-        for (const id of displayedIngredientIds) next.delete(id);
-      } else {
-        for (const id of displayedIngredientIds) next.add(id);
-      }
-      return next;
-    });
+    if (isAllDisplayedSelected) {
+      const next = new Set(selectedIngredientIds);
+      for (const id of displayedIngredientIds) next.delete(id);
+      setSelectedIngredientIds(next);
+      return;
+    }
+
+    const result = addIngredientIdsWithinLimit(
+      selectedIngredientIds,
+      displayedIngredientIds
+    );
+    setSelectedIngredientIds(result.next);
+    if (result.limitReached) {
+      toast.error(`추천 재료는 최대 ${MAX_RECIPE_RECOMMENDATION_INGREDIENTS}개까지 선택할 수 있어요.`);
+    }
   };
 
   const toggleOneIngredient = (id: string) => {
-    setSelectedIngredientIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    const next = new Set(selectedIngredientIds);
+    if (next.has(id)) {
+      next.delete(id);
+      setSelectedIngredientIds(next);
+      return;
+    }
+    if (next.size >= MAX_RECIPE_RECOMMENDATION_INGREDIENTS) {
+      toast.error(`추천 재료는 최대 ${MAX_RECIPE_RECOMMENDATION_INGREDIENTS}개까지 선택할 수 있어요.`);
+      return;
+    }
+    next.add(id);
+    setSelectedIngredientIds(next);
   };
 
   const toggleSection = (section: FridgeSection) => {
     const ids = section.items.map((item) => item.id);
     const allSelected = ids.length > 0 && ids.every((id) => selectedIngredientIds.has(id));
 
-    setSelectedIngredientIds((prev) => {
-      const next = new Set(prev);
-      if (allSelected) {
-        for (const id of ids) next.delete(id);
-      } else {
-        for (const id of ids) next.add(id);
-      }
-      return next;
-    });
+    if (allSelected) {
+      const next = new Set(selectedIngredientIds);
+      for (const id of ids) next.delete(id);
+      setSelectedIngredientIds(next);
+      return;
+    }
+
+    const result = addIngredientIdsWithinLimit(selectedIngredientIds, ids);
+    setSelectedIngredientIds(result.next);
+    if (result.limitReached) {
+      toast.error(`추천 재료는 최대 ${MAX_RECIPE_RECOMMENDATION_INGREDIENTS}개까지 선택할 수 있어요.`);
+    }
   };
 
   const saveGeneratedRecipe = async (item: GeneratedRecipe) => {
@@ -335,6 +372,12 @@ export function useRecipePage() {
           source: "ai",
           link: item.sourceUrl?.trim() || "",
           memo: item.steps.map((step, idx) => `${idx + 1}. ${step}`).join("\n"),
+          recipeData: {
+            ingredients: item.ingredients,
+            steps: item.steps,
+            sourceName: item.sourceName,
+            sourceUrl: item.sourceUrl,
+          },
         }),
       });
 
@@ -375,6 +418,18 @@ export function useRecipePage() {
       toast.error("추천 받을 재료를 1개 이상 선택해주세요.");
       return;
     }
+    if (selectedNames.length > MAX_RECIPE_RECOMMENDATION_INGREDIENTS) {
+      toast.error(`추천 재료는 최대 ${MAX_RECIPE_RECOMMENDATION_INGREDIENTS}개까지 선택할 수 있어요.`);
+      return;
+    }
+    if (
+      selectedNames.some(
+        (name) => [...name.trim()].length > MAX_RECIPE_RECOMMENDATION_INGREDIENT_LENGTH
+      )
+    ) {
+      toast.error("재료 이름이 너무 깁니다. 냉장고에서 80자 이하로 수정해주세요.");
+      return;
+    }
 
     let analyzeTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -405,9 +460,7 @@ export function useRecipePage() {
       setAiGenerationStage("analyzing");
 
       const recommended = (json.recommendations ?? [])
-        .map((item, idx) =>
-          mapRecommendationDtoToGeneratedRecipe(item, `ai-result-${Date.now()}-${idx}`)
-        )
+        .map((item) => mapRecommendationDtoToGeneratedRecipe(item))
         .filter((item): item is GeneratedRecipe => item !== null);
 
       if (recommended.length === 0) {

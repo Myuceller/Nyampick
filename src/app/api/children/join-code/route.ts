@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/server/api-auth";
-import { joinFamilyByInviteCode } from "@/lib/server/family-access";
+import {
+  consumeFamilyInviteJoinAttempt,
+  FamilyInviteRateLimitError,
+  FamilyInviteRateLimitStorageError,
+  joinFamilyByInviteCode,
+} from "@/lib/server/family-access";
+
+function getClientIp(request: Request) {
+  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip")?.trim() || "unknown";
+}
 
 export async function POST(request: Request) {
   const user = await getUserFromRequest(request);
@@ -17,6 +26,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    await consumeFamilyInviteJoinAttempt({ guestUserId: user.id, ip: getClientIp(request) });
     const linked = await joinFamilyByInviteCode({
       guestUserId: user.id,
       code: body.code,
@@ -25,6 +35,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ linked });
   } catch (error) {
     const message = error instanceof Error ? error.message : "failed to join by invite code";
+    if (error instanceof FamilyInviteRateLimitError) {
+      return NextResponse.json({ message, retryAfterSeconds: error.retryAfterSeconds }, { status: 429 });
+    }
+    if (error instanceof FamilyInviteRateLimitStorageError) {
+      return NextResponse.json({ code: "FAMILY_INVITE_RATE_LIMIT_UNAVAILABLE", message }, { status: 503 });
+    }
     const status =
       message === "invite code not found" ||
       message === "invite code expired" ||
