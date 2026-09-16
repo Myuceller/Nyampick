@@ -225,7 +225,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [callbackError, setCallbackError] = useState<string | null>(null);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const processedCodesRef = useRef(new Map<string, Promise<void>>());
-  const isAuthBrowserOpenRef = useRef(false);
   const pendingRegistrationConsentRef = useRef<StoredPendingRegistrationConsent | null>(null);
   const matchedPendingRegistrationConsentRef = useRef<string | null>(null);
   const pendingConsentRequestRef = useRef<Promise<void> | null>(null);
@@ -498,9 +497,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (url) void processAuthRedirect(url);
     });
     const linking = Linking.addEventListener("url", ({ url }) => {
-      // While the system authentication browser is open, its success result owns
-      // the callback. This avoids competing exchanges of a one-time PKCE code.
-      if (isAuthBrowserOpenRef.current) return;
+      // Kakao can return through Linking before openAuthSessionAsync resolves.
+      // processAuthRedirect deduplicates the single-use PKCE code, so the first
+      // valid callback wins without dropping the other delivery path.
       void processAuthRedirect(url);
     });
     const appState = AppState.addEventListener("change", (nextState) => {
@@ -678,10 +677,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
         if (!data.url) throw new Error("소셜 로그인 URL을 준비하지 못했습니다.");
 
-        isAuthBrowserOpenRef.current = true;
         const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
         if (result.type === "cancel" || result.type === "dismiss") {
-          await clearPendingRegistrationConsent();
+          // Kakao's native-app handoff can deliver the callback through Linking
+          // while the auth-session promise reports dismiss. Keep the short-lived
+          // pending attempt so that late callback can still finish safely.
           return;
         }
         if (result.type !== "success") throw new Error("소셜 로그인 화면을 열지 못했습니다.");
@@ -694,8 +694,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (isAppleAuthenticationCancelled(error)) return;
         const message = error instanceof Error ? error.message : null;
         setCallbackError(toFriendlySocialCallbackError({ error: message, errorCode: null, errorDescription: null }));
-      } finally {
-        isAuthBrowserOpenRef.current = false;
       }
     },
     async requestPasswordReset(email) {
