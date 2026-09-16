@@ -11,64 +11,16 @@ import {
   getProfileFromDb,
   updateProfileInDb,
 } from "@/lib/server/supabase-app-data";
+import {
+  readAuthUserDisplayName,
+  readAuthUserEmail,
+  requiresKakaoEmailConsent,
+} from "@/features/auth/lib/social-profile";
 
-type MetadataScalar = string | number | boolean | null;
-type MetadataValue = MetadataScalar | MetadataObject | MetadataValue[];
-interface MetadataObject {
-  [key: string]: MetadataValue;
-}
-
-function asString(value: MetadataValue | undefined): string | undefined {
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
-}
-
-function readDisplayNameFromUser(user: {
-  user_metadata?: MetadataObject | null;
-}): string | undefined {
-  const metadata = user.user_metadata ?? {};
-
-  const direct =
-    asString(metadata.full_name) ||
-    asString(metadata.name) ||
-    asString(metadata.nickname) ||
-    asString(metadata.user_name) ||
-    asString(metadata.preferred_username);
-  if (direct) return direct;
-
-  const kakaoAccount =
-    metadata.kakao_account && typeof metadata.kakao_account === "object"
-      ? (metadata.kakao_account as MetadataObject)
-      : null;
-  const kakaoProfile =
-    kakaoAccount?.profile && typeof kakaoAccount.profile === "object"
-      ? (kakaoAccount.profile as MetadataObject)
-      : null;
-
-  return asString(kakaoProfile?.nickname);
-}
-
-function readEmailFromUser(user: {
-  email?: string | null;
-  user_metadata?: MetadataObject | null;
-}): string | undefined {
-  if (user.email && user.email.trim().length > 0) {
-    return user.email.trim();
-  }
-
-  const metadata = user.user_metadata ?? {};
-  const direct =
-    asString(metadata.email) ||
-    asString(metadata.email_address) ||
-    asString(metadata.preferred_email);
-  if (direct) return direct;
-
-  const kakaoAccount =
-    metadata.kakao_account && typeof metadata.kakao_account === "object"
-      ? (metadata.kakao_account as MetadataObject)
-      : null;
-
-  return asString(kakaoAccount?.email);
-}
+const KAKAO_EMAIL_REQUIRED_RESPONSE = {
+  code: "KAKAO_EMAIL_REQUIRED",
+  message: "카카오 계정에서 이메일 제공에 동의해 주세요.",
+};
 
 function isValidImageDataUrl(value: string): boolean {
   return /^data:image\/(png|jpe?g|webp);base64,/i.test(value) && value.length <= 1_500_000;
@@ -104,19 +56,19 @@ export async function GET(request: Request) {
     if (!(await canAccessProfileDuringRegistration(user))) {
       return registrationConsentRequiredResponse();
     }
-
-    const emailHint = readEmailFromUser(user);
+    if (requiresKakaoEmailConsent(user)) {
+      return NextResponse.json(KAKAO_EMAIL_REQUIRED_RESPONSE, { status: 400 });
+    }
+    const emailHint = readAuthUserEmail(user);
     const profile = await getProfileFromDb(
       user.id,
       emailHint,
-      readDisplayNameFromUser(user)
+      readAuthUserDisplayName(user)
     );
     if (hasRegistrationConsent(user)) {
       await markRegistrationCompleted(user);
     }
-    return NextResponse.json({
-      profile,
-    });
+    return NextResponse.json({ profile });
   } catch (error) {
     if (error instanceof DuplicateEmailAccountError) {
       return NextResponse.json(
@@ -173,9 +125,11 @@ export async function PATCH(request: Request) {
     if (!(await canAccessProfileDuringRegistration(user))) {
       return registrationConsentRequiredResponse();
     }
-
-    const emailHint = readEmailFromUser(user);
-    const displayNameHint = readDisplayNameFromUser(user);
+    if (requiresKakaoEmailConsent(user)) {
+      return NextResponse.json(KAKAO_EMAIL_REQUIRED_RESPONSE, { status: 400 });
+    }
+    const emailHint = readAuthUserEmail(user);
+    const displayNameHint = readAuthUserDisplayName(user);
     await getProfileFromDb(user.id, emailHint, displayNameHint);
     const profile = await updateProfileInDb(user.id, {
       name: body.name?.trim(),

@@ -44,6 +44,8 @@ export default function AuthPage() {
   if (vm.screenMode === "referral") {
     return (
       <ReferralSurveyView
+        errorMessage={vm.errorMessage}
+        isSubmitting={vm.isSubmitting}
         onComplete={(source) => {
           void vm.completeReferralSurvey(source);
         }}

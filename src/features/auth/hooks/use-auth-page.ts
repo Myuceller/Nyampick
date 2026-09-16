@@ -522,6 +522,7 @@ export function useAuthPage() {
 
     setErrorMessage(null);
     setCanRetryProfileSeed(false);
+    setIsSubmitting(true);
     try {
       const { error } = await supabase.auth.updateUser({
         data: {
@@ -538,6 +539,8 @@ export function useAuthPage() {
       router.replace(getAuthNextPath());
     } catch (error) {
       setErrorMessage(toFriendlyAuthErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

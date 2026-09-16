@@ -30,6 +30,7 @@
 | P2 | 유입 조사 | “어느 경로로 이 앱을 알게됐나요?” 질문 추가 | Done | 온보딩 완료 후 1회 카드형 설문, user_metadata referral_source 저장 |
 | P2 | 랜딩 | 랜딩 이미지 손그림 톤으로 변경, 보호자/아기 별명 예시 추가 | Todo | 흰 배경 GIF는 지양, 누끼 PNG + CSS 모션 사용 |
 | P2 | 아이콘 | 메인/앱 아이콘을 최종 누끼 이미지로 통일 | Done | `main_app_icon1.png` 기반 PWA/TWA 런처/스플래시/바로가기 아이콘 재생성 |
+| P2 | 앱 표시 | OS 다크모드에서도 냠픽은 라이트 화면으로 고정 | Done | 웹 `color-scheme: light`, TWA dark status/navigation 색상 라이트 팔레트 적용 |
 
 ## 디자인 적용 기준
 
