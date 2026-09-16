@@ -23,6 +23,8 @@ export function buildRecipeModelRequest(input: {
   recipeInput: GenerateRecipeInput;
   mode: RecipeGenerationMode;
 }) {
+  const supportsTemperature = !/^gpt-5(?:[.-]|$)/i.test(input.model.trim());
+
   return {
     model: input.model,
     input: [
@@ -52,7 +54,7 @@ export function buildRecipeModelRequest(input: {
       ),
     },
     max_output_tokens: Math.min(3_200, Math.max(900, input.recipeInput.limit * 320)),
-    temperature: 0.2,
+    ...(supportsTemperature ? { temperature: 0.2 } : {}),
     store: false as const,
   };
 }

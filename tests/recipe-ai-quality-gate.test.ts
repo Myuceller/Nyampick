@@ -335,6 +335,23 @@ test("model request uses strict structured output without source URLs or storage
   assert.ok(RECIPE_GENERATION_TIMEOUT_MS < 45_000);
 });
 
+test("model request omits temperature for GPT-5 family compatibility", () => {
+  const recipeInput = { ingredients: ["두부", "애호박", "쌀"], limit: 3 };
+  const gpt41Request = buildRecipeModelRequest({
+    model: "gpt-4.1-mini",
+    recipeInput,
+    mode: "strict",
+  });
+  const gpt5Request = buildRecipeModelRequest({
+    model: "gpt-5.6-luna",
+    recipeInput,
+    mode: "strict",
+  });
+
+  assert.equal(gpt41Request.temperature, 0.2);
+  assert.equal(gpt5Request.temperature, undefined);
+});
+
 test("response reader handles incomplete, refusal, and empty responses explicitly", () => {
   const incomplete = readRecipeModelResponse({
     status: "incomplete",
