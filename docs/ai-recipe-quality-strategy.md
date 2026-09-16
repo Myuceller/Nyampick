@@ -13,7 +13,7 @@ AI 레시피 추천은 같은 재료 입력에도 결과 형식과 품질이 흔
 - 조리 단계 형식이 흔들린다.
   - 예: `1.`, `2)`, `-` 같은 목록 기호 포함
 - 금지 조합이나 알레르기 주의 문구가 누락될 수 있다.
-- 출처, 재료 수, 조리 단계 수가 부족할 수 있다.
+- 검증할 수 없는 출처 URL을 생성하거나 재료 수, 조리 단계 수가 부족할 수 있다.
 
 ## 목표
 
@@ -75,21 +75,24 @@ AI 추천을 바로 사용자에게 보여주지 않고, 아래 흐름을 통과
 
 파일:
 
+- `src/lib/ai/recipe-generation.ts`
 - `src/lib/server/recipe-ai.ts`
 
 하는 일:
 
 - AI 응답이 `recipes` 배열을 갖는지 확인
-- 각 recipe의 `title`, `subtitle`, `taste`, `ingredients`, `steps`, `source_name`, `source_url` 타입을 검증
+- 각 recipe의 `title`, `subtitle`, `taste`, `ingredients`, `steps` 타입을 검증
 - `ingredients`와 `steps`가 문자열 배열이 아니면 실패 처리
 - `taste`가 허용값이 아니면 `보통이에요`로 보정
+- 모델에게 출처명이나 URL을 생성하게 하지 않아 검증되지 않은 링크 노출을 막음
 - schema 검증을 통과한 응답만 정규화와 quality gate로 넘김
 
 ### Quality Gate 연결
 
 파일:
 
-- `src/lib/server/recipe-ai.ts`
+- `src/lib/ai/recipe-generation.ts`
+- `src/lib/ai/recipe-quality-gate.ts`
 
 변경:
 
@@ -106,10 +109,11 @@ AI 추천을 바로 사용자에게 보여주지 않고, 아래 흐름을 통과
 - 부제 28자 이하
 - 재료 3개 이상
 - 조리 단계 3개 이상
-- 출처명과 출처 URL 존재
 - 금지 조합 없음
 - 알레르기 재료가 있으면 주의 문구 존재
 - 사용자가 선택한 재료와 충분히 관련 있음
+
+생성형 추천은 검증되지 않은 출처를 만들지 않으며, 출처 유무를 통과 조건이나 점수에 포함하지 않는다. 사용자 제공 링크나 별도 연동으로 검증된 출처를 평가할 때만 `requireSource: true`를 명시해 출처 검증을 켤 수 있다.
 
 ## 실패 사유 reason code
 
@@ -123,7 +127,7 @@ AI 추천이 탈락하면 boolean만 남기지 않고 reason code를 남긴다.
 | `subtitle_too_long` | 부제가 28자를 초과함 |
 | `too_few_ingredients` | 재료가 3개 미만임 |
 | `too_few_steps` | 조리 단계가 3개 미만임 |
-| `missing_source` | 출처명 또는 출처 URL이 없음 |
+| `missing_source` | `requireSource: true`인 검증 출처 모드에서 출처명 또는 출처 URL이 없음 |
 | `awkward_pair` | 금지 조합이 포함됨 |
 | `missing_allergy_caution` | 알레르기 재료가 있지만 주의 문구가 없음 |
 | `not_enough_input_match` | 사용자 입력 재료와 충분히 관련 없음 |
@@ -146,7 +150,8 @@ AI 추천이 탈락하면 boolean만 남기지 않고 reason code를 남긴다.
 - `docs/ai-recipe-quality-history.json`의 추천 히스토리를 읽는다.
 - 각 추천을 `evaluateRecipeQuality`로 다시 평가한다.
 - 통과 추천 수와 탈락 추천 수를 집계한다.
-- `missing_source`, `awkward_pair`, `missing_allergy_caution` 같은 reason code별 빈도를 표로 만든다.
+- `awkward_pair`, `missing_allergy_caution` 같은 reason code별 빈도를 표로 만든다.
+- `missing_source`는 검증 출처 케이스에서만 집계하며, 생성형 추천 케이스의 출처 지표는 `N/A`로 표시한다.
 - production quality gate는 통과했지만 eval case의 추가 기대 조건을 못 맞춘 경우는 eval gap으로 따로 집계한다.
 - `requiredAnyTerms`로 의미가 같은 표현 묶음 중 하나만 포함돼도 통과하도록 평가한다.
   - 예: `["익혀", "익힌", "끓여", "삶"]`
@@ -217,4 +222,4 @@ AI 추천이 탈락하면 boolean만 남기지 않고 reason code를 남긴다.
 
 > AI 레시피 추천의 입력/출력 정규화 레이어를 추가해 영수증 OCR과 사용자 선택 재료의 표기 차이를 대표 재료명으로 통일하고, 정규화된 결과만 quality gate를 통과하도록 개선했습니다.
 
-> OpenAI 추천 결과를 바로 노출하지 않고 재료명 표준화, 조리 단계 정리, 금지 조합/알레르기/출처 검증을 거쳐 production-ready 추천만 사용자에게 제공하는 AI 오케스트레이션 구조를 구현했습니다.
+> OpenAI 추천 결과를 바로 노출하지 않고 재료명 표준화, 조리 단계 정리, 금지 조합·알레르기 검증을 거쳐 production-ready 추천만 사용자에게 제공하고, 검증되지 않은 출처 URL 생성을 차단하는 AI 오케스트레이션 구조를 구현했습니다.

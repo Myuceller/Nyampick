@@ -84,7 +84,7 @@ export async function PATCH(request: Request) {
     name?: string;
     category?: string;
     quantity?: string;
-    expiresAt?: string;
+    expiresAt?: string | null;
   };
 
   if (typeof body.id !== "string" || body.id.length === 0) {
@@ -95,6 +95,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ message: "invalid category" }, { status: 400 });
   }
   const category = body.category && isFridgeCategory(body.category) ? body.category : undefined;
+  const expiresAt = body.expiresAt === undefined ? undefined : body.expiresAt?.trim() || null;
 
   let updated = null;
   try {
@@ -103,7 +104,7 @@ export async function PATCH(request: Request) {
       name: body.name,
       category,
       quantity: body.quantity,
-      expiresAt: body.expiresAt,
+      expiresAt,
     });
   } catch {
     return NextResponse.json({ message: "failed to update fridge item" }, { status: 500 });

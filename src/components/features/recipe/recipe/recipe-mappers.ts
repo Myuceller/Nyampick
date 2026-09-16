@@ -1,4 +1,4 @@
-import type { RecommendationItemDto, SavedRecipeItemDto } from "@/lib/dto/recipe";
+import type { RecipeRecommendationDto, SavedRecipeItemDto } from "@/lib/dto/recipe";
 import type { GeneratedRecipe, RecipeItem, TasteLevel } from "./types";
 
 export function normalizeTaste(taste: string | undefined): TasteLevel {
@@ -19,8 +19,8 @@ export function mapSavedRecipeDtoToItem(item: SavedRecipeItemDto): RecipeItem {
     ctaLabel: "레시피 보기 ↗",
     link: item.link,
     memo: item.memo,
-    ingredients: [],
-    steps: (item.memo ?? "")
+    ingredients: item.recipeData?.ingredients ?? [],
+    steps: item.recipeData?.steps ?? (item.memo ?? "")
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.length > 0),
@@ -28,8 +28,7 @@ export function mapSavedRecipeDtoToItem(item: SavedRecipeItemDto): RecipeItem {
 }
 
 export function mapRecommendationDtoToGeneratedRecipe(
-  item: RecommendationItemDto,
-  id: string
+  item: RecipeRecommendationDto
 ): GeneratedRecipe | null {
   const title = (item.title ?? "").trim();
   const subtitle = (item.subtitle ?? "").trim();
@@ -49,13 +48,13 @@ export function mapRecommendationDtoToGeneratedRecipe(
   }
 
   return {
-    id,
+    id: item.id,
     title,
     subtitle,
     taste: normalizeTaste(item.taste),
     ingredients,
     steps,
-    sourceName: typeof item.source_name === "string" ? item.source_name.trim() : "",
-    sourceUrl: typeof item.source_url === "string" ? item.source_url.trim() : "",
+    sourceName: item.sourceName?.trim() ?? "",
+    sourceUrl: item.sourceUrl?.trim() ?? "",
   };
 }

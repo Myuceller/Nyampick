@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/server/api-auth";
 import {
+  hasLegacyProfile,
+  hasRegistrationConsent,
+  isLegacyRegistrationIdentity,
+  markRegistrationCompleted,
+} from "@/lib/server/registration-consent";
+import {
   DuplicateEmailAccountError,
   getProfileFromDb,
   updateProfileInDb,
@@ -68,20 +74,48 @@ function isValidImageDataUrl(value: string): boolean {
   return /^data:image\/(png|jpe?g|webp);base64,/i.test(value) && value.length <= 1_500_000;
 }
 
+async function canAccessProfileDuringRegistration(user: {
+  id: string;
+  app_metadata: Record<string, unknown>;
+  created_at: string;
+}) {
+  if (hasRegistrationConsent(user)) return true;
+  if (!isLegacyRegistrationIdentity(user)) return false;
+  return hasLegacyProfile(user.id);
+}
+
+function registrationConsentRequiredResponse() {
+  return NextResponse.json(
+    {
+      code: "REGISTRATION_CONSENT_REQUIRED",
+      message: "필수 약관 동의 후 회원가입을 완료해주세요.",
+    },
+    { status: 403 }
+  );
+}
+
 export async function GET(request: Request) {
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest(request, { allowPendingRegistration: true });
   if (!user) {
     return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }
 
   try {
+    if (!(await canAccessProfileDuringRegistration(user))) {
+      return registrationConsentRequiredResponse();
+    }
+
     const emailHint = readEmailFromUser(user);
+    const profile = await getProfileFromDb(
+      user.id,
+      emailHint,
+      readDisplayNameFromUser(user)
+    );
+    if (hasRegistrationConsent(user)) {
+      await markRegistrationCompleted(user);
+    }
     return NextResponse.json({
-      profile: await getProfileFromDb(
-        user.id,
-        emailHint,
-        readDisplayNameFromUser(user)
-      ),
+      profile,
     });
   } catch (error) {
     if (error instanceof DuplicateEmailAccountError) {
@@ -89,8 +123,6 @@ export async function GET(request: Request) {
         {
           code: "DUPLICATE_EMAIL_ACCOUNT",
           message: error.message,
-          email: error.email,
-          existingUserId: error.existingUserId,
         },
         { status: 409 }
       );
@@ -102,7 +134,7 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest(request, { allowPendingRegistration: true });
   if (!user) {
     return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }
@@ -138,26 +170,30 @@ export async function PATCH(request: Request) {
   }
 
   try {
+    if (!(await canAccessProfileDuringRegistration(user))) {
+      return registrationConsentRequiredResponse();
+    }
+
     const emailHint = readEmailFromUser(user);
     const displayNameHint = readDisplayNameFromUser(user);
     await getProfileFromDb(user.id, emailHint, displayNameHint);
-    return NextResponse.json({
-      profile: await updateProfileInDb(user.id, {
-        name: body.name?.trim(),
-        babyName: body.babyName,
-        babyMonthsOld: body.babyMonthsOld,
-        email: body.email,
-        profileImageUrl: body.profileImageUrl === null ? null : body.profileImageUrl,
-      }),
+    const profile = await updateProfileInDb(user.id, {
+      name: body.name?.trim(),
+      babyName: body.babyName,
+      babyMonthsOld: body.babyMonthsOld,
+      email: body.email,
+      profileImageUrl: body.profileImageUrl === null ? null : body.profileImageUrl,
     });
+    if (hasRegistrationConsent(user)) {
+      await markRegistrationCompleted(user);
+    }
+    return NextResponse.json({ profile });
   } catch (error) {
     if (error instanceof DuplicateEmailAccountError) {
       return NextResponse.json(
         {
           code: "DUPLICATE_EMAIL_ACCOUNT",
           message: error.message,
-          email: error.email,
-          existingUserId: error.existingUserId,
         },
         { status: 409 }
       );

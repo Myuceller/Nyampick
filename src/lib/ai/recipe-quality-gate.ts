@@ -131,7 +131,8 @@ function countInputIngredients(recipe: AiRecipeRecommendation, input: GenerateRe
 
 export function evaluateRecipeQuality(
   recipe: AiRecipeRecommendation,
-  input: GenerateRecipeInput
+  input: GenerateRecipeInput,
+  options?: { requireSource?: boolean }
 ): RecipeQualityResult {
   const normalizedRecipe = normalizeRecipeRecommendation(recipe);
   const normalizedInput = {
@@ -144,7 +145,12 @@ export function evaluateRecipeQuality(
   if (titleLength(normalizedRecipe.subtitle) > 28) reasons.push("subtitle_too_long");
   if (normalizedRecipe.ingredients.length < 3) reasons.push("too_few_ingredients");
   if (normalizedRecipe.steps.length < 3) reasons.push("too_few_steps");
-  if (!normalizedRecipe.sourceName || !normalizedRecipe.sourceUrl) reasons.push("missing_source");
+  if (
+    options?.requireSource !== false &&
+    (!normalizedRecipe.sourceName || !normalizedRecipe.sourceUrl)
+  ) {
+    reasons.push("missing_source");
+  }
   if (hasAwkwardPair(normalizedRecipe)) reasons.push("awkward_pair");
   if (hasAllergyIngredient(normalizedRecipe) && !hasAllergyCaution(normalizedRecipe)) {
     reasons.push("missing_allergy_caution");
@@ -163,23 +169,42 @@ export function evaluateRecipeQuality(
   };
 }
 
-export function isProductionReadyRecipe(recipe: AiRecipeRecommendation, input: GenerateRecipeInput) {
-  return evaluateRecipeQuality(recipe, input).ready;
+export function isProductionReadyRecipe(
+  recipe: AiRecipeRecommendation,
+  input: GenerateRecipeInput,
+  options?: { requireSource?: boolean }
+) {
+  return evaluateRecipeQuality(recipe, input, options).ready;
 }
 
 export function selectProductionReadyRecommendations(
   recommendations: AiRecipeRecommendation[],
-  input: GenerateRecipeInput
+  input: GenerateRecipeInput,
+  options?: { requireSource?: boolean }
 ) {
-  const ready = recommendations
-    .map(normalizeRecipeRecommendation)
-    .filter((recipe) => evaluateRecipeQuality(recipe, input).ready);
+  const ready: AiRecipeRecommendation[] = [];
+  const seen = new Set<string>();
+
+  for (const candidate of recommendations) {
+    const recipe = normalizeRecipeRecommendation(candidate);
+    if (!evaluateRecipeQuality(recipe, input, options).ready) continue;
+
+    const identity = JSON.stringify([
+      recipe.title.toLowerCase(),
+      [...recipe.ingredients].sort(),
+    ]);
+    if (seen.has(identity)) continue;
+    seen.add(identity);
+    ready.push(recipe);
+  }
+
   return ready.slice(0, input.limit);
 }
 
 export function hasEnoughReadyRecommendations(
   recommendations: AiRecipeRecommendation[],
-  input: GenerateRecipeInput
+  input: GenerateRecipeInput,
+  options?: { requireSource?: boolean }
 ) {
-  return recommendations.filter((recipe) => evaluateRecipeQuality(recipe, input).ready).length >= input.limit;
+  return selectProductionReadyRecommendations(recommendations, input, options).length >= input.limit;
 }

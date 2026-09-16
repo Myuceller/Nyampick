@@ -1,0 +1,4 @@
+interface:
+  display_name: Nyampick Cross-Platform Harness
+  short_description: Build mobile parity with guarded web SEO
+  default_prompt: Implement or review this Nyampick feature using the cross-platform architecture and delivery harness.

@@ -1,7 +1,6 @@
 import { randomUUID } from "crypto";
 import { SAMPLE_MENUS, getSampleMealData } from "@/lib/meal-store";
 import type { DayMeals, MealType, MenuItem } from "@/lib/types";
-import { normalizeReceiptLines } from "@/lib/server/receipt-normalize";
 
 export type FridgeCategory =
   | "fruit"
@@ -21,19 +20,6 @@ export interface FridgeItem {
   expiresAt?: string;
   addedAt: string;
   source: "manual" | "receipt";
-}
-
-export interface ReceiptScanCandidate {
-  tempId: string;
-  name: string;
-  category: FridgeCategory;
-  confidence: number;
-}
-
-export interface ReceiptScanSession {
-  id: string;
-  createdAt: string;
-  candidates: ReceiptScanCandidate[];
 }
 
 export interface UserProfile {
@@ -64,12 +50,10 @@ interface MealApiStore {
   meals: Record<string, DayMeals>;
   menus: MenuItem[];
   fridgeItems: FridgeItem[];
-  receiptScans: Record<string, ReceiptScanSession>;
   profile: UserProfile;
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var __mealApiStore: MealApiStore | undefined;
 }
 
@@ -174,7 +158,6 @@ function createStore(): MealApiStore {
         source: "manual",
       },
     ],
-    receiptScans: {},
     profile: {
       id: "me",
       name: "하율맘",
@@ -319,73 +302,6 @@ export function deleteFridgeItem(id: string): boolean {
   const before = store.fridgeItems.length;
   store.fridgeItems = store.fridgeItems.filter((item) => item.id !== id);
   return before !== store.fridgeItems.length;
-}
-
-export function createReceiptScanSession(rawText?: string): ReceiptScanSession {
-  const store = getStore();
-  const sessionId = randomUUID();
-
-  const parsedLines = (rawText ?? "사과\n삼겹살\n두부\n바나나\n요거트")
-    .split(/[\n,]/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-
-  const normalized = normalizeReceiptLines(parsedLines);
-
-  const candidates: ReceiptScanCandidate[] = normalized.map((item, index) => ({
-    tempId: `${sessionId}-${index}`,
-    name: item.name,
-    category: guessFridgeCategory(item.name),
-    confidence: Math.max(0.65, 0.96 - index * 0.04),
-  }));
-
-  const session: ReceiptScanSession = {
-    id: sessionId,
-    createdAt: nowIso(),
-    candidates,
-  };
-
-  store.receiptScans[sessionId] = session;
-  return session;
-}
-
-export function getReceiptScanSession(scanId: string): ReceiptScanSession | null {
-  return getStore().receiptScans[scanId] ?? null;
-}
-
-export function confirmReceiptScanSelection(input: {
-  scanId: string;
-  selected: Array<{
-    tempId: string;
-    category?: FridgeCategory;
-    quantity?: string;
-    expiresAt?: string;
-  }>;
-}): FridgeItem[] | null {
-  const store = getStore();
-  const session = store.receiptScans[input.scanId];
-  if (!session) return null;
-
-  const selectedMap = new Map(input.selected.map((item) => [item.tempId, item]));
-
-  const createdItems: FridgeItem[] = [];
-  for (const candidate of session.candidates) {
-    const picked = selectedMap.get(candidate.tempId);
-    if (!picked) continue;
-
-    createdItems.push(
-      addFridgeItem({
-        name: candidate.name,
-        category: picked.category ?? candidate.category,
-        quantity: picked.quantity,
-        expiresAt: picked.expiresAt,
-        source: "receipt",
-      })
-    );
-  }
-
-  delete store.receiptScans[input.scanId];
-  return createdItems;
 }
 
 export function getProfile(): UserProfile {

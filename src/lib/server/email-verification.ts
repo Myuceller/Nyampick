@@ -8,6 +8,13 @@ const MAX_ATTEMPTS = 5;
 const TABLE_NAME = "email_verification_codes";
 const RESEND_TIMEOUT_MS = 12_000;
 
+function canExposeDevelopmentVerificationCode() {
+  return (
+    process.env.NODE_ENV === "development" &&
+    process.env.ALLOW_DEV_EMAIL_VERIFICATION_CODE === "true"
+  );
+}
+
 interface VerificationRecord {
   email: string;
   codeHash: string;
@@ -228,7 +235,10 @@ export async function sendVerificationEmail(input: {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.AUTH_EMAIL_FROM || "Nyampick <onboarding@resend.dev>";
   if (!apiKey) {
-    return { sent: false, devCode: input.code };
+    if (canExposeDevelopmentVerificationCode()) {
+      return { sent: false, devCode: input.code };
+    }
+    throw new Error("이메일 인증 발송 설정이 필요합니다. 운영 환경을 확인해주세요.");
   }
 
   const controller = new AbortController();

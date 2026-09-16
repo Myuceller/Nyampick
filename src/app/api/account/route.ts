@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserFromRequest } from "@/lib/server/api-auth";
+import { getAuthenticatedUserFromRequest } from "@/lib/server/api-auth";
 import { deleteAccountData, deleteAuthUser } from "@/lib/server/account-deletion";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
@@ -21,7 +21,9 @@ async function getDirectAuthUserId(request: Request): Promise<string | null> {
 }
 
 export async function DELETE(request: Request) {
-  const user = await getUserFromRequest(request);
+  // A just-created OAuth identity may not yet have completed consent/profile
+  // initialization, but it must still be able to delete itself.
+  const user = await getAuthenticatedUserFromRequest(request);
   if (!user) {
     return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }

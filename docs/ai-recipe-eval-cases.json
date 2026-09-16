@@ -7,7 +7,7 @@
     "expected": "유아식으로 자연스러운 단백질/채소 조합",
     "checks": {
       "minIngredientUtilization": 0.6,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": []
     }
   },
@@ -19,7 +19,7 @@
     "expected": "부자연스러운 조합 회피",
     "checks": {
       "minIngredientUtilization": 0.4,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": [["바나나", "소고기"]]
     }
   },
@@ -31,7 +31,7 @@
     "expected": "이유식/유아식 톤의 단계형 조리법",
     "checks": {
       "minIngredientUtilization": 0.6,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": []
     }
   },
@@ -43,7 +43,7 @@
     "expected": "간식 또는 식사로 납득 가능한 추천",
     "checks": {
       "minIngredientUtilization": 0.5,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": []
     }
   },
@@ -55,7 +55,7 @@
     "expected": "알레르기 가능 재료를 무리하게 권장하지 않음",
     "checks": {
       "minIngredientUtilization": 0.4,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": [["새우", "우유"]],
       "forbiddenClaims": ["알레르기 걱정 없어요", "안전해요", "완전 안전"],
       "requireCautionTone": true
@@ -69,7 +69,7 @@
     "expected": "철분 보충 이유식으로 자연스러운 죽/무른밥 추천",
     "checks": {
       "minIngredientUtilization": 0.75,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": [],
       "requiredAnyTerms": [["익혀", "익힌", "끓여", "끓인다", "삶"], ["잘게", "곱게", "다진", "다진다", "작게"]]
     }
@@ -82,7 +82,7 @@
     "expected": "알레르기 가능 단백질을 소량/주의 톤으로 다루는 추천",
     "checks": {
       "minIngredientUtilization": 0.6,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": [],
       "forbiddenClaims": ["알레르기 걱정 없어요", "무조건 안전", "완전 안전", "안심하고 먹"],
       "requireCautionTone": true,
@@ -97,7 +97,7 @@
     "expected": "과일과 육류/향채 조합을 무리하게 섞지 않는 추천",
     "checks": {
       "minIngredientUtilization": 0.5,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": [["바나나", "닭고기"], ["바나나", "양파"]]
     }
   },
@@ -109,7 +109,7 @@
     "expected": "새우 알레르기와 월령 확인을 보수적으로 안내하는 추천",
     "checks": {
       "minIngredientUtilization": 0.5,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": [],
       "forbiddenClaims": ["알레르기 걱정 없어요", "무조건 안전", "완전 안전", "안심하고 먹"],
       "requireCautionTone": true,
@@ -124,7 +124,7 @@
     "expected": "유제품 알레르기 주의와 간식/반찬 균형을 갖춘 추천",
     "checks": {
       "minIngredientUtilization": 0.6,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": [],
       "forbiddenClaims": ["알레르기 걱정 없어요", "무조건 안전", "완전 안전"],
       "requireCautionTone": true
@@ -138,7 +138,7 @@
     "expected": "채소와 두부를 활용한 저염 유아식 단계형 추천",
     "checks": {
       "minIngredientUtilization": 0.75,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": [],
       "requiredTerms": ["간을 약", "익혀"]
     }
@@ -151,7 +151,7 @@
     "expected": "새우와 유제품 조합을 피하고 알레르기 주의를 명확히 안내",
     "checks": {
       "minIngredientUtilization": 0.4,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": [["새우", "치즈"], ["새우", "우유"]],
       "forbiddenClaims": ["알레르기 걱정 없어요", "무조건 안전", "완전 안전"],
       "requireCautionTone": true
@@ -165,7 +165,7 @@
     "expected": "단백질/곡물/채소 균형이 있는 식사형 유아식 추천",
     "checks": {
       "minIngredientUtilization": 0.8,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": [],
       "requiredTerms": ["부드"]
     }
@@ -178,7 +178,7 @@
     "expected": "간식형 추천에서 질감과 유제품 주의를 함께 다루는지 평가",
     "checks": {
       "minIngredientUtilization": 0.67,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": [],
       "forbiddenClaims": ["알레르기 걱정 없어요", "무조건 안전", "완전 안전"],
       "requireCautionTone": true,
@@ -187,13 +187,13 @@
   },
   {
     "caseId": "R15",
-    "tags": ["meal-prep", "source", "step-quality"],
+    "tags": ["meal-prep", "cooking-safety", "step-quality"],
     "ingredients": ["소고기", "양파", "당근", "쌀"],
     "limit": 3,
-    "expected": "가열/손질 단계와 출처가 명확한 식사형 추천",
+    "expected": "가열과 손질 단계가 명확한 식사형 추천",
     "checks": {
       "minIngredientUtilization": 0.75,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": [],
       "requiredAnyTerms": [["손질", "다진", "다진다", "썬", "자른", "준비"], ["익혀", "익힌", "끓", "삶", "가열", "굽"]]
     }
@@ -206,20 +206,20 @@
     "expected": "영수증/OCR 잡음이 섞인 재료명을 애호박, 닭고기, 쌀로 정규화해 추천",
     "checks": {
       "minIngredientUtilization": 0.75,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": [],
       "requiredTerms": ["부드"]
     }
   },
   {
     "caseId": "R17",
-    "tags": ["low-context", "fallback", "source"],
+    "tags": ["low-context", "fallback"],
     "ingredients": ["감자"],
     "limit": 3,
     "expected": "재료가 적어도 과도한 창작 없이 보수적인 추천 또는 보조 재료 활용",
     "checks": {
       "minIngredientUtilization": 0.3,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": []
     }
   },
@@ -231,7 +231,7 @@
     "expected": "초기/중기 이유식에 가까운 부드러운 질감과 단계형 조리법",
     "checks": {
       "minIngredientUtilization": 0.6,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": [],
       "requiredTerms": ["부드", "익"]
     }
@@ -244,7 +244,7 @@
     "expected": "냉장고 잔여 재료를 현실적인 한 끼 메뉴로 연결",
     "checks": {
       "minIngredientUtilization": 0.75,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": []
     }
   },
@@ -256,7 +256,7 @@
     "expected": "갑각류+유제품 조합과 알레르기 안전 단정을 회피",
     "checks": {
       "minIngredientUtilization": 0.4,
-      "requireSource": true,
+      "requireSource": false,
       "awkwardPairs": [["새우", "우유"]],
       "forbiddenClaims": ["알레르기 걱정 없어요", "안전해요", "완전 안전", "무조건 안전"],
       "requireCautionTone": true

@@ -102,8 +102,8 @@ export default function AuthPage() {
         void vm.requestPasswordReset();
       }}
       onSubmit={vm.onSubmit}
-      onSocialSignIn={(provider) => {
-        void vm.signInWithSocial(provider);
+      onSocialSignIn={(provider, consent) => {
+        void vm.signInWithSocial(provider, consent);
       }}
       onRetryProfileSeed={() => {
         void vm.retryProfileSeed();

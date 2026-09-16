@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/server/api-auth";
 import { getFamilyDataScope } from "@/lib/server/family-access";
 import {
-  getReceiptScanSession,
-  isFridgeCategory,
-} from "@/lib/server/meal-api-store";
-import { addFridgeItemToDb } from "@/lib/server/supabase-app-data";
+  confirmPersistentReceiptScanSession,
+  getPersistentReceiptScanSession,
+  ReceiptScanSessionStorageError,
+} from "@/lib/server/receipt-scan-sessions";
+import { isFridgeCategory } from "@/lib/server/supabase-app-data";
 
 export async function POST(request: Request) {
   const user = await getUserFromRequest(request);
@@ -50,23 +51,42 @@ export async function POST(request: Request) {
     }
   }
 
-  const session = getReceiptScanSession(body.scanId);
-  if (!session) {
-    return NextResponse.json({ message: "scan session not found" }, { status: 404 });
+  let sessionResult;
+  try {
+    sessionResult = await getPersistentReceiptScanSession({ scanId: body.scanId, userId: user.id });
+  } catch (error) {
+    const message =
+      error instanceof ReceiptScanSessionStorageError
+        ? error.message
+        : "영수증 분석 결과를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
+    return NextResponse.json(
+      { message },
+      { status: error instanceof ReceiptScanSessionStorageError ? 503 : 500 }
+    );
+  }
+  if (sessionResult.status !== "available") {
+    const status = sessionResult.status === "already_confirmed" ? 409 : sessionResult.status === "expired" ? 410 : 404;
+    return NextResponse.json({ message: `scan session ${sessionResult.status.replace("_", " ")}` }, { status });
   }
 
   const selectedMap = new Map(body.selected.map((item) => [item.tempId, item]));
-  const selectedCandidates = session.candidates.filter((candidate) =>
+  const selectedCandidates = sessionResult.session.candidates.filter((candidate) =>
     selectedMap.has(candidate.tempId)
   );
+  if (!selectedCandidates.length) {
+    return NextResponse.json({ message: "selected candidates not found in scan session" }, { status: 400 });
+  }
 
   try {
     const scope = await getFamilyDataScope({ userId: user.id });
-    const created = await Promise.all(
-      selectedCandidates.map((candidate) => {
+    const result = await confirmPersistentReceiptScanSession({
+      scanId: body.scanId,
+      userId: user.id,
+      storageUserId: scope.ownerUserId,
+      selected: selectedCandidates.map((candidate) => {
         const picked = selectedMap.get(candidate.tempId)!;
-        return addFridgeItemToDb({
-          userId: scope.ownerUserId,
+        return {
+          tempId: candidate.tempId,
           name:
             typeof picked.name === "string" && picked.name.trim().length > 0
               ? picked.name.trim()
@@ -75,20 +95,31 @@ export async function POST(request: Request) {
             picked.category && isFridgeCategory(picked.category)
               ? picked.category
               : candidate.category,
-          quantity: picked.quantity,
+          quantity: picked.quantity ?? candidate.quantity,
           expiresAt: picked.expiresAt,
-          source: "receipt",
-        });
-      })
-    );
+        };
+      }),
+    });
+
+    if (result.status !== "confirmed") {
+      const status = result.status === "already_confirmed" ? 409 : result.status === "expired" ? 410 : result.status === "invalid_selection" ? 400 : 404;
+      return NextResponse.json({ message: `scan session ${result.status.replace("_", " ")}` }, { status });
+    }
 
     return NextResponse.json({
-      addedCount: created.length,
-      items: created,
+      addedCount: result.items.length,
+      items: result.items,
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "failed to confirm receipt scan";
-    return NextResponse.json({ message }, { status: 500 });
+      error instanceof ReceiptScanSessionStorageError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : "failed to confirm receipt scan";
+    return NextResponse.json(
+      { message },
+      { status: error instanceof ReceiptScanSessionStorageError ? 503 : 500 }
+    );
   }
 }

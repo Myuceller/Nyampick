@@ -1,4 +1,4 @@
-import { getAuthNextPath } from "../../../lib/auth-redirect";
+import { getAuthNextPath } from "@/lib/auth-redirect";
 export { validateAuthForm } from "./auth-form-validation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
@@ -30,9 +30,11 @@ const AUTH_CALLBACK_KEYS = [
   "reset_password",
   "sb",
   "social_provider",
+  "registration_attempt",
 ] as const;
 
 const SOCIAL_PROVIDER_PARAM = "social_provider";
+const REGISTRATION_ATTEMPT_PARAM = "registration_attempt";
 const AUTH_CODE_EXCHANGE_LOCK_PREFIX = "nyampick:auth-code-exchange:";
 const AUTH_CODE_EXCHANGE_LOCK_TTL_MS = 15_000;
 
@@ -40,6 +42,8 @@ export interface AuthCallbackParams {
   authCode: string | null;
   hashAccessToken: string | null;
   hashRefreshToken: string | null;
+  oauthState: string | null;
+  registrationAttempt: string | null;
   oauthError: string | null;
   isPasswordRecovery: boolean;
   hasCallback: boolean;
@@ -56,6 +60,13 @@ export class FatalProfileSeedError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "FatalProfileSeedError";
+  }
+}
+
+export class RegistrationConsentRequiredError extends FatalProfileSeedError {
+  constructor(message = "처음 소셜 가입은 회원가입 화면에서 필수 약관에 동의한 뒤 진행해주세요.") {
+    super(message);
+    this.name = "RegistrationConsentRequiredError";
   }
 }
 
@@ -138,12 +149,15 @@ export function clearSocialProviderParam() {
   );
 }
 
-export function getOAuthRedirectTo() {
+export function getOAuthRedirectTo(registrationAttempt?: string) {
   if (typeof window === "undefined") return undefined;
   const nextPath = getAuthNextPath();
   const redirectUrl = new URL("/auth", window.location.origin);
   if (nextPath !== "/") {
     redirectUrl.searchParams.set("next", nextPath);
+  }
+  if (registrationAttempt) {
+    redirectUrl.searchParams.set(REGISTRATION_ATTEMPT_PARAM, registrationAttempt);
   }
   return redirectUrl.toString();
 }
@@ -168,6 +182,10 @@ export async function ensureProfileSeeded(accessToken: string) {
       );
     }
 
+    if (response.status === 403 && body.code === "REGISTRATION_CONSENT_REQUIRED") {
+      throw new RegistrationConsentRequiredError(body.message);
+    }
+
     const message = body.message ?? "프로필 초기화에 실패했습니다.";
     if (response.status >= 500 || response.status === 429) {
       throw new RecoverableProfileSeedError(message);
@@ -181,6 +199,8 @@ export function readAuthCallbackParams(): AuthCallbackParams {
   const currentUrl = new URL(window.location.href);
   const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
   const authCode = currentUrl.searchParams.get("code");
+  const oauthState = currentUrl.searchParams.get("state");
+  const registrationAttempt = currentUrl.searchParams.get(REGISTRATION_ATTEMPT_PARAM);
   const hashAccessToken = hashParams.get("access_token");
   const hashRefreshToken = hashParams.get("refresh_token");
   const hashType = hashParams.get("type");
@@ -194,6 +214,8 @@ export function readAuthCallbackParams(): AuthCallbackParams {
     authCode,
     hashAccessToken,
     hashRefreshToken,
+    oauthState,
+    registrationAttempt,
     oauthError,
     isPasswordRecovery,
     hasCallback: Boolean(authCode || hashAccessToken || hashRefreshToken || oauthError),

@@ -81,7 +81,7 @@ export function generateEvalCases(
       expected: describeCase(ingredients, awkwardPairs),
       checks: {
         minIngredientUtilization: awkwardPairs.length > 0 ? 0.4 : 0.6,
-        requireSource: true,
+        requireSource: false,
         awkwardPairs,
         requireBabyFriendlyTone: true,
         requireCookingSteps: true,

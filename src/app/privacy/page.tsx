@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { LEGAL_EFFECTIVE_DATE_KOREAN } from "@/lib/legal-policy";
 
 const contactEmail = "kwdonggyu@gmail.com";
 
@@ -58,7 +59,7 @@ const sections = [
     body: [
       "냠픽은 인증과 데이터 저장을 위해 Supabase를 사용할 수 있습니다.",
       "냠픽은 AI 레시피 추천 생성을 위해 OpenAI API를 사용할 수 있습니다.",
-      "소셜 로그인 사용 시 Google 또는 Kakao가 제공하는 인증 정보가 처리될 수 있습니다.",
+      "소셜 로그인 사용 시 Google, Kakao 또는 Apple이 제공하는 인증 정보가 처리될 수 있습니다.",
       "외부 서비스에는 서비스 제공에 필요한 최소한의 정보만 전달되도록 관리합니다.",
     ],
   },
@@ -97,7 +98,7 @@ export default function PrivacyPage() {
 
       <h1 className="mt-10 text-[24px] font-extrabold">개인정보 처리방침</h1>
       <p className="mt-4 text-[14px] leading-relaxed text-[#65716d]">
-        시행일: 2026년 5월 3일
+        시행일: {LEGAL_EFFECTIVE_DATE_KOREAN}
         <br />
         개인정보 처리자: Don · 문의:{" "}
         <a className="font-bold text-[#2f9569]" href={`mailto:${contactEmail}`}>

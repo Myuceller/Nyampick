@@ -10,7 +10,8 @@ export type IngredientMetaMap = Record<string, IngredientMeta>;
 
 export interface RecipeEvalChecks {
   minIngredientUtilization: number;
-  requireSource: boolean;
+  /** Opt in only when the evaluated text is expected to use a verified source. */
+  requireSource?: boolean;
   awkwardPairs: [string, string][];
   requireBabyFriendlyTone: boolean;
   requireCookingSteps: boolean;

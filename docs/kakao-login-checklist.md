@@ -5,26 +5,28 @@
 - [ ] Tester:
 - [ ] Environment: `local` / `preview` / `production`
 - [ ] Base URL:
-- [ ] Kakao app key used:
+- [ ] Kakao 앱 자격 증명이 콘솔에서 확인됨 (값은 이 문서에 기록하지 않음)
 
 ## 1) Kakao Dev Console Configuration
 - [ ] Platform > Web site domain includes exact service domain
-- [ ] Redirect URI includes:
-  - [ ] `http://localhost:3000/auth` (local)
-  - [ ] `https://<preview-domain>/auth` (preview if needed)
-  - [ ] `https://nyampick.vercel.app/auth` (production)
+- [ ] Redirect URI is the exact callback displayed in Supabase Auth > Providers > Kakao:
+  - [ ] `https://<project-ref>.supabase.co/auth/v1/callback`
+- [ ] `nyampick://auth/callback*` was **not** entered here; it belongs only in the Supabase Auth Redirect URL Allow List.
 - [ ] Consent items:
   - [ ] `profile_nickname` enabled
   - [ ] `profile_image` enabled (optional)
-  - [ ] `account_email` enabled (if email-based account unification is required)
+  - [ ] `account_email` enabled (프로필 연락처가 필요할 때만; 같은 이메일을 기준으로 별도 OAuth 계정을 통합하지 않음)
 - [ ] If `account_email` is required, app review/permission state confirmed
 
 ## 2) Supabase Provider Configuration
 - [ ] Supabase Auth > Providers > Kakao is enabled
 - [ ] Client ID / Client Secret match Kakao app
-- [ ] Redirect URL in Supabase/Kakao side is consistent
+- [ ] Supabase Auth Redirect URL Allow List includes `nyampick://auth/callback*` for the native app
+- [ ] Supabase Auth Redirect URL Allow List includes each approved web `/auth*` URL for browser login
+- [ ] Production web origin follows the configured canonical host: currently `https://www.nyampick.kr` (`https://nyampick.kr` redirects here)
+- [ ] The Kakao console Redirect URI matches the callback displayed in the Supabase provider settings
 - [ ] Provider scope is aligned with Kakao consent setup
-- [ ] `NEXT_PUBLIC_APP_URL` points to real production origin (not localhost)
+- [ ] `NEXT_PUBLIC_APP_URL` and `NEXT_PUBLIC_CANONICAL_URL` both point to the configured canonical production origin (not localhost)
 
 ## 3) Browser/Context Matrix
 ### Desktop
@@ -83,7 +85,8 @@
 - [ ] Critical auth errors without recovery guidance
 
 ## 8) Known Break Conditions
-- [ ] Redirect URI mismatch between Kakao and Supabase
+- [ ] Kakao console uses a native deep link instead of the Supabase callback
+- [ ] Native deep link callback pattern is missing from Supabase Auth Redirect URL Allow List
 - [ ] `NEXT_PUBLIC_APP_URL` set to localhost in production
 - [ ] Kakao consent scope requested but not enabled/reviewed
 - [ ] Provider client secret mismatch
@@ -91,8 +94,10 @@
 
 ## 9) Quick Debug Commands / Checks
 ```bash
-# Check env keys exist (local)
-rg -n "NEXT_PUBLIC_APP_URL|NEXT_PUBLIC_SUPABASE_URL|NEXT_PUBLIC_SUPABASE_ANON_KEY|SUPABASE_SERVICE_ROLE_KEY|OPENAI_API_KEY" .env.local .env.production
+# Check required variable names exist locally without printing any values.
+for required_name in NEXT_PUBLIC_APP_URL NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY; do
+  rg -q "^${required_name}=" .env.local .env.production 2>/dev/null || printf 'missing: %s\n' "$required_name"
+done
 ```
 
 ```sql

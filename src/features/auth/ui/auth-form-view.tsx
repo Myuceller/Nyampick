@@ -4,7 +4,9 @@ import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
-import type { AuthMode, SocialProvider } from "../lib/auth-utils";
+import type { AuthMode, SocialProvider } from "@/features/auth/lib/auth-utils";
+import type { RegistrationConsentInput } from "@/features/auth/lib/registration-consent";
+import { LEGAL_EFFECTIVE_DATE_DOTTED } from "@/lib/legal-policy";
 
 interface AuthFormViewProps {
   mode: AuthMode;
@@ -35,8 +37,8 @@ interface AuthFormViewProps {
   onRequestEmailVerification: () => void;
   onVerifyEmailCode: () => void;
   onRequestPasswordReset: () => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  onSocialSignIn: (provider: "google" | "kakao") => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>, consent?: RegistrationConsentInput) => void;
+  onSocialSignIn: (provider: "google" | "kakao", consent?: RegistrationConsentInput) => void;
   onRetryProfileSeed: () => void;
 }
 
@@ -193,7 +195,24 @@ export function AuthFormView({
       showToast(validationMessage);
       return;
     }
-    onSubmit(event);
+    onSubmit(event, isSignin ? undefined : getRegistrationConsent());
+  }
+
+  function getRegistrationConsent(): RegistrationConsentInput {
+    return {
+      serviceTermsAccepted: agreeService,
+      privacyPolicyAccepted: agreePrivacy,
+      ageOver14Confirmed: agreeAge,
+      marketingAccepted: agreeMarketing,
+    };
+  }
+
+  function handleSocialSignIn(provider: "google" | "kakao") {
+    if (!isSignin && !requiredTermsReady) {
+      showToast("필수 약관에 동의해 주세요.");
+      return;
+    }
+    onSocialSignIn(provider, isSignin ? undefined : getRegistrationConsent());
   }
 
   function toggleAgreeAll(checked: boolean) {
@@ -459,12 +478,17 @@ export function AuthFormView({
                   <Divider />
                   <SocialButtons
                     isSignin={false}
-                    isBusy={isBusy}
+                    disabled={isBusy || !requiredTermsReady}
                     isSocialSubmitting={isSocialSubmitting}
                     socialProvider={socialProvider}
-                    onSocialSignIn={onSocialSignIn}
+                    onSocialSignIn={handleSocialSignIn}
                     onNaver={() => showToast("네이버 로그인은 준비 중입니다.")}
                   />
+                  {!requiredTermsReady ? (
+                    <p className="text-center text-[12px] font-medium leading-[1.55] text-[#8aa99a]">
+                      필수 약관에 동의하면 소셜 계정으로 시작할 수 있어요.
+                    </p>
+                  ) : null}
                 </>
               ) : null}
             </form>
@@ -474,10 +498,10 @@ export function AuthFormView({
                 <Divider />
                 <SocialButtons
                   isSignin
-                  isBusy={isBusy}
+                  disabled={isBusy}
                   isSocialSubmitting={isSocialSubmitting}
                   socialProvider={socialProvider}
-                  onSocialSignIn={onSocialSignIn}
+                  onSocialSignIn={handleSocialSignIn}
                   onNaver={() => showToast("네이버 로그인은 준비 중입니다.")}
                 />
               </>
@@ -587,7 +611,7 @@ export function AuthFormView({
               <div className="max-h-[calc(90vh-58px)] overflow-y-auto p-[18px]">
                 <div className="rounded-[18px] border border-[#d4ede0] bg-white p-4">
                   <p className="mb-4 text-[12px] font-medium leading-[1.55] text-[#8aa99a]">
-                    시행일: 2026.00.00 · 서비스명: 냠픽
+                    시행일: {LEGAL_EFFECTIVE_DATE_DOTTED} · 서비스명: 냠픽
                   </p>
                   {activePolicy.sections.map((section) => (
                     <section key={section.title} className="mb-[18px] last:mb-0">
@@ -702,14 +726,14 @@ function SubmitButton({ isReady, isBusy, label }: { isReady: boolean; isBusy: bo
 
 function SocialButtons({
   isSignin,
-  isBusy,
+  disabled,
   isSocialSubmitting,
   socialProvider,
   onSocialSignIn,
   onNaver,
 }: {
   isSignin: boolean;
-  isBusy: boolean;
+  disabled: boolean;
   isSocialSubmitting: boolean;
   socialProvider: SocialProvider;
   onSocialSignIn: (provider: "google" | "kakao") => void;
@@ -720,7 +744,7 @@ function SocialButtons({
       <div className="flex items-center justify-center gap-3" aria-label="소셜 로그인">
         <button
           type="button"
-          disabled={isBusy}
+          disabled={disabled}
           onClick={() => onSocialSignIn("kakao")}
           className="flex h-[52px] w-[52px] items-center justify-center rounded-[18px] border border-[#d4ede0] bg-white shadow-[0_2px_10px_rgba(87,191,142,0.06)] transition active:scale-[0.96] active:bg-[#f8fffb] disabled:opacity-60"
           aria-label={isSignin ? "카카오로 로그인" : "카카오로 시작하기"}
@@ -731,7 +755,7 @@ function SocialButtons({
         </button>
         <button
           type="button"
-          disabled={isBusy}
+          disabled={disabled}
           onClick={() => onSocialSignIn("google")}
           className="flex h-[52px] w-[52px] items-center justify-center rounded-[18px] border border-[#d4ede0] bg-white shadow-[0_2px_10px_rgba(87,191,142,0.06)] transition active:scale-[0.96] active:bg-[#f8fffb] disabled:opacity-60"
           aria-label={isSignin ? "Google로 로그인" : "Google로 시작하기"}
@@ -742,7 +766,7 @@ function SocialButtons({
         </button>
         <button
           type="button"
-          disabled={isBusy}
+          disabled={disabled}
           onClick={onNaver}
           className="flex h-[52px] w-[52px] items-center justify-center rounded-[18px] border border-[#d4ede0] bg-white shadow-[0_2px_10px_rgba(87,191,142,0.06)] transition active:scale-[0.96] active:bg-[#f8fffb] disabled:opacity-60"
           aria-label={isSignin ? "네이버로 로그인" : "네이버로 시작하기"}

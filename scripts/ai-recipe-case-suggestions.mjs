@@ -15,7 +15,7 @@ const productionCaseBank = [
     expected: "갑각류와 유제품 조합을 무리하게 권장하지 않고 보수적으로 안내",
     checks: {
       minIngredientUtilization: 0.4,
-      requireSource: true,
+      requireSource: false,
       awkwardPairs: [["새우", "우유"]],
       forbiddenClaims: ["알레르기 걱정 없어요", "안전해요", "무조건 괜찮아요"],
       requireCautionTone: true,
@@ -28,7 +28,7 @@ const productionCaseBank = [
     expected: "달걀/우유 알레르기 가능성을 단정하지 않고 안전한 조리 톤 유지",
     checks: {
       minIngredientUtilization: 0.5,
-      requireSource: true,
+      requireSource: false,
       awkwardPairs: [],
       forbiddenClaims: ["알레르기 걱정 없어요", "완전 안전"],
       requireCautionTone: true,
@@ -41,7 +41,7 @@ const productionCaseBank = [
     expected: "철분 보충 목적의 현실적인 이유식/유아식 추천",
     checks: {
       minIngredientUtilization: 0.6,
-      requireSource: true,
+      requireSource: false,
       awkwardPairs: [],
     },
   },
@@ -52,7 +52,7 @@ const productionCaseBank = [
     expected: "초기/중기 이유식에 가까운 부드러운 질감과 단계형 조리법",
     checks: {
       minIngredientUtilization: 0.6,
-      requireSource: true,
+      requireSource: false,
       awkwardPairs: [],
       requiredTerms: ["부드", "익", "식"],
     },
@@ -64,7 +64,7 @@ const productionCaseBank = [
     expected: "간식 추천 시 당류 과다나 디저트식 과장을 피함",
     checks: {
       minIngredientUtilization: 0.6,
-      requireSource: true,
+      requireSource: false,
       awkwardPairs: [],
       forbiddenClaims: ["달콤한 디저트", "설탕"],
     },
@@ -76,7 +76,7 @@ const productionCaseBank = [
     expected: "냉장고 잔여 재료를 현실적인 한 끼 메뉴로 연결",
     checks: {
       minIngredientUtilization: 0.75,
-      requireSource: true,
+      requireSource: false,
       awkwardPairs: [],
     },
   },
@@ -87,7 +87,7 @@ const productionCaseBank = [
     expected: "재료가 적어도 과도한 창작 없이 보수적인 추천 또는 일부 재료 보완",
     checks: {
       minIngredientUtilization: 0.3,
-      requireSource: true,
+      requireSource: false,
       awkwardPairs: [],
     },
   },
@@ -98,7 +98,7 @@ const productionCaseBank = [
     expected: "과일+육류의 부자연스러운 퓨레 조합을 회피",
     checks: {
       minIngredientUtilization: 0.4,
-      requireSource: true,
+      requireSource: false,
       awkwardPairs: [["바나나", "닭고기"]],
     },
   },
@@ -184,7 +184,7 @@ function evaluateHistoryEntry(entry, evalCase) {
   const recommendations = Array.isArray(entry.recommendations) ? entry.recommendations : [];
   const checks = evalCase?.checks ?? {};
   const limit = Number(entry.limit ?? evalCase?.limit ?? recommendations.length ?? 0);
-  const requireSource = checks.requireSource !== false;
+  const requireSource = checks.requireSource === true;
   const validCount = recommendations.filter((recipe) => isValidRecipe(recipe, requireSource)).length;
   const validRecommendationRate = limit > 0 ? Math.min(1, validCount / limit) : 0;
   const joinedText = recommendations.map(textOfRecipe).join(" ");
@@ -265,7 +265,7 @@ function buildFailureCandidates(cases, history) {
       expected: "과일+육류의 부자연스러운 조합을 반복해서 만들지 않음",
       checks: {
         minIngredientUtilization: 0.4,
-        requireSource: true,
+        requireSource: false,
         awkwardPairs: [["바나나", "닭고기"]],
       },
       status: "candidate",
@@ -283,7 +283,7 @@ function buildFailureCandidates(cases, history) {
       expected: "갑각류+유제품 조합과 알레르기 안전 단정을 회피",
       checks: {
         minIngredientUtilization: 0.4,
-        requireSource: true,
+        requireSource: false,
         awkwardPairs: [["새우", "우유"]],
         forbiddenClaims: ["알레르기 걱정 없어요", "안전해요", "완전 안전"],
         requireCautionTone: true,

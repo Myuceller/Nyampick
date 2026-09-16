@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { getLoadingPhaseMessage, LoadingPhase } from "../lib/auth-utils";
+import { getLoadingPhaseMessage, LoadingPhase } from "@/features/auth/lib/auth-utils";
 
 interface AuthLoadingViewProps {
   loadingPhase: LoadingPhase;

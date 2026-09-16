@@ -11,6 +11,7 @@ export function summarizeQualityTelemetry(input: {
   normalizedInput: GenerateRecipeInput;
   strictCandidateCount: number;
   fallbackCandidateCount: number;
+  requireSource?: boolean;
 }): AiRecipeQualityTelemetry {
   const rejectReasonCounts = Object.fromEntries(
     recipeRejectReasons.map((reason) => [reason, 0])
@@ -19,7 +20,9 @@ export function summarizeQualityTelemetry(input: {
   let rejectedCount = 0;
 
   for (const recipe of input.recommendations) {
-    const result = evaluateRecipeQuality(recipe, input.normalizedInput);
+    const result = evaluateRecipeQuality(recipe, input.normalizedInput, {
+      requireSource: input.requireSource,
+    });
     if (result.ready) {
       readyCount += 1;
       continue;

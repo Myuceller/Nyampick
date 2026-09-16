@@ -30,6 +30,7 @@ export async function deleteAccountData(userId: string): Promise<void> {
   await deleteFromTable("fridge_items", "user_id", userId);
   await deleteFromTable("saved_recipes", "user_id", userId);
   await deleteFromTable("child_profiles", "user_id", userId);
+  await deleteFromTable("user_registration_consents", "user_id", userId);
   await deleteFromTable("user_profile", "id", userId);
 }
 

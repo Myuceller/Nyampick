@@ -1,0 +1,10 @@
+{
+  "name": "@nyampick/contracts",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./legal": "./src/legal.ts",
+    "./recipe": "./src/recipe.ts"
+  }
+}

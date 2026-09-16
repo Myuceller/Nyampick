@@ -37,7 +37,8 @@ function cleanupIngredientText(value: string) {
 
 export function normalizeIngredientName(value: string) {
   const cleaned = cleanupIngredientText(value);
-  if (cleaned.length < 2) return "";
+  if (!cleaned) return "";
+  if ([...cleaned].length < 2 && !/^[가-힣]$/u.test(cleaned)) return "";
 
   for (const [pattern, canonical] of aliasRules) {
     if (pattern.test(cleaned)) return canonical;
