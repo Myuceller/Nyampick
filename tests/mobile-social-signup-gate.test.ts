@@ -66,3 +66,21 @@ test("mobile social signup binds a server attempt to its one-time callback", () 
   assert.match(authContextSource, /body: \{ attemptId \}/);
   assert.doesNotMatch(authContextSource, /createRegistrationAttemptId/);
 });
+
+test("mobile OAuth accepts the first Kakao callback without dropping Linking delivery", () => {
+  assert.doesNotMatch(authContextSource, /if \(isAuthBrowserOpenRef\.current\) return/);
+  assert.match(
+    authContextSource,
+    /Linking\.addEventListener\("url", \(\{ url \}\) => \{[\s\S]*?processAuthRedirect\(url\)/
+  );
+  assert.match(
+    authContextSource,
+    /if \(result\.type === "cancel" \|\| result\.type === "dismiss"\) \{\s*\/\/[\s\S]*?return;\s*\}/
+  );
+  assert.doesNotMatch(
+    authContextSource,
+    /if \(result\.type === "cancel" \|\| result\.type === "dismiss"\) \{\s*await clearPendingRegistrationConsent\(\)/
+  );
+  assert.match(authContextSource, /processedCodesRef\.current\.get\(code\)/);
+  assert.match(authContextSource, /processedCodesRef\.current\.set\(code, exchange\)/);
+});
